@@ -61,9 +61,117 @@
   .app-container {
     position: relative;
     z-index: 1;
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 12px 16px 40px 16px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px 18px 40px 18px;
+    box-sizing: border-box;
+  }
+
+  /* Attractive Market Terminal Glowing Animations */
+  @keyframes pulseBuy {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+  @keyframes pulseSell {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+  @keyframes pulseMatch {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  }
+  @keyframes atmShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .signal-badge-buy {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.15) 100%);
+    border: 1px solid #10b981;
+    color: #34d399;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    animation: pulseBuy 2.2s infinite;
+    white-space: nowrap;
+  }
+  .signal-badge-sell {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.22) 0%, rgba(185, 28, 28, 0.15) 100%);
+    border: 1px solid #ef4444;
+    color: #f87171;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    animation: pulseSell 2.2s infinite;
+    white-space: nowrap;
+  }
+  .signal-badge-match {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.15) 100%);
+    border: 1px solid #f59e0b;
+    color: #fbbf24;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    animation: pulseMatch 2.5s infinite;
+    white-space: nowrap;
+  }
+  .cron-badge {
+    background: rgba(139, 92, 246, 0.16);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    color: #c084fc;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10.5px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ist-clock-badge {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    color: #94a3b8;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+  }
+  .atm-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+    border: 1px solid #38bdf8;
+    color: #7dd3fc;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 11.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  }
+  .atm-row-highlight {
+    background: rgba(56, 189, 248, 0.08) !important;
+    border-top: 1px dashed rgba(56, 189, 248, 0.45) !important;
+    border-bottom: 1px dashed rgba(56, 189, 248, 0.45) !important;
   }
 
   /* Header */
@@ -1357,13 +1465,153 @@
   }
 
   /* Dedicated Lightweight Indicator Script Hub Modal */
+  /* Enhanced Indicator Modal with Live Option Chain */
   .indicator-modal-card {
-    max-width: 980px;
-    background: #0d111a;
-    border: 1px solid #1e293b;
+    max-width: 1440px;
+    width: 97vw;
+    max-height: 94vh;
+    background: #0b101a;
+    border: 1px solid #1e2c44;
     border-radius: 14px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.75);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+  }
+  .ind-view-switcher {
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #0d131f;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+  }
+  .ind-view-btn {
+    background: #151d2c;
+    border: 1px solid #233148;
+    color: #94a3b8;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ind-view-btn:hover {
+    color: #fff;
+    border-color: #3b82f6;
+  }
+  .ind-view-btn.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+  }
+  .ind-chain-control-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    background: #111726;
+    border-bottom: 1px solid var(--line);
+  }
+  .ind-index-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .ind-idx-btn {
+    background: #182234;
+    border: 1px solid #28374d;
+    color: #cbd5e1;
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .ind-idx-btn:hover {
+    background: #2563eb;
+    color: #fff;
+    border-color: #3b82f6;
+  }
+  .ind-idx-btn.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+  }
+  .ind-summary-ribbon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #0c121e;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .ind-stat-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ind-stat-chip {
+    background: #141c2c;
+    border: 1px solid #1f2c42;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ind-chain-table-wrap {
+    flex: 1;
+    overflow: auto;
+    max-height: 58vh;
+    border-radius: 0;
+  }
+  .ind-chain-table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .ind-chain-table-wrap th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 7px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #141a29;
+    border-bottom: 1px solid #233148;
+  }
+  .ind-chain-table-wrap td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #182234;
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .ind-chain-table-wrap td.strike-col {
+    position: sticky;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    background: #101626;
+    font-weight: 700;
+    text-align: center;
   }
   .ind-tag {
     background: rgba(59, 130, 246, 0.2);
@@ -1521,9 +1769,13 @@
       <p>Institutional algorithmic screener for Day Low bounce, Previous Close breakout, and Open=Low / Open=High setups with live web &amp; mobile indicators and UT Bot Buy/Sell signals.</p>
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-      <div class="status-badge" id="marketBadge">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="marketStatusText">Checking market status…</span>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+        <span class="cron-badge" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
+        <span class="ist-clock-badge" id="liveClockIst">--:--:-- IST</span>
+        <div class="status-badge" id="marketBadge">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="marketStatusText">Checking market status…</span>
+        </div>
       </div>
       <div id="loadedInfo" style="font-size:12px; color:var(--muted);"></div>
     </div>
@@ -1589,6 +1841,7 @@
       <span>⚡</span> <b>Technical &amp; Algo Indicators:</b>
     </div>
     <div class="indicator-btn-row">
+      <button class="small-strat-btn" style="background:#2563eb; color:#fff; border-color:#3b82f6; font-weight:700;" onclick="openIndicatorModal('ut')" title="Open Indicator Suite with live Option Chain and algorithm code">📊 Indicator Option Chain &amp; Scripts</button>
       <button class="small-strat-btn alpha-btn" data-ind="alphascan" onclick="runIndicatorScan('alphascan')" title="Scan all stocks & indices with AlphaScan Option Matrix">📊 AlphaScan Matrix</button>
       <button class="small-strat-btn pred-btn" data-ind="trade_pred" onclick="runIndicatorScan('trade_pred')" title="Scan all stocks & indices with Trade Predictor">🔮 Trade Predictor</button>
       <button class="small-strat-btn quantum-btn" data-ind="quantum" onclick="runIndicatorScan('quantum')" title="Scan all stocks & indices with Quantum Matrix Strategy">🌌 Quantum Matrix</button>
@@ -2145,13 +2398,14 @@
   </div>
 </div>
 
-<!-- Algo Indicator & Strategy Formula Hub Modal -->
+<!-- Algo Indicator & Strategy Formula Hub Modal with Integrated Live Option Chain -->
 <div id="indicatorModal" class="modal-overlay" style="display:none; z-index:1150;">
   <div class="modal-card indicator-modal-card">
     <div class="modal-header">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <span class="ind-tag" id="indBadge">Algo Indicator Script</span>
-        <h2 id="indModalTitle" style="margin:0; font-size:17px; font-weight:700;">⚡ UT Bot Alerts (Buy &amp; Sell Signals)</h2>
+        <span class="ind-tag" id="indBadge">Algo Indicator &amp; Option Chain Suite</span>
+        <h2 id="indModalTitle" style="margin:0; font-size:17.5px; font-weight:700;">⚡ UT Bot Alerts (Buy &amp; Sell Signals)</h2>
+        <span id="indAtmSpotBadge" class="stat" style="font-family:'IBM Plex Mono', monospace; font-size:11.5px; padding:3px 9px; border-radius:6px; color:#38bdf8;">Spot: – | ATM: –</span>
       </div>
       <button id="indCloseBtn" class="modal-close-pill" onclick="closeAllModals()">✕ Close</button>
     </div>
@@ -2173,7 +2427,98 @@
       <button class="strat-tab-btn" data-ind="strat3" onclick="switchIndModalTab('strat3')">3️⃣ Premium ÷8 &amp; ÷6.5</button>
     </div>
 
-    <div class="ind-modal-body">
+    <!-- View Switcher Tabs: Live Option Chain vs Pine Script Code -->
+    <div class="ind-view-switcher">
+      <button class="ind-view-btn active" id="indViewChainBtn" onclick="switchIndView('chain')">
+        <span>📊</span> <b>Live Option Chain (Indicator Fitted)</b>
+      </button>
+      <button class="ind-view-btn" id="indViewCodeBtn" onclick="switchIndView('code')">
+        <span>📜</span> <b>Pine Script v6 Code &amp; Formulas</b>
+      </button>
+    </div>
+
+    <!-- 1. LIVE OPTION CHAIN VIEW (INDICATOR FITTED) -->
+    <div id="indChainSection" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+      <!-- Control Bar -->
+      <div class="ind-chain-control-bar">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:12px; color:var(--muted); font-weight:700;">Index / Stock:</span>
+          <div class="ind-index-pills">
+            <button class="ind-idx-btn active" id="indPillNIFTY" onclick="setIndChainIndex('NIFTY')">NIFTY</button>
+            <button class="ind-idx-btn" id="indPillBANKNIFTY" onclick="setIndChainIndex('BANKNIFTY')">BANKNIFTY</button>
+            <button class="ind-idx-btn" id="indPillSENSEX" onclick="setIndChainIndex('SENSEX')">SENSEX</button>
+            <button class="ind-idx-btn" id="indPillFINNIFTY" onclick="setIndChainIndex('FINNIFTY')">FINNIFTY</button>
+            <button class="ind-idx-btn" id="indPillMIDCPNIFTY" onclick="setIndChainIndex('MIDCPNIFTY')">MIDCPNIFTY</button>
+          </div>
+          <select id="indSymbolSelect" onchange="setIndChainIndex(this.value)" style="padding:5px 8px; font-size:12px; background:#090e17; color:#fff; border:1px solid #1f2c3f; border-radius:6px; min-width:130px;" title="Select any of the 216 F&O symbols"></select>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:11.5px; color:var(--muted); font-weight:600;">Expiry:</label>
+            <select id="indExpirySelect" onchange="onIndExpiryChange(this.value)" style="padding:5px 8px; font-size:12px; background:#090e17; color:#fff; border:1px solid #1f2c3f; border-radius:6px; min-width:130px;"></select>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:11.5px; color:var(--muted); font-weight:600;">Filter:</label>
+            <select id="indStrikeFilter" onchange="onIndFilterChange(this.value)" style="padding:5px 8px; font-size:12px; background:#090e17; color:#fff; border:1px solid #1f2c3f; border-radius:6px;">
+              <option value="ALL">All Strikes (±12)</option>
+              <option value="MATCHES_ONLY">Only Indicator Matches</option>
+              <option value="BUY_ONLY">Only BUY Signals</option>
+              <option value="ATM_8">Near ATM (±8)</option>
+            </select>
+          </div>
+          <button class="action-btn" onclick="loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey)" style="padding:5px 12px; font-size:12px;">🔄 Refresh Chain</button>
+        </div>
+      </div>
+
+      <!-- Summary Ribbon -->
+      <div class="ind-summary-ribbon">
+        <div class="ind-stat-group">
+          <div class="ind-stat-chip">
+            <span style="color:var(--muted);">Spot:</span>
+            <b id="indChainSpotVal" style="color:#fff; font-family:'IBM Plex Mono', monospace;">₹–</b>
+          </div>
+          <div class="ind-stat-chip">
+            <span style="color:var(--muted);">ATM:</span>
+            <span class="atm-badge" id="indChainAtmVal">–</span>
+          </div>
+          <div class="ind-stat-chip" style="border-color:#3b82f6;">
+            <span style="color:#93c5fd;">Active Indicator:</span>
+            <b id="indChainActiveName" style="color:#fff;">⚡ UT Bot Alerts</b>
+          </div>
+        </div>
+
+        <div class="ind-stat-group">
+          <span class="signal-badge-buy" id="indChainBuyCount">0 BUY Signals</span>
+          <span class="signal-badge-sell" id="indChainSellCount">0 SELL Signals</span>
+          <span class="signal-badge-match" id="indChainMatchCount">0 Matches</span>
+          <div style="font-size:11.5px; color:#cbd5e1;" id="indChainVolShare">Volume Share: Loading…</div>
+        </div>
+      </div>
+
+      <!-- Live Option Chain Table -->
+      <div class="ind-chain-table-wrap">
+        <table class="chain-table">
+          <thead>
+            <tr>
+              <th colspan="6" style="background:#132d20; color:#35d07f; text-align:center;">CALLS (CE) — Click LTP for In-App Chart</th>
+              <th rowspan="2" style="background:#1c2333; text-align:center; min-width:85px; color:#fff;">STRIKE</th>
+              <th colspan="6" style="background:#3d1a22; color:#ff6b81; text-align:center;">PUTS (PE) — Click LTP for In-App Chart</th>
+            </tr>
+            <tr>
+              <th>OI</th><th>Vol</th><th>Low</th><th>High</th><th>LTP</th><th style="text-align:right;">Indicator Signal / Level</th>
+              <th style="text-align:left;">Indicator Signal / Level</th><th>LTP</th><th>High</th><th>Low</th><th>Vol</th><th>OI</th>
+            </tr>
+          </thead>
+          <tbody id="indChainTableBody">
+            <tr><td colspan="13" style="text-align:center; padding:30px; color:#94a3b8;">Loading indicator option chain…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. PINE SCRIPT & ALGORITHM CODE VIEW -->
+    <div id="indCodeSection" class="ind-modal-body" style="display:none;">
       <div class="ind-info-banner">
         <div>
           <div id="indDescText" style="font-size:12.5px; color:#e2e8f0; font-weight:600;">
@@ -2196,8 +2541,8 @@
 
       <div class="hub-steps">
         <div class="step-chip"><span class="step-num">1</span> <b>Select Indicator</b> tab above</div>
-        <div class="step-chip"><span class="step-num">2</span> Click <b>📈 Open Chart in Website</b> to view visual levels</div>
-        <div class="step-chip"><span class="step-num">3</span> Click <b>⚡ Scan All Stocks &amp; Indices</b> for live market scanner</div>
+        <div class="step-chip"><span class="step-num">2</span> Inspect <b>Live Option Chain (Indicator Fitted)</b> tab</div>
+        <div class="step-chip"><span class="step-num">3</span> Click <b>⚡ Scan All Stocks &amp; Indices</b> for full market screener</div>
       </div>
 
       <div class="code-preview-wrap">
@@ -3570,23 +3915,25 @@ function renderTable(rows) {
     const sigCls = r.sig && r.sig.includes('L') && !r.sig.includes('H') ? 'ol' : r.sig && r.sig.includes('H') && !r.sig.includes('L=H') ? 'oh' : (r.sig === 'O=L=H' ? 'ol' : '');
 
     // UT Bot Action calculation
-    let utAction = 'WAIT';
-    let utCls = 'wait';
+    let utBadgeHtml = '<span class="ut-badge wait">WAIT</span>';
     if (r.isOL || (r.sig && r.sig.includes('O=L')) || (r.close > r.open && r.close >= r.prevCloseUsed && r.low <= (r.open * 0.98))) {
-      utAction = '🟢 BUY';
-      utCls = 'buy';
+      utBadgeHtml = '<span class="signal-badge-buy">🟢 BUY</span>';
     } else if (r.isOH || (r.sig && r.sig.includes('O=H')) || (r.close < r.open && r.close <= r.prevCloseUsed)) {
-      utAction = '🔴 SELL';
-      utCls = 'sell';
+      utBadgeHtml = '<span class="signal-badge-sell">🔴 SELL</span>';
     } else if (r.isMatch && r.close > r.low) {
-      utAction = '🟢 BUY';
-      utCls = 'buy';
+      utBadgeHtml = '<span class="signal-badge-buy">🟢 BUY</span>';
     }
-    r.utBot = utAction;
 
-    // Direct Selected Option TradingView URL
-    const optTvUrl = getTradingViewUrl(r.symbol, r.expiry, r.strike, r.type);
-    const optTicker = getTradingViewOptionSymbol(r.symbol, r.expiry, r.strike, r.type);
+    let sigHtml = r.sig || '–';
+    if (r.indicatorTag) {
+      sigHtml = '<span class="signal-badge-match">' + r.indicatorTag + '</span>';
+    } else if (r.isMatch) {
+      sigHtml = '<span class="signal-badge-match">💎 MATCH</span>';
+    } else if (r.sig === 'O=L') {
+      sigHtml = '<span style="color:#34d399; font-weight:700;">⚡ O=L</span>';
+    } else if (r.sig === 'O=H') {
+      sigHtml = '<span style="color:#f87171; font-weight:700;">⚡ O=H</span>';
+    }
 
     return '<tr>' +
       '<td style="text-align:center; color:var(--muted); font-size:11px;">' + (idx + 1) + '</td>' +
@@ -3594,8 +3941,8 @@ function renderTable(rows) {
       '<td class="exp">' + r.expiry + '</td>' +
       '<td>' + r.strike + '</td>' +
       '<td class="' + typeCls + '">' + r.type + '</td>' +
-      '<td class="sig ' + sigCls + '">' + (r.indicatorTag ? '<span class="indicator-tag-badge">' + r.indicatorTag + '</span>' : (r.sig || '–')) + '</td>' +
-      '<td class="ut-cell"><span class="ut-badge ' + utCls + '">' + utAction + '</span></td>' +
+      '<td class="sig ' + sigCls + '">' + sigHtml + '</td>' +
+      '<td class="ut-cell">' + utBadgeHtml + '</td>' +
       '<td>' + fmtOI(r.oi) + '</td>' +
       '<td class="' + (r.oiPct > 0 ? 'ce-cell' : r.oiPct < 0 ? 'pe-cell' : '') + '">' + fmtPct(r.oiPct) + '</td>' +
       '<td class="' + (r.isMatch ? 'yellow' : '') + '">' + fmtNum(r.prevCloseUsed) + '</td>' +
@@ -3767,18 +4114,31 @@ async function loadSymbols() {
 
 function populateSymbols(list) {
   const sel = document.getElementById('symSelect');
-  sel.innerHTML = '<option value="__ALL__">All symbols</option>' +
-    list.map(s => `<option value="${s}">${s}</option>`).join('');
+  if (sel) {
+    sel.innerHTML = '<option value="__ALL__">All symbols</option>' +
+      list.map(s => `<option value="${s}">${s}</option>`).join('');
+  }
 
   const chainSel = document.getElementById('chainSymbolSelect');
   if (chainSel) {
     chainSel.innerHTML = list.map(s => `<option value="${s}" ${s === currentChainSymbol ? 'selected' : ''}>${s}</option>`).join('');
   }
+
+  const indSymSel = document.getElementById('indSymbolSelect');
+  if (indSymSel) {
+    indSymSel.innerHTML = list.map(s => `<option value="${s}" ${s === currentIndSymbol ? 'selected' : ''}>${s}</option>`).join('');
+  }
 }
 
 /* ============================================================
-   INDICATOR HUB & MODALS
+   INDICATOR HUB & LIVE OPTION CHAIN ENGINE
 ============================================================ */
+let currentIndSymbol = 'NIFTY';
+let currentIndExpiry = '';
+let currentIndChainData = null;
+let currentIndStrikeFilter = 'ALL';
+let currentIndView = 'chain';
+
 function openIndicatorModal(key) {
   currentIndKey = key || 'ut';
   switchIndModalTab(currentIndKey);
@@ -3786,11 +4146,219 @@ function openIndicatorModal(key) {
   if (modal) modal.style.display = 'flex';
 }
 
+function switchIndView(view) {
+  currentIndView = view;
+  const chainBtn = document.getElementById('indViewChainBtn');
+  const codeBtn = document.getElementById('indViewCodeBtn');
+  const chainSec = document.getElementById('indChainSection');
+  const codeSec = document.getElementById('indCodeSection');
+
+  if (view === 'chain') {
+    if (chainBtn) chainBtn.classList.add('active');
+    if (codeBtn) codeBtn.classList.remove('active');
+    if (chainSec) chainSec.style.display = 'flex';
+    if (codeSec) codeSec.style.display = 'none';
+    if (!currentIndChainData || currentIndChainData.symbol !== currentIndSymbol) {
+      loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey);
+    }
+  } else {
+    if (chainBtn) chainBtn.classList.remove('active');
+    if (codeBtn) codeBtn.classList.add('active');
+    if (chainSec) chainSec.style.display = 'none';
+    if (codeSec) codeSec.style.display = 'block';
+  }
+}
+
+function setIndChainIndex(sym) {
+  if (!sym) return;
+  currentIndSymbol = sym.toUpperCase().trim();
+  currentIndExpiry = '';
+
+  ['NIFTY', 'BANKNIFTY', 'SENSEX', 'FINNIFTY', 'MIDCPNIFTY'].forEach(p => {
+    const pill = document.getElementById('indPill' + p);
+    if (pill) {
+      pill.classList.toggle('active', p === currentIndSymbol);
+    }
+  });
+
+  const sel = document.getElementById('indSymbolSelect');
+  if (sel && sel.value !== currentIndSymbol) {
+    sel.value = currentIndSymbol;
+  }
+
+  loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey);
+}
+
+function onIndExpiryChange(exp) {
+  currentIndExpiry = exp;
+  loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey);
+}
+
+function onIndFilterChange(filt) {
+  currentIndStrikeFilter = filt;
+  if (currentIndChainData) {
+    renderIndChainTable(currentIndChainData.strikes || [], currentIndChainData.atmStrike, currentIndKey);
+  }
+}
+
+async function loadIndicatorOptionChain(symbol, expiry, indicator) {
+  currentIndSymbol = symbol || currentIndSymbol || 'NIFTY';
+  currentIndExpiry = expiry !== undefined ? expiry : currentIndExpiry;
+  const ind = indicator || currentIndKey || 'ut';
+
+  const tbody = document.getElementById('indChainTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:28px; color:#94a3b8;">Scanning ' + currentIndSymbol + ' option strikes with ' + (PINE_SCRIPTS[ind] ? PINE_SCRIPTS[ind].title : ind) + '…</td></tr>';
+  }
+
+  try {
+    let url = `${API_BASE}/api/chain?symbol=${encodeURIComponent(currentIndSymbol)}&indicator=${encodeURIComponent(ind)}`;
+    if (currentIndExpiry) {
+      url += `&expiry=${encodeURIComponent(currentIndExpiry)}`;
+    }
+
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) {
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:30px; color:#f87171;">⚠️ ${data.error}</td></tr>`;
+      }
+      return;
+    }
+
+    currentIndChainData = data;
+    currentIndExpiry = data.expiry || '';
+
+    // Update Header and Ribbon
+    const spotAtm = document.getElementById('indAtmSpotBadge');
+    if (spotAtm) {
+      spotAtm.textContent = `${data.symbol} Spot: ₹${fmtNum(data.spot)} | ATM Strike: ${data.atmStrike}`;
+    }
+
+    const spotVal = document.getElementById('indChainSpotVal');
+    if (spotVal) spotVal.textContent = `₹${fmtNum(data.spot)}`;
+
+    const atmVal = document.getElementById('indChainAtmVal');
+    if (atmVal) atmVal.textContent = `${data.atmStrike}`;
+
+    const activeIndName = document.getElementById('indChainActiveName');
+    if (activeIndName) {
+      const p = PINE_SCRIPTS[ind];
+      activeIndName.textContent = p ? p.title : ind.toUpperCase();
+    }
+
+    const buyCountEl = document.getElementById('indChainBuyCount');
+    if (buyCountEl) {
+      buyCountEl.textContent = `🟢 ${data.buySignalsCount || 0} BUY Signals`;
+    }
+
+    const sellCountEl = document.getElementById('indChainSellCount');
+    if (sellCountEl) {
+      sellCountEl.textContent = `🔴 ${data.sellSignalsCount || 0} SELL Signals`;
+    }
+
+    const matchCountEl = document.getElementById('indChainMatchCount');
+    if (matchCountEl) {
+      matchCountEl.textContent = `💎 ${(data.matchedCallsCount || 0) + (data.matchedPutsCount || 0)} Matches`;
+    }
+
+    const volShareEl = document.getElementById('indChainVolShare');
+    if (volShareEl) {
+      volShareEl.textContent = `Vol Share: Calls ${data.callVolumePct || 50}% · Puts ${data.putVolumePct || 50}% (${data.volumeSignal || 'Neutral'})`;
+    }
+
+    // Populate Expiry Dropdown
+    const expSel = document.getElementById('indExpirySelect');
+    if (expSel && data.allExpiries && data.allExpiries.length) {
+      expSel.innerHTML = data.allExpiries.map(e => `<option value="${e}" ${e === data.expiry ? 'selected' : ''}>${e}</option>`).join('');
+    }
+
+    renderIndChainTable(data.strikes || [], data.atmStrike, ind);
+  } catch (err) {
+    console.error('Error loading indicator option chain:', err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:30px; color:#f87171;">⚠️ Failed to load option chain: ${err.message}</td></tr>`;
+    }
+  }
+}
+
+function renderIndChainTable(strikes, atm, ind) {
+  const tbody = document.getElementById('indChainTableBody');
+  if (!tbody) return;
+
+  if (!strikes || !strikes.length) {
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:30px; color:#94a3b8;">No option chain strikes found for this selection.</td></tr>';
+    return;
+  }
+
+  const filter = currentIndStrikeFilter || 'ALL';
+  let filtered = strikes;
+
+  if (filter === 'MATCHES_ONLY') {
+    filtered = strikes.filter(s => (s.CE && s.CE.indMatched) || (s.PE && s.PE.indMatched));
+  } else if (filter === 'BUY_ONLY') {
+    filtered = strikes.filter(s => (s.CE && s.CE.utSignal === 'BUY') || (s.PE && s.PE.utSignal === 'BUY'));
+  } else if (filter === 'ATM_8') {
+    const atmIdx = strikes.findIndex(s => s.strike === atm);
+    if (atmIdx >= 0) {
+      filtered = strikes.slice(Math.max(0, atmIdx - 8), Math.min(strikes.length, atmIdx + 9));
+    }
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:30px; color:#94a3b8;">No strikes matching filter "${filter}". Try selecting "All Strikes".</td></tr>`;
+    return;
+  }
+
+  const targetExp = currentIndExpiry || (currentIndChainData ? currentIndChainData.expiry : '');
+  const sym = currentIndSymbol || 'NIFTY';
+
+  tbody.innerHTML = filtered.map(s => {
+    const isATM = s.strike === atm;
+    const ce = s.CE || {};
+    const pe = s.PE || {};
+
+    let ceBadge = '–';
+    if (ce.indBadge) {
+      const cls = ce.indMatched ? 'signal-badge-buy' : (ce.utSignal === 'SELL' ? 'signal-badge-sell' : 'indicator-tag-badge');
+      ceBadge = `<span class="${cls}" title="${ce.indNote || ''}">${ce.indBadge}</span>`;
+    }
+
+    let peBadge = '–';
+    if (pe.indBadge) {
+      const cls = pe.indMatched ? 'signal-badge-buy' : (pe.utSignal === 'SELL' ? 'signal-badge-sell' : 'indicator-tag-badge');
+      peBadge = `<span class="${cls}" title="${pe.indNote || ''}">${pe.indBadge}</span>`;
+    }
+
+    const ceLtpBtn = ce.close ? `<button class="prem-chip ce" onclick="openOptionChartModal('${sym}', '${targetExp}', ${s.strike}, 'CE'); selectHubStrat('${ind}'); switchOptChartTab('canvas');" title="Open ${sym} ${s.strike} CE chart with ${ind} fitted">📈 ${fmtNum(ce.close)}</button>` : '–';
+    const peLtpBtn = pe.close ? `<button class="prem-chip pe" onclick="openOptionChartModal('${sym}', '${targetExp}', ${s.strike}, 'PE'); selectHubStrat('${ind}'); switchOptChartTab('canvas');" title="Open ${sym} ${s.strike} PE chart with ${ind} fitted">📈 ${fmtNum(pe.close)}</button>` : '–';
+
+    const rowCls = isATM ? 'atm-row atm-row-highlight' : '';
+    const strikeDisplay = isATM ? `<span class="atm-badge">${s.strike} ★ ATM</span>` : `<b>${s.strike}</b>`;
+
+    return `<tr class="${rowCls}">
+      <td>${fmtOI(ce.oi)}</td>
+      <td>${fmtOI(ce.vol)}</td>
+      <td>${fmtNum(ce.low)}</td>
+      <td>${fmtNum(ce.high)}</td>
+      <td>${ceLtpBtn}</td>
+      <td style="text-align:right;">${ceBadge}</td>
+      <td class="strike-col" style="text-align:center; min-width:90px;">${strikeDisplay}</td>
+      <td style="text-align:left;">${peBadge}</td>
+      <td>${peLtpBtn}</td>
+      <td>${fmtNum(pe.high)}</td>
+      <td>${fmtNum(pe.low)}</td>
+      <td>${fmtOI(pe.vol)}</td>
+      <td>${fmtOI(pe.oi)}</td>
+    </tr>`;
+  }).join('');
+}
+
 function openIndicatorInAppChart(key) {
   const indKey = key || currentIndKey || 'alphascan';
   closeAllModals();
   const c = currentSelectedContract || (lastResults && lastResults.length ? lastResults[0] : null);
-  const sym = c ? c.symbol : (currentChainSymbol || 'NIFTY');
+  const sym = c ? c.symbol : (currentChainSymbol || currentIndSymbol || 'NIFTY');
   const exp = c ? c.expiry : '';
   const strk = c ? c.strike : 0;
   const typ = c ? c.type : '';
@@ -3820,7 +4388,7 @@ function switchIndModalTab(key) {
   if (currentSelectedContract) {
     optUrl = getTradingViewUrl(currentSelectedContract.symbol, currentSelectedContract.expiry, currentSelectedContract.strike, currentSelectedContract.type);
   } else {
-    optUrl = getTradingViewUrl(currentChainSymbol || 'NIFTY');
+    optUrl = getTradingViewUrl(currentChainSymbol || currentIndSymbol || 'NIFTY');
   }
 
   if (tvBtn) {
@@ -3834,6 +4402,9 @@ function switchIndModalTab(key) {
     document.getElementById('indCopyIcon').textContent = '📋';
     document.getElementById('indCopyText').textContent = 'Copy Pine Script';
   }
+
+  // Load option chain fitted for this selected indicator!
+  loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, key);
 }
 
 function copyIndScript() {
@@ -4258,19 +4829,23 @@ async function loadChainData() {
     }
 
     currentChainData = data;
+    const spotVal = data.spot || 0;
+    const atmVal = data.atmStrike || data.atm || 0;
+    const targetExp = data.expiry || data.targetExpiry || '';
     document.getElementById('chainTitle').textContent = `Option Chain: ${data.symbol}`;
-    document.getElementById('chainSub').textContent = `Spot: ₹${fmtNum(data.spot)} | ATM: ₹${fmtNum(data.atm)}`;
+    document.getElementById('chainSub').textContent = `Spot: ₹${fmtNum(spotVal)} | ATM: ₹${fmtNum(atmVal)}`;
     const cLnk = document.getElementById('chainTvLink'); if (cLnk) { cLnk.onclick = (e) => { e.preventDefault(); openOptionChartModal(data.symbol, '', 0, ''); }; }
 
     const expSel = document.getElementById('chainExpirySelect');
-    if (data.expiryDates && data.expiryDates.length) {
-      expSel.innerHTML = data.expiryDates.map(e => `<option value="${e}" ${e === data.targetExpiry ? 'selected' : ''}>${e}</option>`).join('');
+    const expList = data.allExpiries || data.expiryDates || [];
+    if (expSel && expList.length) {
+      expSel.innerHTML = expList.map(e => `<option value="${e}" ${e === targetExp ? 'selected' : ''}>${e}</option>`).join('');
     }
 
     const volSig = document.getElementById('chainVolSignal');
-    if (data.volumeShare) {
-      const callPct = data.volumeShare.callPct || 50;
-      const putPct = data.volumeShare.putPct || 50;
+    if (volSig) {
+      const callPct = data.callVolumePct !== undefined ? data.callVolumePct : (data.volumeShare ? data.volumeShare.callPct : 50);
+      const putPct = data.putVolumePct !== undefined ? data.putVolumePct : (data.volumeShare ? data.volumeShare.putPct : 50);
       if (callPct >= 71) {
         volSig.className = 'vol-signal-tag bullish';
         volSig.textContent = `⚡ 71% Bullish Volume Surge: Call Volume ${callPct.toFixed(1)}% vs Put ${putPct.toFixed(1)}%`;
@@ -4283,7 +4858,7 @@ async function loadChainData() {
       }
     }
 
-    renderChainTable(data.strikes || [], data.atm);
+    renderChainTable(data.strikes || [], atmVal);
   } catch (err) {
     console.error('Error loading chain data:', err);
   }
@@ -4296,13 +4871,14 @@ function renderChainTable(strikes, atm) {
     return;
   }
 
+  const targetExp = currentChainData ? (currentChainData.expiry || currentChainData.targetExpiry || '') : '';
   const rows = strikes.map(s => {
     const isATM = s.strike === atm;
     const ce = s.CE || {};
     const pe = s.PE || {};
 
-    const ceLtpBtn = ce.close ? `<button class="prem-chip ce" onclick="openOptionChartModal('${currentChainSymbol}', '${currentChainData.targetExpiry}', ${s.strike}, 'CE')" title="Open CE chart with fitted indicators in this app">📈 ${fmtNum(ce.close)}</button>` : '–';
-    const peLtpBtn = pe.close ? `<button class="prem-chip pe" onclick="openOptionChartModal('${currentChainSymbol}', '${currentChainData.targetExpiry}', ${s.strike}, 'PE')" title="Open PE chart with fitted indicators in this app">📈 ${fmtNum(pe.close)}</button>` : '–';
+    const ceLtpBtn = ce.close ? `<button class="prem-chip ce" onclick="openOptionChartModal('${currentChainSymbol}', '${targetExp}', ${s.strike}, 'CE')" title="Open CE chart with fitted indicators in this app">📈 ${fmtNum(ce.close)}</button>` : '–';
+    const peLtpBtn = pe.close ? `<button class="prem-chip pe" onclick="openOptionChartModal('${currentChainSymbol}', '${targetExp}', ${s.strike}, 'PE')" title="Open PE chart with fitted indicators in this app">📈 ${fmtNum(pe.close)}</button>` : '–';
 
     return `<tr class="${isATM ? 'atm-row' : ''}">
       <td>${fmtOI(ce.oi)}</td>
@@ -4587,8 +5163,26 @@ function initAmbientBackground() {
   requestAnimationFrame(animate);
 }
 
+function initLiveClock() {
+  function update() {
+    const el = document.getElementById('liveClockIst');
+    if (!el) return;
+    try {
+      const now = new Date();
+      const istStr = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: true });
+      el.textContent = `${istStr} IST`;
+    } catch (e) {
+      const now = new Date();
+      el.textContent = now.toLocaleTimeString() + ' IST';
+    }
+  }
+  update();
+  setInterval(update, 1000);
+}
+
 // Initial Boot
 initAmbientBackground();
+initLiveClock();
 initStatus().then(() => {
   runServerScan();
 });

@@ -526,15 +526,36 @@ class NSEService:
             "results": processed
         }
 
-    def get_option_chain_for_symbol(self, symbol="NIFTY", expiry=None):
+    def get_option_chain_for_symbol(self, symbol="NIFTY", expiry=None, indicator=None):
         """
         Returns a structured option chain table around ATM for the symbol,
-        including Call & Put volume totals and the 71% volume share indicator.
+        enriched with indicator calculations (UT Bot signals, AlphaScan formula,
+        Trade Predictor levels, Quantum Matrix, Target Projections), Call & Put volume totals,
+        and the 71% volume share indicator.
         """
-        sym = symbol.upper()
+        if not self.today_rows:
+            try:
+                self.fetch_latest_bhavcopy()
+            except Exception:
+                pass
+
+        sym = symbol.upper().strip()
+        if sym in ("NIFTY 50", "NIFTY50"):
+            sym = "NIFTY"
+        elif sym in ("BANK NIFTY", "NIFTY BANK"):
+            sym = "BANKNIFTY"
+
         candidates = [r for r in self.today_rows if r["symbol"] == sym]
         if not candidates:
-            return {"symbol": sym, "error": f"No data found for symbol {sym}"}
+            # Fallback search
+            candidates = [r for r in self.today_rows if r["symbol"].startswith(sym)]
+        if not candidates:
+            available_symbols = sorted(list({r["symbol"] for r in self.today_rows}))[:50]
+            return {
+                "symbol": sym,
+                "error": f"No data found for symbol {sym}",
+                "availableSymbols": available_symbols
+            }
 
         expiries = sorted(list({r["expiry"] for r in candidates}))
         target_expiry = expiry if expiry and expiry in expiries else expiries[0]
@@ -546,8 +567,15 @@ class NSEService:
         strikes_map = {}
         call_vol_tot = 0.0
         put_vol_tot = 0.0
+        active_ind = (indicator or "ut").lower().strip()
+
+        matched_calls = 0
+        matched_puts = 0
+        buy_signals = 0
+        sell_signals = 0
 
         def enrich_contract(r):
+            nonlocal matched_calls, matched_puts, buy_signals, sell_signals
             if not r:
                 return None
             low = r.get("low", 0.0)
@@ -555,6 +583,7 @@ class NSEService:
             high = r.get("high", 0.0)
             close_p = r.get("close", 0.0)
             prev_close = r.get("prevClose", 0.0)
+            opt_type = r.get("type", "CE")
             
             tgt_9 = round(low * 1.09, 2) if low > 0 else 0.0
             tgt_18 = round(low * 1.18, 2) if low > 0 else 0.0
@@ -568,6 +597,83 @@ class NSEService:
             is_match = (5.80 <= low <= 8.45) and (38.0 <= prev_close <= 48.0)
             chg = round(close_p - prev_close, 2) if prev_close > 0 else 0.0
             chg_pct = round((chg / prev_close) * 100.0, 2) if prev_close > 0 else 0.0
+
+            # UT Bot Alerts calculation
+            atr = max(high - low, abs(high - prev_close), abs(low - prev_close)) if high > low else max(0.5, close_p * 0.04)
+            ut_trailing_sl = round(max(0.05, close_p - 1.5 * atr), 2)
+            if close_p > open_p and (chg >= 0 or is_ol):
+                ut_signal = "BUY"
+                ut_tag = f"🟢 BUY (SL: ₹{ut_trailing_sl})"
+                buy_signals += 1
+            elif close_p < open_p and chg <= 0:
+                ut_signal = "SELL"
+                ut_tag = "🔴 SELL"
+                sell_signals += 1
+            else:
+                ut_signal = "NEUTRAL"
+                ut_tag = "WAIT"
+
+            # AlphaScan Matrix formula
+            prem_ok = (300 <= prev_close <= 349) or (38 <= prev_close <= 48)
+            low_ok = (52 <= low <= 58) or (5.80 <= low <= 8.45) or (div_8 > 0 and min(div_8, div_65) <= low <= max(div_8, div_65))
+            alphascan_match = prem_ok and low_ok
+            alphascan_tag = "💎 MATCH" if alphascan_match else ("Prem ✓" if prem_ok else ("Low ✓" if low_ok else ""))
+
+            # Quantum Matrix
+            quantum_frac = round(open_p * 0.88, 2) if open_p > 0 else 0.0
+            quantum_sup = round(low * 0.96, 2) if low > 0 else 0.0
+            quantum_res = round(high * 1.04, 2) if high > 0 else 0.0
+
+            # Target Projections
+            tp_status = "TARGET 1 MET" if high >= tgt_9 and tgt_9 > 0 else ("IN ZONE" if close_p >= low * 1.01 else "WAIT")
+
+            # Determine Indicator Badge & Match based on active_ind
+            ind_badge = ""
+            ind_matched = False
+            ind_note = ""
+
+            if "ut" in active_ind:
+                ind_badge = ut_tag
+                ind_matched = (ut_signal == "BUY")
+                ind_note = f"UT ATR SL: ₹{ut_trailing_sl}"
+            elif "alpha" in active_ind:
+                ind_badge = alphascan_tag if alphascan_tag else (f"÷8: ₹{div_8}" if div_8 > 0 else "")
+                ind_matched = alphascan_match
+                ind_note = f"÷8: ₹{div_8} | ÷6.5: ₹{div_65}"
+            elif "pred" in active_ind:
+                ind_badge = f"🎯 Tgt: ₹{tgt_9}" if close_p > open_p else "AVOID"
+                ind_matched = (close_p > open_p)
+                ind_note = f"Target: ₹{tgt_9} | SL: ₹{sl_5}"
+            elif "target" in active_ind or "proj" in active_ind:
+                ind_badge = f"T1: ₹{tgt_9} | SL: ₹{sl_5}"
+                ind_matched = (high >= tgt_9 or close_p > low)
+                ind_note = f"T1: ₹{tgt_9} (+9%) | T2: ₹{tgt_18} (+18%)"
+            elif "quantum" in active_ind:
+                ind_badge = f"Sup: ₹{quantum_sup}"
+                ind_matched = (close_p >= quantum_frac)
+                ind_note = f"Support: ₹{quantum_sup} | Resistance: ₹{quantum_res}"
+            elif "strat1" in active_ind:
+                ind_badge = "BUY ZONE ₹52-58" if (52 <= low <= 58 or 5.8 <= low <= 8.45) else ""
+                ind_matched = (52 <= low <= 58 or 5.8 <= low <= 8.45)
+                ind_note = f"Low: ₹{low} (Buy Range 52-58)"
+            elif "strat2" in active_ind:
+                ind_badge = "O=L BULLISH" if is_ol else ("O=H BEARISH" if is_oh else "")
+                ind_matched = is_ol or is_oh
+                ind_note = f"O: ₹{open_p} | L: ₹{low} | H: ₹{high}"
+            elif "strat3" in active_ind:
+                ind_badge = f"÷8: ₹{div_8} | ÷6.5: ₹{div_65}"
+                ind_matched = (min(div_8, div_65) <= low <= max(div_8, div_65)) if div_8 > 0 else False
+                ind_note = f"÷8.0 Level: ₹{div_8} | ÷6.5 Level: ₹{div_65}"
+            else:
+                ind_badge = ut_tag
+                ind_matched = (ut_signal == "BUY")
+                ind_note = f"Trailing SL: ₹{ut_trailing_sl}"
+
+            if ind_matched:
+                if opt_type == "CE":
+                    matched_calls += 1
+                else:
+                    matched_puts += 1
 
             item = dict(r)
             item.update({
@@ -584,6 +690,17 @@ class NSEService:
                 "isMatch": is_match,
                 "chg": chg,
                 "chgPct": chg_pct,
+                "utSignal": ut_signal,
+                "utTag": ut_tag,
+                "utTrailingSl": ut_trailing_sl,
+                "alphascanMatch": alphascan_match,
+                "alphascanTag": alphascan_tag,
+                "quantumSup": quantum_sup,
+                "quantumRes": quantum_res,
+                "tpStatus": tp_status,
+                "indBadge": ind_badge,
+                "indMatched": ind_matched,
+                "indNote": ind_note
             })
             return item
 
@@ -631,11 +748,16 @@ class NSEService:
             "allExpiries": expiries,
             "spot": spot,
             "atmStrike": atm_strike,
+            "indicator": active_ind,
             "callVolumeTotal": call_vol_tot,
             "putVolumeTotal": put_vol_tot,
             "callVolumePct": call_pct,
             "putVolumePct": put_pct,
             "volumeSignal": vol_signal,
+            "matchedCallsCount": matched_calls,
+            "matchedPutsCount": matched_puts,
+            "buySignalsCount": buy_signals,
+            "sellSignalsCount": sell_signals,
             "strikes": strikes_data
         }
 

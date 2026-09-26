@@ -118,9 +118,9 @@ def get_symbols():
     return {"symbols": nse_service.get_symbols()}
 
 @app.get("/api/chain")
-def get_chain(symbol: str = "NIFTY", expiry: Optional[str] = None):
+def get_chain(symbol: str = "NIFTY", expiry: Optional[str] = None, indicator: Optional[str] = None):
     try:
-        res = nse_service.get_option_chain_for_symbol(symbol=symbol, expiry=expiry)
+        res = nse_service.get_option_chain_for_symbol(symbol=symbol, expiry=expiry, indicator=indicator)
         return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
