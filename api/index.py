@@ -64,6 +64,14 @@ def fetch_latest(force: bool = False):
 def get_symbols():
     return {"symbols": nse_service.get_symbols()}
 
+@app.get("/api/chain")
+def get_chain(symbol: str = "NIFTY", expiry: Optional[str] = None):
+    try:
+        res = nse_service.get_option_chain_for_symbol(symbol=symbol, expiry=expiry)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/scan")
 def scan_bhavcopy(req: ScanRequest):
     if not nse_service.today_rows:
