@@ -239,6 +239,121 @@ class NSEService:
             return []
         return sorted(list({r["symbol"] for r in self.today_rows}))
 
+    def get_indices_pulse(self):
+        """
+        Returns live indicator verdicts, option flow movement (Calls vs Puts volume share),
+        ATM strikes, and top active options for major indices: NIFTY, BANKNIFTY, SENSEX, FINNIFTY, MIDCPNIFTY.
+        """
+        if not self.today_rows:
+            try:
+                self.fetch_latest_bhavcopy()
+            except Exception:
+                pass
+
+        target_indices = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX"]
+        summary = {}
+
+        for sym in target_indices:
+            candidates = [r for r in self.today_rows if r["symbol"] == sym]
+            if not candidates:
+                candidates = [r for r in self.today_rows if r["symbol"].startswith(sym)]
+            
+            if not candidates:
+                continue
+
+            expiries = sorted(list({r["expiry"] for r in candidates}))
+            target_exp = expiries[0] if expiries else ""
+            chain_rows = [r for r in candidates if r["expiry"] == target_exp] if target_exp else candidates
+
+            spot = chain_rows[0].get("spot", 0.0) if chain_rows else 0.0
+            
+            step = 100.0 if sym in ("BANKNIFTY", "SENSEX") else (25.0 if sym == "MIDCPNIFTY" else 50.0)
+            atm_strike = round(spot / step) * step if spot > 0 else 0.0
+
+            call_vol = 0.0
+            put_vol = 0.0
+            call_oi = 0.0
+            put_oi = 0.0
+            calls = []
+            puts = []
+            matches_count = 0
+
+            for r in chain_rows:
+                v = r.get("vol", 0.0)
+                o = r.get("oi", 0.0)
+                l = r.get("low", 0.0)
+                pc = r.get("prevClose", 0.0)
+                
+                if (5.80 <= l <= 8.45 and 38.0 <= pc <= 48.0) or (52 <= l <= 58 and 300 <= pc <= 349):
+                    matches_count += 1
+
+                if r["type"] == "CE":
+                    call_vol += v
+                    call_oi += o
+                    calls.append(r)
+                elif r["type"] == "PE":
+                    put_vol += v
+                    put_oi += o
+                    puts.append(r)
+
+            tot_vol = call_vol + put_vol
+            call_vol_pct = round((call_vol / tot_vol) * 100.0, 1) if tot_vol > 0 else 50.0
+            put_vol_pct = round((put_vol / tot_vol) * 100.0, 1) if tot_vol > 0 else 50.0
+
+            if call_vol_pct >= 68.0:
+                sentiment = "🚀 Heavy Call Surge (Strong Bullish Flow)"
+                verdict = "🟢 STRONG BUY"
+            elif call_vol_pct >= 55.0:
+                sentiment = "🟢 Call Inflows (Bullish Bias)"
+                verdict = "🟢 BUY"
+            elif put_vol_pct >= 68.0:
+                sentiment = "🔻 Heavy Put Surge (Strong Bearish Flow)"
+                verdict = "🔴 STRONG SELL"
+            elif put_vol_pct >= 55.0:
+                sentiment = "🔴 Put Inflows (Bearish Bias)"
+                verdict = "🔴 SELL"
+            else:
+                sentiment = "⚖️ Balanced Volume (Rangebound / Straddle Zone)"
+                verdict = "WAIT / RANGE"
+
+            calls_sorted = sorted(calls, key=lambda x: x.get("vol", 0.0), reverse=True)
+            puts_sorted = sorted(puts, key=lambda x: x.get("vol", 0.0), reverse=True)
+
+            top_call = {
+                "strike": calls_sorted[0]["strike"],
+                "close": calls_sorted[0]["close"],
+                "vol": calls_sorted[0]["vol"],
+                "chg": round(calls_sorted[0]["close"] - calls_sorted[0]["prevClose"], 2) if calls_sorted[0]["prevClose"] > 0 else 0.0,
+                "chgPct": round(((calls_sorted[0]["close"] - calls_sorted[0]["prevClose"]) / calls_sorted[0]["prevClose"]) * 100.0, 1) if calls_sorted[0]["prevClose"] > 0 else 0.0
+            } if calls_sorted else None
+
+            top_put = {
+                "strike": puts_sorted[0]["strike"],
+                "close": puts_sorted[0]["close"],
+                "vol": puts_sorted[0]["vol"],
+                "chg": round(puts_sorted[0]["close"] - puts_sorted[0]["prevClose"], 2) if puts_sorted[0]["prevClose"] > 0 else 0.0,
+                "chgPct": round(((puts_sorted[0]["close"] - puts_sorted[0]["prevClose"]) / puts_sorted[0]["prevClose"]) * 100.0, 1) if puts_sorted[0]["prevClose"] > 0 else 0.0
+            } if puts_sorted else None
+
+            summary[sym] = {
+                "symbol": sym,
+                "spot": spot,
+                "atmStrike": atm_strike,
+                "expiry": target_exp,
+                "callVol": call_vol,
+                "putVol": put_vol,
+                "callVolPct": call_vol_pct,
+                "putVolPct": put_vol_pct,
+                "sentiment": sentiment,
+                "verdict": verdict,
+                "topCall": top_call,
+                "topPut": top_put,
+                "matchesCount": matches_count,
+                "totalContracts": len(chain_rows)
+            }
+
+        return summary
+
     def fetch_live_option_chain(self, symbol="NIFTY", expiry=None):
         cache_key = f"{symbol}|{expiry}"
         now = time.time()

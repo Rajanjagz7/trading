@@ -54,6 +54,17 @@ def get_status():
     status = nse_service.get_market_status()
     return status
 
+@app.get("/api/indices/pulse")
+def get_indices_pulse():
+    """
+    Returns live indicator verdicts, Call/Put volume share, ATM strikes,
+    and top active options for major indices: NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY.
+    """
+    try:
+        return nse_service.get_indices_pulse()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/cleanup")
 @app.post("/api/cleanup")
 def cleanup_stored_csvs():
