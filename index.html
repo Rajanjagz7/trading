@@ -2023,9 +2023,9 @@
           📈 TradingView Chart Widget (<span id="tvTabSymbol">Option</span>)
         </button>
       </div>
-      <a id="tvExternalLink" href="https://in.tradingview.com" target="_blank" rel="noopener noreferrer" class="tv-outlink">
-        ↗ Open Exact Option on TradingView.com
-      </a>
+      <button id="tvExternalLink" class="tv-outlink" onclick="switchOptChartTab('tv')" style="background:#1e293b; border:1px solid #3b82f6; cursor:pointer;" title="View TradingView chart widget inside this website">
+        📈 Open TradingView Chart in Website
+      </button>
     </div>
 
     <!-- Chart Container Area -->
@@ -2134,9 +2134,9 @@
           </div>
         </div>
         <div class="ind-action-row">
-          <a id="indTvLaunchBtn" href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" rel="noopener noreferrer" class="tv-launch-btn">
-            📈 Open Live Chart ↗
-          </a>
+          <button id="indTvLaunchBtn" class="tv-launch-btn" onclick="openIndicatorInAppChart()" style="cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px;">
+            📈 Open Chart in Website
+          </button>
           <button class="copy-script-btn" id="indCopyBtn" onclick="copyIndScript()">
             <span id="indCopyIcon">📋</span> <span id="indCopyText">Copy Pine Script</span>
           </button>
@@ -2327,118 +2327,500 @@ alertcondition(buy,  title = "UT Bot Buy Alert",  message = "UT Bot BUY Signal o
 alertcondition(sell, title = "UT Bot Sell Alert", message = "UT Bot SELL Signal on {{ticker}} at {{close}}")`
   },
   trade_pred: {
-    title: "🔮 Trade Predictor - UT Bot Trend Strategy",
-    desc: "Complete UT Bot trading strategy with 200 EMA trend filter, automated Take Profit (+9%/+18%) and Stop Loss (-5%).",
-    code: `//@version=6
-strategy("Trade Predictor - UT Bot Trend Strategy", overlay = true, initial_capital = 100000, default_qty_type = strategy.percent_of_equity, default_qty_value = 10)
+    title: "🔮 Trade Predictor",
+    desc: "UT Bot trend trailing strategy with 200 EMA trend filtering, ATR-based dynamic Stop Loss, and Take Profit levels that persist throughout open positions.",
+    code: `// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © rajanjagz7
 
-// ═════════════ INPUTS ═════════════
-sens     = input.int(1, "Sensitivity (Key Value)", minval = 1)
-atrLen   = input.int(10, "ATR Period", minval = 1)
-useEma   = input.bool(true, "Filter with 200 EMA Trend")
-emaLen   = input.int(200, "EMA Length")
-tpPct    = input.float(9.0, "Take Profit %", step = 0.5)
-slPct    = input.float(5.0, "Stop Loss %", step = 0.5)
+//@version=6
+strategy("Trade Predictor", overlay = true, default_qty_type = strategy.percent_of_equity, default_qty_value = 100)
 
-// ═════════════ INDICATORS ═════════════
-atrVal   = ta.atr(atrLen)
-nLoss    = sens * atrVal
-ema200   = ta.ema(close, emaLen)
-plot(useEma ? ema200 : na, "200 EMA", color = color.orange, linewidth = 2)
+// === Inputs ===
+atrLength       = input.int(10, "ATR Period", group = "UT Bot Settings")
+factor          = input.float(1.5, "ATR Multiplier", group = "UT Bot Settings")
+emaLength       = input.int(200, "Trend EMA Length", group = "Filter Settings")
+useTrendFilter  = input.bool(true, "Enable EMA Trend Filter", group = "Filter Settings")
+slMultiplier    = input.float(1.5, "Stop Loss ATR Multiplier", group = "Risk Management")
+tpMultiplier    = input.float(2.0, "Target (TP) ATR Multiplier", group = "Risk Management")
 
-var float trailStop = 0.0
-trailStop := close > nz(trailStop[1], 0) ? math.max(nz(trailStop[1], 0), close - nLoss) : math.min(nz(trailStop[1], 0), close + nLoss)
+// === Core Calculations ===
+src       = close
+atr       = ta.atr(atrLength)
+emaTrend  = ta.ema(close, emaLength)
+upperBand = src + factor * atr
+lowerBand = src - factor * atr
 
-buyCond  = ta.crossover(close, trailStop) and (not useEma or close > ema200)
-sellCond = ta.crossunder(close, trailStop) and (not useEma or close < ema200)
+// === UT Bot Trail Logic ===
+var float trail = na
+var bool dir = false
 
-plotshape(buyCond,  title = "Trade Predictor BUY",  text = "BUY",  style = shape.labelup,   location = location.belowbar, color = color.green, textcolor = color.white, size = size.tiny)
-plotshape(sellCond, title = "Trade Predictor SELL", text = "SELL", style = shape.labeldown, location = location.abovebar, color = color.red,   textcolor = color.white, size = size.tiny)
+if na(trail)
+    trail := src
+    dir := true
+else
+    if (src > trail and dir)
+        trail := math.max(trail, lowerBand)
+    else if (src < trail and not dir)
+        trail := math.min(trail, upperBand)
+    dir := src > trail
 
-if buyCond
-    strategy.entry("Long", strategy.long)
-    strategy.exit("TP/SL Long", "Long", limit = close * (1 + tpPct/100), stop = close * (1 - slPct/100))
+// === Entry Conditions ===
+buySignal  = ta.crossunder(trail, src)
+sellSignal = ta.crossover(trail, src)
 
-if sellCond
-    strategy.entry("Short", strategy.short)
-    strategy.exit("TP/SL Short", "Short", limit = close * (1 - tpPct/100), stop = close * (1 + slPct/100))`
+trendOkBuy  = not useTrendFilter or (close > emaTrend)
+trendOkSell = not useTrendFilter or (close < emaTrend)
+
+finalBuySignal  = buySignal and trendOkBuy
+finalSellSignal = sellSignal and trendOkSell
+
+// === Persistent Trade Levels Tracker ===
+var float entrySL = na
+var float entryTP = na
+
+if finalBuySignal
+    entrySL := close - atr * slMultiplier
+    entryTP := close + atr * tpMultiplier
+else if finalSellSignal
+    entrySL := close + atr * slMultiplier
+    entryTP := close - atr * tpMultiplier
+else if strategy.position_size == 0
+    entrySL := na
+    entryTP := na
+
+// === Strategy Entries and Exits ===
+if finalBuySignal
+    strategy.entry("Buy", strategy.long)
+    strategy.exit("Buy Exit", from_entry = "Buy", stop = entrySL, limit = entryTP)
+
+if finalSellSignal
+    strategy.entry("Sell", strategy.short)
+    strategy.exit("Sell Exit", from_entry = "Sell", stop = entrySL, limit = entryTP)
+
+// === Plot Buy/Sell Signals ===
+plotshape(finalBuySignal, title = "Buy Signal", location = location.belowbar, style = shape.labelup, color = color.green, text = "BUY", textcolor = color.white)
+plotshape(finalSellSignal, title = "Sell Signal", location = location.abovebar, style = shape.labeldown, color = color.red, text = "SELL", textcolor = color.white)
+
+// === Dynamic Level Plotting (Active Trade Duration) ===
+plot(strategy.position_size != 0 ? entrySL : na, title = "Active Stop Loss", color = color.red, style = plot.style_linebr, linewidth = 1)
+plot(strategy.position_size != 0 ? entryTP : na, title = "Active Take Profit", color = color.lime, style = plot.style_linebr, linewidth = 1)
+
+// === EMA Trend Line ===
+plot(useTrendFilter ? emaTrend : na, title = "EMA Trend Line", color = color.orange, linewidth = 2)
+
+// === Alerts ===
+alertcondition(finalBuySignal, title = "Trade Predictor: Buy Alert", message = "Trade Predictor - Long Entry Signal Triggered!")
+alertcondition(finalSellSignal, title = "Trade Predictor: Sell Alert", message = "Trade Predictor - Short Entry Signal Triggered!")`
   },
   quantum: {
     title: "🌌 Quantum Matrix Strategy",
-    desc: "Opening 09:15 price fraction scanner (÷8 and ÷6.5 levels) combined with dynamic multi-EMA ribbons and ATR trailing stop.",
-    code: `//@version=6
+    desc: "All-in-one multi-strategy indicator combining support/resistance boxes, target/stop levels, UT trailing signals, 09:15 opening price fraction levels (H/4, L/4, H/3, L/3, H/2, L/2), and an EMA ribbon (8, 13, 21, 34).",
+    code: `// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © brd904
+
+//@version=6
 indicator("Quantum Matrix Strategy", overlay = true)
 
-// ═════════════ INPUTS ═════════════
-showFractions = input.bool(true, "Show 09:15 Opening Fractions (÷8 & ÷6.5)")
-showEmaRibbon = input.bool(true, "Show Dynamic EMA Ribbon")
-sens          = input.int(1, "UT Key Sensitivity", minval = 1)
-atrP          = input.int(10, "ATR Length", minval = 1)
+// ═════════════ SCRIPT 1: DYNAMIC KEY LEVELS & UT ENGINE ═════════════
 
-// Dynamic 09:15 Opening Anchor
-var float dayOpenPrice = na
-isNewDay = ta.change(time("D")) != 0
-if isNewDay
-    dayOpenPrice := open
+// Input Parameters
+lookbackPeriod   = input.int(20, "Lookback Period for Key Levels", group = "Key Levels")
+atrPeriod        = input.int(14, "ATR Period", group = "Key Levels")
+atrMultiplierSL  = input.float(1.5, "SL ATR Multiplier", group = "Key Levels")
+atrMultiplierTP1 = input.float(1.5, "TP1 ATR Multiplier", group = "Key Levels")
+atrMultiplierTP2 = input.float(2.0, "TP2 ATR Multiplier", group = "Key Levels")
+rewardToRisk     = input.float(2.0, "Reward to Risk Ratio", group = "Key Levels")
 
-div8_level  = dayOpenPrice / 8.0
-div65_level = dayOpenPrice / 6.5
+// ATR and Volume Calculation
+atr       = ta.atr(atrPeriod)
+volumeSMA = ta.sma(volume, atrPeriod)
 
-plot(showFractions ? div8_level : na,  "÷8 Level",  color = color.blue, linewidth = 2, style = plot.style_linebr)
-plot(showFractions ? div65_level : na, "÷6.5 Level", color = color.purple, linewidth = 2, style = plot.style_linebr)
+// Key Levels Identification
+support          = ta.lowest(low, lookbackPeriod)
+resistance       = ta.highest(high, lookbackPeriod)
+supportBuffer    = support - atr * 0.5
+resistanceBuffer = resistance + atr * 0.5
+
+// Bullish and Bearish Boxes
+var box bullishBox = na
+var box bearishBox = na
+
+// Bullish Entry
+isBullishEntry = (close > supportBuffer) and (low <= support) and (volume > volumeSMA)
+if isBullishEntry
+    if na(bullishBox)
+        bullishBox := box.new(left = bar_index - 10, top = support + atr * 0.5, right = bar_index + 10, bottom = support - atr * 0.5, border_color = color.green, bgcolor = color.new(color.green, 85))
+    else
+        box.set_left(bullishBox, bar_index - 10)
+        box.set_right(bullishBox, bar_index + 10)
+        box.set_top(bullishBox, support + atr * 0.5)
+        box.set_bottom(bullishBox, support - atr * 0.5)
+
+// Bearish Entry
+isBearishEntry = (close < resistanceBuffer) and (high >= resistance) and (volume > volumeSMA)
+if isBearishEntry
+    if na(bearishBox)
+        bearishBox := box.new(left = bar_index - 10, top = resistance + atr * 0.5, right = bar_index + 10, bottom = resistance - atr * 0.5, border_color = color.red, bgcolor = color.new(color.red, 85))
+    else
+        box.set_left(bearishBox, bar_index - 10)
+        box.set_right(bearishBox, bar_index + 10)
+        box.set_top(bearishBox, resistance + atr * 0.5)
+        box.set_bottom(bearishBox, resistance - atr * 0.5)
+
+// Target & Stop Levels Calculation
+bullishSL  = support - atr * atrMultiplierSL
+bullishTP1 = support + atr * rewardToRisk * atrMultiplierTP1
+bullishTP2 = support + atr * rewardToRisk * atrMultiplierTP2
+
+bearishSL  = resistance + atr * atrMultiplierSL
+bearishTP1 = resistance - atr * rewardToRisk * atrMultiplierTP1
+bearishTP2 = resistance - atr * rewardToRisk * atrMultiplierTP2
+
+// Bullish Visuals
+var line  bullishTP1Line  = na
+var line  bullishTP2Line  = na
+var line  bullishSLLine   = na
+var label bullishTP1Label = na
+var label bullishTP2Label = na
+var label bullishSLLabel  = na
+
+if isBullishEntry
+    if na(bullishTP1Line)
+        bullishTP1Line := line.new(bar_index - 10, bullishTP1, bar_index + 10, bullishTP1, color = color.green, width = 2)
+    else
+        line.set_xy1(bullishTP1Line, bar_index - 10, bullishTP1)
+        line.set_xy2(bullishTP1Line, bar_index + 10, bullishTP1)
+    if na(bullishTP1Label)
+        bullishTP1Label := label.new(bar_index + 10, bullishTP1, "TP1", color = color.green, textcolor = color.white, yloc = yloc.price, style = label.style_label_right)
+    else
+        label.set_xy(bullishTP1Label, bar_index + 10, bullishTP1)
+
+    if na(bullishTP2Line)
+        bullishTP2Line := line.new(bar_index - 10, bullishTP2, bar_index + 10, bullishTP2, color = color.green, width = 2)
+    else
+        line.set_xy1(bullishTP2Line, bar_index - 10, bullishTP2)
+        line.set_xy2(bullishTP2Line, bar_index + 10, bullishTP2)
+    if na(bullishTP2Label)
+        bullishTP2Label := label.new(bar_index + 10, bullishTP2, "TP2", color = color.green, textcolor = color.white, yloc = yloc.price, style = label.style_label_right)
+    else
+        label.set_xy(bullishTP2Label, bar_index + 10, bullishTP2)
+
+    if na(bullishSLLine)
+        bullishSLLine := line.new(bar_index - 10, bullishSL, bar_index + 10, bullishSL, color = color.red, width = 2)
+    else
+        line.set_xy1(bullishSLLine, bar_index - 10, bullishSL)
+        line.set_xy2(bullishSLLine, bar_index + 10, bullishSL)
+    if na(bullishSLLabel)
+        bullishSLLabel := label.new(bar_index + 10, bullishSL, "SL", color = color.red, textcolor = color.white, yloc = yloc.price, style = label.style_label_right)
+    else
+        label.set_xy(bullishSLLabel, bar_index + 10, bullishSL)
+
+// Bearish Visuals
+var line  bearishTP1Line  = na
+var line  bearishTP2Line  = na
+var line  bearishSLLine   = na
+var label bearishTP1Label = na
+var label bearishTP2Label = na
+var label bearishSLLabel  = na
+
+if isBearishEntry
+    if na(bearishTP1Line)
+        bearishTP1Line := line.new(bar_index - 10, bearishTP1, bar_index + 10, bearishTP1, color = color.red, width = 2)
+    else
+        line.set_xy1(bearishTP1Line, bar_index - 10, bearishTP1)
+        line.set_xy2(bearishTP1Line, bar_index + 10, bearishTP1)
+    if na(bearishTP1Label)
+        bearishTP1Label := label.new(bar_index + 10, bearishTP1, "TP1", color = color.red, textcolor = color.white, yloc = yloc.price, style = label.style_label_right)
+    else
+        label.set_xy(bearishTP1Label, bar_index + 10, bearishTP1)
+
+    if na(bearishTP2Line)
+        bearishTP2Line := line.new(bar_index - 10, bearishTP2, bar_index + 10, bearishTP2, color = color.red, width = 2)
+    else
+        line.set_xy1(bearishTP2Line, bar_index - 10, bearishTP2)
+        line.set_xy2(bearishTP2Line, bar_index + 10, bearishTP2)
+    if na(bearishTP2Label)
+        bearishTP2Label := label.new(bar_index + 10, bearishTP2, "TP2", color = color.red, textcolor = color.white, yloc = yloc.price, style = label.style_label_right)
+    else
+        label.set_xy(bearishTP2Label, bar_index + 10, bearishTP2)
+
+    if na(bearishSLLine)
+        bearishSLLine := line.new(bar_index - 10, bearishSL, bar_index + 10, bearishSL, color = color.green, width = 2)
+    else
+        line.set_xy1(bearishSLLine, bar_index - 10, bearishSL)
+        line.set_xy2(bearishSLLine, bar_index + 10, bearishSL)
+    if na(bearishSLLabel)
+        bearishSLLabel := label.new(bar_index + 10, bearishSL, "SL", color = color.green, textcolor = color.white, yloc = yloc.price, style = label.style_label_right)
+    else
+        label.set_xy(bearishSLLabel, bar_index + 10, bearishSL)
+
+// UT Strategy Signals
+a = input.float(1.0, title = "Key Value (Sensitivity)", group = "UT Strategy")
+c = input.int(10, title = "ATR Period", group = "UT Strategy")
+h = input.bool(false, title = "Signals from Heikin Ashi", group = "UT Strategy")
+
+xATR = ta.atr(c)
+nLoss = a * xATR
+src = h ? request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, close, lookahead = barmerge.lookahead_off) : close
+
+var float xATRTrailingStop = 0.0
+iff_1 = src > nz(xATRTrailingStop[1], 0) ? src - nLoss : src + nLoss
+iff_2 = src < nz(xATRTrailingStop[1], 0) and src[1] < nz(xATRTrailingStop[1], 0) ? math.min(nz(xATRTrailingStop[1]), src + nLoss) : iff_1
+xATRTrailingStop := src > nz(xATRTrailingStop[1], 0) and src[1] > nz(xATRTrailingStop[1], 0) ? math.max(nz(xATRTrailingStop[1]), src - nLoss) : iff_2
+
+var int pos = 0
+iff_3 = src[1] > nz(xATRTrailingStop[1], 0) and src < nz(xATRTrailingStop[1], 0) ? -1 : nz(pos[1], 0)
+pos := src[1] < nz(xATRTrailingStop[1], 0) and src > nz(xATRTrailingStop[1], 0) ? 1 : iff_3
+
+ema = ta.ema(src, 1)
+above = ta.crossover(ema, xATRTrailingStop)
+below = ta.crossover(xATRTrailingStop, ema)
+
+buy  = src > xATRTrailingStop and above
+sell = src < xATRTrailingStop and below
+
+barbuy  = src > xATRTrailingStop
+barsell = src < xATRTrailingStop
+
+plotshape(buy, title = "Buy", text = "Buy", style = shape.labelup, location = location.belowbar, color = color.new(color.green, 0), textcolor = color.new(color.white, 0), size = size.tiny)
+plotshape(sell, title = "Sell", text = "Sell", style = shape.labeldown, location = location.abovebar, color = color.new(color.red, 0), textcolor = color.new(color.white, 0), size = size.tiny)
+
+barcolor(barbuy ? color.green : na)
+barcolor(barsell ? color.red : na)
+
+alertcondition(buy, "UT Long", "UT Long Signal")
+alertcondition(sell, "UT Short", "UT Short Signal")
+
+closeopensame = open == close[1]
+bgcolor(closeopensame ? color.new(color.green, 90) : na)
+openlowsame = open == low
+bgcolor(openlowsame ? color.new(color.green, 90) : na)
+openhighsame = open == high
+bgcolor(openhighsame ? color.new(color.green, 90) : na)
+
+// ═════════════ SCRIPT 2: OPENING PRICE FRACTIONAL LEVELS & EMAS ═════════════
+
+// Opening Bar Calculation (09:15)
+nineFifteenTime = timestamp(TZ = "Asia/Kolkata", year = year, month = month, day = dayofmonth, hour = 09, minute = 15)
+isNineFifteenCandle = time == nineFifteenTime
+
+var float high_0915  = na
+var float low_0915   = na
+var float high1_0915 = na
+var float low1_0915  = na
+var float high2_0915 = na
+var float low2_0915  = na
+
+if isNineFifteenCandle
+    high_0915  := high / 4
+    low_0915   := low / 4
+    high1_0915 := high / 3
+    low1_0915  := low / 3
+    high2_0915 := high / 2
+    low2_0915  := low / 2
+
+plot(high_0915, title = "H/4", color = color.new(color.green, 0), linewidth = 1, style = plot.style_linebr)
+plot(low_0915, title = "L/4", color = color.new(color.red, 0), linewidth = 1, style = plot.style_linebr)
+plot(high1_0915, title = "H/3", color = color.new(color.green, 0), linewidth = 1, style = plot.style_linebr)
+plot(low1_0915, title = "L/3", color = color.new(color.red, 0), linewidth = 1, style = plot.style_linebr)
+plot(high2_0915, title = "H/2", color = color.new(color.green, 0), linewidth = 1, style = plot.style_linebr)
+plot(low2_0915, title = "L/2", color = color.new(color.red, 0), linewidth = 1, style = plot.style_linebr)
 
 // Dynamic EMA Ribbon
-ema9  = ta.ema(close, 9)
-ema21 = ta.ema(close, 21)
-ema55 = ta.ema(close, 55)
+len8  = input.int(8, "EMA 1", minval = 1, group = "EMA Settings")
+src8  = input.source(close, "Source 1", group = "EMA Settings")
+out8  = ta.ema(src8, len8)
+plot(out8, title = "EMA 1", color = color.new(#fc4c2a, 0), linewidth = 1)
 
-plot(showEmaRibbon ? ema9 : na,  "EMA 9",  color = color.green)
-plot(showEmaRibbon ? ema21 : na, "EMA 21", color = color.yellow)
-plot(showEmaRibbon ? ema55 : na, "EMA 55", color = color.red)
+len13 = input.int(13, "EMA 2", minval = 1, group = "EMA Settings")
+src13 = input.source(close, "Source 2", group = "EMA Settings")
+out13 = ta.ema(src13, len13)
+plot(out13, title = "EMA 2", color = color.new(#35b4b8, 0), linewidth = 1)
 
-// UT Bot Dynamic Stop
-atrVal = ta.atr(atrP)
-nLoss  = sens * atrVal
-var float stopLine = 0.0
-stopLine := close > nz(stopLine[1], 0) ? math.max(nz(stopLine[1], 0), close - nLoss) : math.min(nz(stopLine[1], 0), close + nLoss)
-plot(stopLine, "Quantum Stop", color = color.teal, linewidth = 2)`
+len21 = input.int(21, "EMA 3", minval = 1, group = "EMA Settings")
+src21 = input.source(close, "Source 3", group = "EMA Settings")
+out21 = ta.ema(src21, len21)
+plot(out21, title = "EMA 3", color = color.new(#2e3440, 0), linewidth = 1)
+
+len34 = input.int(34, "EMA 4", minval = 1, group = "EMA Settings")
+src34 = input.source(close, "Source 4", group = "EMA Settings")
+out34 = ta.ema(src34, len34)
+plot(out34, title = "EMA 4", color = color.new(#9b9e9e, 0), linewidth = 1)`
   },
   alphascan: {
     title: "📊 AlphaScan Option Matrix",
-    desc: "Multi-strike ATM options scanner table for NIFTY & SENSEX with premium ranges, low-price ranges, and target division formulas.",
-    code: alphascan_code || `//@version=6
+    desc: "Displays a dynamic table scanning ATM option strikes for NIFTY or SENSEX based on premium ranges, low-price ranges, and target division formulas (÷8 and ÷6.5).",
+    code: `//@version=6
 indicator("AlphaScan Option Matrix", overlay = true)
-// Multi-strike ATM options scanner table`
+
+// ═════════════ INPUTS ═════════════
+string under   = input.string("SENSEX", "Index", options = ["SENSEX", "NIFTY"], group = "Index Settings")
+string expSel  = input.string("Weekly + Monthly", "Expiry Type", options = ["Weekly + Monthly", "Weekly only", "Monthly only"], group = "Index Settings")
+string manW    = input.string("", "Manual Weekly (yymmdd)", group = "Index Settings")
+string manM    = input.string("", "Manual Monthly (yymmdd)", group = "Index Settings")
+
+string premSrc = input.string("Previous close", "Base Premium", options = ["Previous close", "Open"], group = "Filters")
+float premFrom = input.float(300, "Premium Min", step = 1, group = "Filters")
+float premTo   = input.float(349, "Premium Max", step = 1, group = "Filters")
+float lowFrom  = input.float(52,  "Day Low Min", step = 0.05, group = "Filters")
+float lowTo    = input.float(58,  "Day Low Max", step = 0.05, group = "Filters")
+
+float  div1    = input.float(8.0, "Divisor A (Formula 1)", step = 0.1, group = "Formula Rules")
+float  div2    = input.float(6.5, "Divisor B (Formula 2)", step = 0.1, group = "Formula Rules")
+string lowMode = input.string("Fixed low range", "Low Condition", options = ["Fixed low range", "Between ÷8 and ÷6.5 levels", "Both", "Either"], group = "Formula Rules")
+
+int  eachIn    = input.int(4, "Strike Depth (± ATM)", minval = 1, maxval = 9, group = "Display")
+bool onlyM     = input.bool(false, "Show Only Matches", group = "Display")
+string pos     = input.string("Top right", "Table Position", options = ["Top right", "Top left", "Bottom right", "Bottom left"], group = "Display")
+string txtSz   = input.string("Small", "Text Size", options = ["Tiny", "Small", "Normal"], group = "Display")
+
+// ═════════════ CONSTANTS & UTILS ═════════════
+string TZ  = "Asia/Kolkata"
+int    DAY = 86400000
+
+bool   isSX    = under == "SENSEX"
+string ex      = isSX ? "BSE:" : "NSE:"
+string root    = under
+string spotSym = isSX ? "BSE:SENSEX" : "NSE:NIFTY"
+int    expDay  = isSX ? dayofweek.thursday : dayofweek.tuesday
+float  step    = isSX ? 100.0 : 50.0
+
+bool wantW = expSel != "Monthly only"
+bool wantM = expSel != "Weekly only"
+int  each  = wantW and wantM ? math.min(eachIn, 4) : eachIn
+
+lastWeekday(int y, int m, int wd) =>
+    int ny = m == 12 ? y + 1 : y
+    int nm = m == 12 ? 1 : m + 1
+    int lastDay = timestamp(TZ, ny, nm, 1, 0, 0) - DAY
+    lastDay - ((dayofweek(lastDay, TZ) - wd + 7) % 7) * DAY
+
+monthlyExpiry(int t, int wd) =>
+    int y  = year(t, TZ)
+    int m  = month(t, TZ)
+    int t0 = timestamp(TZ, y, m, dayofmonth(t, TZ), 0, 0)
+    int mm = m - 1 + (lastWeekday(y, m, wd) < t0 ? 1 : 0)
+    lastWeekday(y + math.floor(mm / 12), mm % 12 + 1, wd)
+
+weeklyExpiry(int t, int wd) =>
+    int t0 = timestamp(TZ, year(t, TZ), month(t, TZ), dayofmonth(t, TZ), 0, 0)
+    t0 + ((wd - dayofweek(t0, TZ) + 7) % 7) * DAY
+
+yymmdd(int t) =>
+    str.format("{0,number,00}{1,number,00}{2,number,00}", year(t, TZ) % 100, month(t, TZ), dayofmonth(t, TZ))
+
+num(float v) => na(v) ? "–" : str.tostring(v, "#.00")
+inR(float v, float a, float b) => not na(v) and v >= a and v <= b
+
+// ═════════════ CALCULATION & RENDER ═════════════
+[sO, sH, sL, sC] = request.security(spotSym, "D", [open, high, low, close], lookahead = barmerge.lookahead_on)
+
+tablePos = pos == "Top left" ? position.top_left : pos == "Bottom right" ? position.bottom_right : pos == "Bottom left" ? position.bottom_left : position.top_right
+tsize    = txtSz == "Tiny" ? size.tiny : txtSz == "Normal" ? size.normal : size.small
+var table tbl = table.new(tablePos, 11, 46, bgcolor = color.new(#111111, 5), border_color = color.new(color.gray, 70), border_width = 1)
+
+put(int c, int r, string t, color fg, color bg) =>
+    tbl.cell(c, r, t, text_color = fg, bgcolor = bg, text_size = tsize)
+
+var float  atm   = na
+var string codeW = ""
+var string codeM = ""
+var string textW = ""
+var string textM = ""
+
+if barstate.islast
+    if na(atm) and not na(sC)
+        atm := math.round(sC / step) * step
+        int eW = weeklyExpiry(time, expDay)
+        int eM = monthlyExpiry(time, expDay)
+        codeW := manW != "" ? manW : yymmdd(eW)
+        codeM := manM != "" ? manM : yymmdd(eM)
+        textW := manW != "" ? manW + " (manual)" : str.format_time(eW, "dd MMM", TZ)
+        textM := manM != "" ? manM + " (manual)" : str.format_time(eM, "dd MMM", TZ)
+
+    tbl.clear(0, 0, 10, 45)
+
+    string expInfo = (wantW ? "W: " + textW : "") + (wantW and wantM ? " | " : "") + (wantM ? "M: " + textM : "")
+    put(0, 0, root + " | Spot " + num(sC) + " | ATM " + str.tostring(atm) + " | " + expInfo, color.white, na)
+    tbl.merge_cells(0, 0, 10, 0)
+
+    array<string> hdr = array.from("Expiry", "Type", "Strike", "Premium", "Open", "High", "Day Low", "LTP", "÷" + str.tostring(div1), "÷" + str.tostring(div2), "Status")
+    for c = 0 to 10
+        put(c, 1, hdr.get(c), color.white, color.new(#222222, 0))
+
+    int row = 2
+    int count = 0
+
+    if not na(atm)
+        for x = 0 to 1
+            bool isW   = x == 0
+            bool same  = codeW == codeM
+            bool doExp = isW ? wantW : (wantM and not (wantW and same))
+            if doExp
+                string code = isW ? codeW : codeM
+                string lab  = isW ? (same ? "W/M " : "W ") + textW : "M " + textM
+                for s = 0 to 1
+                    bool isCall = s == 0
+                    for i = 0 to 2 * each
+                        float  k  = atm + (i - each) * step
+                        string kt = str.tostring(k)
+                        [o, h, l, c, pc] = request.security(ex + root + code + (isCall ? "C" : "P") + kt, "D", [open, high, low, close, close[1]], lookahead = barmerge.lookahead_on, ignore_invalid_symbol = true)
+
+                        float prem   = premSrc == "Previous close" ? pc : o
+                        float f1     = na(prem) ? na : prem / div1
+                        float f2     = na(prem) ? na : prem / div2
+                        bool  premOk = inR(prem, premFrom, premTo)
+                        bool  lowFix = inR(l, lowFrom, lowTo)
+                        bool  lowFor = not na(f1) and inR(l, math.min(f1, f2), math.max(f1, f2))
+                        bool  lowOk  = lowMode == "Fixed low range" ? lowFix : lowMode == "Between ÷8 and ÷6.5 levels" ? lowFor : lowMode == "Both" ? (lowFix and lowFor) : (lowFix or lowFor)
+                        bool  match  = premOk and lowOk
+
+                        if match
+                            count += 1
+
+                        if (match or not onlyM) and not na(prem) and row < 44
+                            color fg = match ? color.white : color.silver
+                            color bg = match ? color.new(color.green, 40) : na
+                            string st = match ? "MATCH" : premOk ? "Prem ✓" : lowOk ? "Low ✓" : ""
+                            put(0,  row, lab, color.gray, na)
+                            put(1,  row, isCall ? "CE" : "PE", isCall ? color.lime : color.red, na)
+                            put(2,  row, kt + (i == each ? " *" : ""), color.white, na)
+                            put(3,  row, num(prem), premOk ? color.yellow : fg, bg)
+                            put(4,  row, num(o), fg, bg)
+                            put(5,  row, num(h), fg, bg)
+                            put(6,  row, num(l), lowOk ? color.yellow : fg, bg)
+                            put(7,  row, num(c), fg, bg)
+                            put(8,  row, num(f1), color.blue, bg)
+                            put(9,  row, num(f2), color.blue, bg)
+                            put(10, row, st, match ? color.white : color.gray, bg)
+                            row += 1`
   },
   target_proj: {
     title: "🎯 Option Target Projection Levels",
-    desc: "Automated chart overlay projecting targets (+9%, +18%) and stop losses (-5%, -9%) directly from day low or base entry price.",
+    desc: "Plotted directly on individual option charts to project target support zones (÷8 and ÷6.5) relative to open or previous close premiums.",
     code: `//@version=6
 indicator("Option Target Projection Levels", overlay = true)
 
 // ═════════════ INPUTS ═════════════
-basePrice = input.source(low, "Base Reference Price (Default: Day Low)")
-t1Pct     = input.float(9.0,  "Target 1 %", step = 0.5)
-t2Pct     = input.float(18.0, "Target 2 %", step = 0.5)
-sl1Pct    = input.float(5.0,  "Stop Loss 1 %", step = 0.5)
-sl2Pct    = input.float(9.0,  "Stop Loss 2 %", step = 0.5)
+string baseSource = input.string("Previous Close", "Reference Premium Base", options = ["Previous Close", "Session Open"])
+float  divDivisor1 = input.float(8.0, "Lower Band Divisor", step = 0.1)
+float  divDivisor2 = input.float(6.5, "Upper Band Divisor", step = 0.1)
+color  colBase    = input.color(color.yellow, "Base Line Color")
+color  colBand    = input.color(color.new(color.blue, 20), "Target Band Color")
 
-var float anchorLow = na
-if ta.change(time("D")) != 0
-    anchorLow := low
-else
-    anchorLow := math.min(nz(anchorLow, low), low)
+// ═════════════ CALCULATIONS ═════════════
+[dailyOpen, prevClose] = request.security(syminfo.tickerid, "D", [open, close[1]], lookahead = barmerge.lookahead_on)
 
-t1  = anchorLow * (1 + t1Pct/100)
-t2  = anchorLow * (1 + t2Pct/100)
-sl1 = anchorLow * (1 - sl1Pct/100)
-sl2 = anchorLow * (1 - sl2Pct/100)
+float baseVal = baseSource == "Previous Close" ? prevClose : dailyOpen
+float levelLower = not na(baseVal) ? baseVal / divDivisor1 : na
+float levelUpper = not na(baseVal) ? baseVal / divDivisor2 : na
 
-plot(anchorLow, "Day Low Anchor", color = color.yellow, linewidth = 2, style = plot.style_linebr)
-plot(t1, "Target 1 (+9%)", color = color.green, linewidth = 2, style = plot.style_linebr)
-plot(t2, "Target 2 (+18%)", color = color.teal, linewidth = 2, style = plot.style_linebr)
-plot(sl1, "SL 1 (-5%)", color = color.red, linewidth = 2, style = plot.style_linebr)
-plot(sl2, "SL 2 (-9%)", color = color.maroon, linewidth = 2, style = plot.style_linebr)`
+// ═════════════ PLOTTING ═════════════
+plot(baseVal, "Base Premium", color = colBase, linewidth = 2, style = plot.style_line)
+p1 = plot(levelLower, "Target Lower (÷8)", color = colBand, linewidth = 1)
+p2 = plot(levelUpper, "Target Upper (÷6.5)", color = colBand, linewidth = 1)
+
+fill(p1, p2, color = color.new(color.blue, 85), title = "Target Range Zone")`
   },
   supertrend: {
     title: "📈 Supertrend Multi-Timeframe Strategy",
@@ -2638,8 +3020,15 @@ plotshape(inFormula and inRange, title = "Strategy 3 Match", text = "S3 MATCH", 
 function getStudiesForIndicator(key) {
   switch (key) {
     case 'ut':
-    case 'trade_pred':
       return ["ATR@tv-basicstudies", "MASimple@tv-basicstudies"];
+    case 'trade_pred':
+      return ["ATR@tv-basicstudies", "MAExp@tv-basicstudies"];
+    case 'quantum':
+      return ["MAExp@tv-basicstudies", "PivotPointsHighLow@tv-basicstudies"];
+    case 'alphascan':
+    case 'target_proj':
+    case 'strat3':
+      return ["PivotPointsStandard@tv-basicstudies", "MASimple@tv-basicstudies"];
     case 'supertrend':
       return ["Supertrend@tv-basicstudies"];
     case 'vwap_rsi':
@@ -3218,6 +3607,19 @@ function openIndicatorModal(key) {
   if (modal) modal.style.display = 'flex';
 }
 
+function openIndicatorInAppChart(key) {
+  const indKey = key || currentIndKey || 'alphascan';
+  closeAllModals();
+  const c = currentSelectedContract || (lastResults && lastResults.length ? lastResults[0] : null);
+  const sym = c ? c.symbol : (currentChainSymbol || 'NIFTY');
+  const exp = c ? c.expiry : '';
+  const strk = c ? c.strike : 0;
+  const typ = c ? c.type : '';
+  openOptionChartModal(sym, exp, strk, typ);
+  selectHubStrat(indKey);
+  switchOptChartTab('tv');
+}
+
 function switchIndModalTab(key) {
   currentIndKey = key;
   document.querySelectorAll('.modal-strat-tabs .strat-tab-btn').forEach(btn => {
@@ -3575,7 +3977,70 @@ function drawOptionChart(c) {
   ctx.fillText(`⚡ FITTED: ${indData.title}`, 38, 24);
 
   // 1. DYNAMICALLY FIT SELECTED INDICATOR
-  if (indKey === 'ut' || indKey === 'trade_pred') {
+  if (indKey === 'alphascan') {
+    const premBase = c.prevClose > 0 ? c.prevClose : c.open;
+    const f1 = premBase / 8.0;
+    const f2 = premBase / 6.5;
+    drawLine(premBase, '#eab308', 'AlphaScan Base Premium', false, 2);
+    drawLine(f2, '#38bdf8', 'Formula 2 (÷6.5 Upper Band)', false, 2);
+    drawLine(f1, '#818cf8', 'Formula 1 (÷8.0 Lower Band)', false, 2);
+    const yF2 = getY(f2);
+    const yF1 = getY(f1);
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
+    ctx.fillRect(70, Math.min(yF1, yF2), w - 120, Math.abs(yF1 - yF2));
+    const lowOk = c.low >= 52 && c.low <= 58;
+    const match = lowOk || (c.low >= Math.min(f1, f2) && c.low <= Math.max(f1, f2));
+    ctx.fillStyle = match ? '#34d399' : '#94a3b8';
+    ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+    ctx.fillText(match ? '⭐ ALPHASCAN MATCH (Day Low ' + fmtNum(c.low) + ' in Zone)' : 'AlphaScan Matrix Monitoring (÷8 / ÷6.5)', w * 0.35 + 25, getY(c.low) + 24);
+  } else if (indKey === 'trade_pred') {
+    const atrEst = Math.max((c.high - c.low) * 0.8, c.close * 0.035);
+    const ema200 = c.close >= c.open ? c.close * 0.97 : c.close * 1.03;
+    const isBull = c.close > ema200;
+    const trail = isBull ? Math.max(c.low, c.close - atrEst * 1.5) : Math.min(c.high, c.close + atrEst * 1.5);
+    const entryTP = isBull ? c.close + atrEst * 2.0 : c.close - atrEst * 2.0;
+    const entrySL = isBull ? c.close - atrEst * 1.5 : c.close + atrEst * 1.5;
+    drawLine(ema200, '#f97316', '200 EMA Trend Line', false, 2);
+    drawLine(trail, isBull ? '#10b981' : '#ef4444', 'UT Bot Trail Stop', true, 2);
+    drawLine(entryTP, '#34d399', 'Active Take Profit (2.0x ATR)', false, 2);
+    drawLine(entrySL, '#ef4444', 'Active Stop Loss (1.5x ATR)', false, 2);
+    ctx.fillStyle = isBull ? '#10b981' : '#ef4444';
+    ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+    ctx.fillText(isBull ? '🟢 BUY (Above 200 EMA Trend)' : '🔴 SELL (Below 200 EMA Trend)', w * 0.35 + 25, isBull ? getY(c.low) + 24 : getY(c.high) - 12);
+  } else if (indKey === 'quantum') {
+    const atrEst = Math.max((c.high - c.low) * 0.7, c.close * 0.03);
+    const sup = c.low;
+    const res = c.high;
+    const tp1 = sup + atrEst * 3.0;
+    const tp2 = sup + atrEst * 4.0;
+    const sl = sup - atrEst * 1.5;
+    drawLine(res, '#ef4444', 'Key Resistance Box', false, 2);
+    drawLine(sup, '#10b981', 'Key Support Box', false, 2);
+    drawLine(tp1, '#34d399', 'Quantum TP1 (+3.0x ATR)');
+    drawLine(tp2, '#06b6d4', 'Quantum TP2 (+4.0x ATR)');
+    drawLine(sl, '#f87171', 'Quantum SL (-1.5x ATR)');
+    drawLine(c.high * 0.5, '#a855f7', '09:15 H/2 Opening Fraction', true, 1);
+    drawLine(c.high * 0.333, '#60a5fa', '09:15 H/3 Opening Fraction', true, 1);
+    drawLine(c.high * 0.25, '#34d399', '09:15 H/4 Opening Fraction', true, 1);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 11.5px "IBM Plex Sans", sans-serif';
+    ctx.fillText('🌌 Quantum Matrix (S/R Boxes + 09:15 Fractions + EMA Ribbon 8/13/21/34)', w * 0.35 + 25, getY(c.low) + 24);
+  } else if (indKey === 'target_proj') {
+    const baseVal = c.prevClose > 0 ? c.prevClose : c.open;
+    const lvlLower = baseVal / 8.0;
+    const lvlUpper = baseVal / 6.5;
+    drawLine(baseVal, '#eab308', 'Base Premium', false, 2);
+    drawLine(lvlUpper, '#38bdf8', 'Target Upper (÷6.5)', false, 2);
+    drawLine(lvlLower, '#818cf8', 'Target Lower (÷8.0)', false, 2);
+    const yUpper = getY(lvlUpper);
+    const yLower = getY(lvlLower);
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
+    ctx.fillRect(70, Math.min(yUpper, yLower), w - 120, Math.abs(yUpper - yLower));
+    drawLine(c.low, '#facc15', 'Day Low (Reference)', true, 1);
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+    ctx.fillText('🎯 Target Range Zone (÷8.0 - ÷6.5)', w * 0.35 + 25, (yUpper + yLower) / 2);
+  } else if (indKey === 'ut') {
     const isBull = c.close >= c.open;
     const atrEst = Math.max((c.high - c.low) * 0.8, c.close * 0.035);
     const trailStop = isBull ? Math.max(c.low, c.close - atrEst) : Math.min(c.high, c.close + atrEst);
