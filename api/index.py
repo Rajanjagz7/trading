@@ -7,7 +7,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
 
 from .nse_service import nse_service
 
@@ -53,31 +52,6 @@ def get_status():
     status = nse_service.get_market_status()
     return status
 
-@app.get("/api/cron")
-@app.post("/api/cron")
-def scheduled_cron():
-    """
-    Automated Cron Job running at 9:14 AM IST (03:44 UTC) Mon-Fri.
-    Refreshes Bhavcopy data and primes cache for market open at 9:15 AM IST.
-    """
-    try:
-        res = nse_service.fetch_latest_bhavcopy(force_refresh=True)
-        return {
-            "success": True,
-            "message": "9:14 AM IST pre-market sync executed successfully",
-            "executedAt": datetime.now().isoformat(),
-            "todayDate": res.get("todayDate"),
-            "prevDate": res.get("prevDate"),
-            "totalContracts": res.get("totalContracts", 0)
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "message": f"Pre-market sync notice: {str(e)}",
-            "executedAt": datetime.now().isoformat(),
-            "cachedContracts": len(nse_service.today_rows)
-        }
-
 @app.post("/api/fetch-latest")
 def fetch_latest(force: bool = False):
     try:
@@ -89,6 +63,14 @@ def fetch_latest(force: bool = False):
 @app.get("/api/symbols")
 def get_symbols():
     return {"symbols": nse_service.get_symbols()}
+
+@app.get("/api/chain")
+def get_chain(symbol: str = "NIFTY", expiry: Optional[str] = None):
+    try:
+        res = nse_service.get_option_chain_for_symbol(symbol=symbol, expiry=expiry)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/scan")
 def scan_bhavcopy(req: ScanRequest):
