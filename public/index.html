@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Chartink F&amp;O Algo Screener &amp; TradingView Indicator Hub</title>
+  <title>Chartink F&amp;O Algo Screener &amp; Option Indicator Hub (Web &amp; Mobile)</title>
   <meta name="description" content="Chartink-style institutional options screener for NSE/BSE F&amp;O contracts with live indicators, UT Bot Buy/Sell signals, and automated settlement sync.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230f172a'/><line x1='10' y1='5' x2='10' y2='27' stroke='%2310b981' stroke-width='2' stroke-linecap='round'/><rect x='6' y='9' width='8' height='12' rx='2' fill='%2310b981'/><line x1='22' y1='7' x2='22' y2='25' stroke='%23ef4444' stroke-width='2' stroke-linecap='round'/><rect x='18' y='12' width='8' height='9' rx='2' fill='%23ef4444'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <!-- Native Web & Mobile Canvas Chart Engine Active (No external TV dependency) -->
 
   <style>
   :root {
@@ -1458,13 +1458,48 @@
     font-size: 13px;
   }
 
-  /* Responsive Mobile Tweaks */
+/* Responsive Mobile & Web First Layout */
   @media (max-width: 900px) {
     .workspace { flex-direction: column; }
     .panel.filters { width: 100%; }
     .chartink-indices-bar { flex-wrap: nowrap; overflow-x: auto; }
     .clause-row { font-size: 11.5px; gap: 6px; }
     .results-search-box { min-width: 100%; }
+  }
+  @media (max-width: 768px) {
+    header { padding: 12px 14px; flex-direction: column; align-items: flex-start; gap: 10px; }
+    header > div:last-child { align-items: flex-start !important; }
+    .glow-title { font-size: 19px !important; }
+    .indicator-btn-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .indicator-btn-row::-webkit-scrollbar { display: none; }
+    .mode-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 4px; }
+    .tab-btn { white-space: nowrap; font-size: 12px; padding: 7px 12px; }
+    .modal-overlay { padding: 6px; }
+    .modal-card { width: 100%; max-height: 96vh; border-radius: 8px; margin: 0; }
+    .modal-header { padding: 10px 14px; position: sticky; top: 0; z-index: 10; background: #141c2c; }
+    .modal-close-pill { padding: 5px 12px; font-size: 12px; min-height: 32px; }
+    .opt-stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px 12px; }
+    .opt-stat-val { font-size: 15px; }
+    .opt-stat-val-sm { font-size: 11.5px; }
+    #optCanvasContainer { height: 260px !important; }
+    .hub-strategy-selector, .modal-strat-tabs {
+      overflow-x: auto;
+      flex-wrap: nowrap !important;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 6px;
+    }
+    .results-filter-toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .quick-filter-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+    table { min-width: 880px; }
   }
   </style>
 </head>
@@ -1482,8 +1517,8 @@
         <span class="brand-pill"><span class="brand-dot"></span> CHARTINK QUANT ENGINE</span>
         <span class="live-pill"><span class="live-pulse"></span> ALGO SCREENER 2.0</span>
       </div>
-      <h1 class="glow-title">Chartink F&amp;O Algo Screener &amp; TradingView Indicator Hub</h1>
-      <p>Institutional algorithmic screener for Day Low bounce, Previous Close breakout, and Open=Low / Open=High setups with live TradingView indicators and UT Bot Buy/Sell signals.</p>
+      <h1 class="glow-title">Chartink F&amp;O Algo Screener &amp; Option Indicator Hub</h1>
+      <p>Institutional algorithmic screener for Day Low bounce, Previous Close breakout, and Open=Low / Open=High setups with live web &amp; mobile indicators and UT Bot Buy/Sell signals.</p>
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
       <div class="status-badge" id="marketBadge">
@@ -1548,10 +1583,10 @@
     </div>
   </div>
 
-  <!-- ⚡ TradingView Indicator Hub Small Button Bar (13 Indicators) -->
+  <!-- ⚡ Technical & Algo Indicator Bar (13 Indicators) -->
   <div class="indicator-bar">
     <div class="indicator-bar-label">
-      <span>⚡</span> <b>TradingView Indicators:</b>
+      <span>⚡</span> <b>Technical &amp; Algo Indicators:</b>
     </div>
     <div class="indicator-btn-row">
       <button class="small-strat-btn alpha-btn" data-ind="alphascan" onclick="runIndicatorScan('alphascan')" title="Scan all stocks & indices with AlphaScan Option Matrix">📊 AlphaScan Matrix</button>
@@ -1635,7 +1670,7 @@
     <div class="panel filters">
       <div class="group" style="background:#151b27; border:1px solid #232d40; border-radius:8px; padding:12px; margin-bottom:16px;">
         <label style="color:#93c5fd; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-          <span>📈</span> TradingView Strategies
+          <span>📈</span> Algorithmic Strategies
         </label>
         <div style="display:flex; flex-direction:column; gap:6px;">
           <button class="strat-btn active" id="strat1Btn">
@@ -1947,7 +1982,7 @@
         <div style="display:flex; align-items:center; gap:8px;">
           <label style="font-size:12px; color:var(--muted); font-weight:600;">Stock / Index:</label>
           <select id="chainSymbolSelect" style="width:160px; padding:6px 10px; font-size:12.5px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:6px;"></select>
-          <button id="chainTvLink" class="tv-outlink" style="background:#1e293b; border:1px solid #3b82f6; cursor:pointer;" onclick="openOptionChartModal(currentChainSymbol, '', 0, '')" title="Open underlying chart with fitted indicators in this app">📈 View Chart &amp; Indicators</button>
+          <button id="chainTvLink" class="chain-btn" style="background:#1e293b; border:1px solid #3b82f6; cursor:pointer;" onclick="openOptionChartModal(currentChainSymbol, '', 0, '')" title="Open underlying chart with fitted indicators in this app">📈 View Chart &amp; Indicators</button>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:12px;">
@@ -2036,37 +2071,19 @@
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:12px; color:var(--muted); font-weight:600;">Fitted Indicator:</span>
         <span id="activeIndNameTag" style="background:#2563eb; color:#fff; padding:3px 10px; border-radius:12px; font-weight:700; font-size:12px;">⚡ UT Bot Alerts</span>
-        <span style="font-size:11px; color:#94a3b8;">(Click any indicator tab below to switch)</span>
+        <span style="font-size:11px; color:#94a3b8;">(Select indicator below to change)</span>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <button class="query-run-btn" style="padding:6px 14px; font-size:12px;" onclick="switchOrOpenIndicatorChart()">
-          📈 View TradingView Widget &amp; Fit Indicator
+        <button class="query-run-btn" style="padding:6px 14px; font-size:12px;" onclick="runIndicatorScan(currentHubStratKey); closeAllModals();">
+          ⚡ Scan Market for This Indicator
         </button>
       </div>
     </div>
 
-    <!-- Chart Switcher Tabs -->
-    <div class="opt-chart-tabs">
-      <div style="display:flex; gap:8px;">
-        <button class="opt-tab-btn active" id="tabOptCanvas" onclick="switchOptChartTab('canvas')">
-          📊 Option Price Action &amp; Indicator Levels
-        </button>
-        <button class="opt-tab-btn" id="tabOptTV" onclick="switchOptChartTab('tv')">
-          📈 TradingView Chart Widget (<span id="tvTabSymbol">Option</span>)
-        </button>
-      </div>
-      <button id="tvExternalLink" class="tv-outlink" onclick="switchOptChartTab('tv')" style="background:#1e293b; border:1px solid #3b82f6; cursor:pointer;" title="View TradingView chart widget inside this website">
-        📈 Open TradingView Chart in Website
-      </button>
-    </div>
-
-    <!-- Chart Container Area -->
-    <div class="opt-chart-body">
-      <div id="optCanvasContainer" style="width:100%; height:330px; position:relative; background:#0b0e14; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
-        <canvas id="optChartCanvas" width="1140" height="330" style="width:100%; height:100%; display:block;"></canvas>
-      </div>
-      <div id="optTvContainer" style="width:100%; height:340px; display:none; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
-        <div id="tradingview_widget" style="width:100%; height:100%;"></div>
+    <!-- Interactive Web & Mobile Chart Container Area -->
+    <div class="opt-chart-body" style="padding: 12px 16px;">
+      <div id="optCanvasContainer" style="width:100%; height:340px; position:relative; background:#0b0e14; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
+        <canvas id="optChartCanvas" width="1140" height="340" style="width:100%; height:100%; display:block;"></canvas>
       </div>
     </div>
 
@@ -2078,7 +2095,7 @@
             <span>🚀</span> Select Indicator to Fit in Chart
           </h3>
           <p style="margin:3px 0 0 0; font-size:11.5px; color:var(--muted);">
-            Click any indicator below to fit its levels on this option chart, then paste the script into TradingView's Pine Editor.
+            Click any indicator below to immediately update and fit its levels on this live web & mobile chart.
           </p>
         </div>
         <div class="hub-strategy-selector" style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -2109,9 +2126,9 @@
         </div>
 
         <div class="hub-steps">
-          <div class="step-chip"><span class="step-num">1</span> Click <b>Copy Pine Script Code</b> (auto-copied on indicator click)</div>
-          <div class="step-chip"><span class="step-num">2</span> In TradingView, click <b>Pine Editor</b> at bottom</div>
-          <div class="step-chip"><span class="step-num">3</span> Paste (Ctrl+V) &amp; click <b>Save → Add to chart</b></div>
+          <div class="step-chip"><span class="step-num">1</span> <b>Click Indicator button</b> to switch levels on chart</div>
+          <div class="step-chip"><span class="step-num">2</span> <b>Inspect targets &amp; SL</b> drawn live on chart canvas</div>
+          <div class="step-chip"><span class="step-num">3</span> <b>Click Scan Market</b> to scan all 216 stocks &amp; indices</div>
         </div>
 
         <div class="code-preview-wrap">
@@ -2127,12 +2144,12 @@
   </div>
 </div>
 
-<!-- TradingView Indicator & Strategy Pine Script Hub Modal -->
+<!-- Algo Indicator & Strategy Formula Hub Modal -->
 <div id="indicatorModal" class="modal-overlay" style="display:none; z-index:1150;">
   <div class="modal-card indicator-modal-card">
     <div class="modal-header">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <span class="ind-tag" id="indBadge">TradingView Pine Script</span>
+        <span class="ind-tag" id="indBadge">Algo Indicator Script</span>
         <h2 id="indModalTitle" style="margin:0; font-size:17px; font-weight:700;">⚡ UT Bot Alerts (Buy &amp; Sell Signals)</h2>
       </div>
       <button id="indCloseBtn" class="modal-close-pill" onclick="closeAllModals()">✕ Close</button>
@@ -2162,24 +2179,24 @@
             Institutional Buy/Sell signals based on ATR Trailing Stop with alerts for NIFTY, SENSEX, and Options.
           </div>
           <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">
-            Compatible with TradingView Pine Editor v6. Ready to paste directly into your chart.
+            Universal Pine Script v6 algorithm. Ready for backtesting, live alerts, and web/mobile charting.
           </div>
         </div>
         <div class="ind-action-row">
-          <button id="indTvLaunchBtn" class="tv-launch-btn" onclick="openIndicatorInAppChart()" style="cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px;">
-            📈 Open Chart in Website
+          <button id="indTvLaunchBtn" class="query-run-btn" onclick="openIndicatorInAppChart()" style="cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px;">
+            📈 Open Fitted Chart
           </button>
           <button class="query-run-btn" onclick="runIndicatorScan(currentIndKey); closeAllModals();" style="padding:6px 14px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">⚡ Scan All Stocks &amp; Indices</button>
           <button class="copy-script-btn" id="indCopyBtn" onclick="copyIndScript()">
-            <span id="indCopyIcon">📋</span> <span id="indCopyText">Copy Pine Script</span>
+            <span id="indCopyIcon">📋</span> <span id="indCopyText">Copy Script</span>
           </button>
         </div>
       </div>
 
       <div class="hub-steps">
-        <div class="step-chip"><span class="step-num">1</span> Click <b>Copy Pine Script</b></div>
-        <div class="step-chip"><span class="step-num">2</span> Open TradingView &amp; click <b>Pine Editor</b> at bottom</div>
-        <div class="step-chip"><span class="step-num">3</span> Paste &amp; click <b>Save → Add to chart</b></div>
+        <div class="step-chip"><span class="step-num">1</span> <b>Select Indicator</b> tab above</div>
+        <div class="step-chip"><span class="step-num">2</span> Click <b>📈 Open Chart in Website</b> to view visual levels</div>
+        <div class="step-chip"><span class="step-num">3</span> Click <b>⚡ Scan All Stocks &amp; Indices</b> for live market scanner</div>
       </div>
 
       <div class="code-preview-wrap">
@@ -2298,12 +2315,12 @@ function getTradingViewOptionSymbol(rawSymbol, expiry, strike, type) {
 
 function getTradingViewUrl(rawSymbol, expiry, strike, type) {
   const optSymbol = getTradingViewOptionSymbol(rawSymbol, expiry, strike, type);
-  return `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(optSymbol)}`;
+  return '#';
 }
 
 function redirectToTradingView(symbol, expiry, strike, type) {
   const url = getTradingViewUrl(symbol, expiry, strike, type);
-  window.open(url, '_blank', 'noopener,noreferrer');
+  openOptionChartModal(symbol, expiry, strike, type);
 }
 
 function switchOrOpenIndicatorChart() {
@@ -2312,8 +2329,8 @@ function switchOrOpenIndicatorChart() {
   if (scriptData) {
     navigator.clipboard.writeText(scriptData.code).catch(() => {});
   }
-  switchOptChartTab('tv');
-  showToast(`✔ Fitted ${scriptData ? scriptData.title : 'indicator'} on TradingView widget inside this app!`, 'success');
+  switchOptChartTab('canvas');
+  showToast(`✔ Fitted ${scriptData ? scriptData.title : 'indicator'} on chart!`, 'success');
 }
 
 function redirectToTradingViewWithIndicator() {
@@ -3051,26 +3068,7 @@ plotshape(inFormula and inRange, title = "Strategy 3 Match", text = "S3 MATCH", 
 };
 
 function getStudiesForIndicator(key) {
-  switch (key) {
-    case 'ut':
-      return ["ATR@tv-basicstudies", "MASimple@tv-basicstudies"];
-    case 'trade_pred':
-      return ["ATR@tv-basicstudies", "MAExp@tv-basicstudies"];
-    case 'quantum':
-      return ["MAExp@tv-basicstudies", "PivotPointsHighLow@tv-basicstudies"];
-    case 'alphascan':
-    case 'target_proj':
-    case 'strat3':
-      return ["PivotPointsStandard@tv-basicstudies", "MASimple@tv-basicstudies"];
-    case 'supertrend':
-      return ["Supertrend@tv-basicstudies"];
-    case 'vwap_rsi':
-      return ["VWAP@tv-basicstudies", "RSI@tv-basicstudies"];
-    case 'volume_oi':
-      return ["Volume@tv-basicstudies"];
-    default:
-      return ["PivotPointsHighLow@tv-basicstudies"];
-  }
+  return [];
 }
 
 /* ============================================================
@@ -3797,7 +3795,7 @@ function openIndicatorInAppChart(key) {
   const typ = c ? c.type : '';
   openOptionChartModal(sym, exp, strk, typ);
   selectHubStrat(indKey);
-  switchOptChartTab('tv');
+  switchOptChartTab('canvas');
 }
 
 function switchIndModalTab(key) {
@@ -3826,7 +3824,7 @@ function switchIndModalTab(key) {
 
   if (tvBtn) {
     tvBtn.href = optUrl;
-    tvBtn.title = `Open live chart on TradingView`;
+    tvBtn.title = `Open interactive chart in website`;
   }
 
   const copyBtn = document.getElementById('indCopyBtn');
@@ -3905,80 +3903,13 @@ function copyCurrentPineScript() {
 }
 
 function switchOptChartTab(tab) {
-  const tabCanvas = document.getElementById('tabOptCanvas');
-  const tabTV = document.getElementById('tabOptTV');
-  const canvasContainer = document.getElementById('optCanvasContainer');
-  const tvContainer = document.getElementById('optTvContainer');
-
-  if (tab === 'canvas') {
-    tabCanvas.classList.add('active');
-    tabTV.classList.remove('active');
-    canvasContainer.style.display = 'block';
-    tvContainer.style.display = 'none';
-    if (currentSelectedContract) {
-      setTimeout(() => drawOptionChart(currentSelectedContract), 30);
-    }
-  } else {
-    tabCanvas.classList.remove('active');
-    tabTV.classList.add('active');
-    canvasContainer.style.display = 'none';
-    tvContainer.style.display = 'block';
-    loadTradingViewWidget(currentSelectedContract);
+  if (currentSelectedContract) {
+    setTimeout(() => drawOptionChart(currentSelectedContract), 30);
   }
 }
 
 function loadTradingViewWidget(contractOrSymbol) {
-  const container = document.getElementById('tradingview_widget');
-  if (!container) return;
-  container.innerHTML = '';
-
-  let tvSymbol;
-  let optUrl;
-  if (typeof contractOrSymbol === 'object' && contractOrSymbol !== null) {
-    tvSymbol = getTradingViewOptionSymbol(contractOrSymbol.symbol, contractOrSymbol.expiry, contractOrSymbol.strike, contractOrSymbol.type);
-    optUrl = getTradingViewUrl(contractOrSymbol.symbol, contractOrSymbol.expiry, contractOrSymbol.strike, contractOrSymbol.type);
-  } else {
-    tvSymbol = getTradingViewOptionSymbol(contractOrSymbol);
-    optUrl = getTradingViewUrl(contractOrSymbol);
-  }
-
-  const studies = getStudiesForIndicator(currentHubStratKey);
-
-  try {
-    if (typeof TradingView !== 'undefined' && TradingView.widget) {
-      new TradingView.widget({
-        "autosize": true,
-        "symbol": tvSymbol,
-        "interval": "D",
-        "timezone": "Asia/Kolkata",
-        "theme": "dark",
-        "style": "1",
-        "locale": "in",
-        "toolbar_bg": "#141824",
-        "enable_publishing": false,
-        "allow_symbol_change": true,
-        "container_id": "tradingview_widget",
-        "studies": studies
-      });
-    } else {
-      container.innerHTML = `
-        <div style="padding:40px 20px; text-align:center; color:#94a3b8; background:#0b0e14; border-radius:8px;">
-          <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">📊 ${tvSymbol} Live Chart</h4>
-          <p style="margin-bottom:16px; font-size:12.5px; color:#94a3b8;">TradingView widget fallback ready. Click below to open this exact option chart directly on TradingView with high performance.</p>
-          <a href="${optUrl}" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="text-decoration:none; display:inline-flex;">
-            🚀 Open ${tvSymbol} on TradingView.com ↗
-          </a>
-        </div>`;
-    }
-  } catch (err) {
-    container.innerHTML = `
-      <div style="padding:40px 20px; text-align:center; color:#94a3b8; background:#0b0e14; border-radius:8px;">
-        <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">📊 ${tvSymbol} Live Chart</h4>
-        <a href="${optUrl}" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="text-decoration:none; display:inline-flex;">
-          🚀 Open ${tvSymbol} on TradingView.com ↗
-        </a>
-      </div>`;
-  }
+  // TradingView disabled: Web and Mobile native canvas chart active
 }
 
 function openOptionChartModal(symbol, expiry, strike, type) {
@@ -4072,15 +4003,9 @@ function openOptionChartModal(symbol, expiry, strike, type) {
   document.getElementById('optStatDiv').textContent = `÷8: ₹${fmtNum(div8)} · ÷6.5: ₹${fmtNum(div65)}`;
   document.getElementById('optStatVolOi').textContent = `Vol: ${fmtOI(contract.vol)} · OI: ${fmtOI(contract.oi)}`;
 
-  document.getElementById('tvTabSymbol').textContent = optTicker;
-  document.getElementById('tvExternalLink').href = optTvUrl;
-  document.getElementById('tvExternalLink').title = `Open ${optTicker} on TradingView.com`;
-
-  switchOptChartTab('canvas');
   selectHubStrat(currentHubStratKey || 'ut');
-
   modal.style.display = 'flex';
-  setTimeout(() => drawOptionChart(contract), 60);
+  setTimeout(() => drawOptionChart(contract), 40);
 }
 
 /* ============================================================
@@ -4088,16 +4013,16 @@ function openOptionChartModal(symbol, expiry, strike, type) {
 ============================================================ */
 function drawOptionChart(c) {
   const canvas = document.getElementById('optChartCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+  if (!canvas || !c) return;
+  const container = document.getElementById('optCanvasContainer') || canvas.parentElement;
+  const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
+  const w = rect.width > 0 ? rect.width : (window.innerWidth < 768 ? window.innerWidth - 32 : 800);
+  const h = rect.height > 0 ? rect.height : (window.innerWidth < 768 ? 260 : 340);
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
-
-  const w = rect.width;
-  const h = rect.height;
   ctx.clearRect(0, 0, w, h);
 
   const indKey = currentHubStratKey || 'ut';
@@ -4146,7 +4071,8 @@ function drawOptionChart(c) {
 
     ctx.fillStyle = color;
     ctx.font = 'bold 11px "IBM Plex Mono", monospace';
-    ctx.fillText(label + ' ₹' + fmtNum(yVal), w - 210, y - 4);
+    const lblX = w < 520 ? 55 : (w - 210);
+    ctx.fillText(label + ' ₹' + fmtNum(yVal), lblX, y - 4);
   };
 
   // Top Fitted Indicator Header Tag on Canvas
@@ -4275,8 +4201,8 @@ function drawOptionChart(c) {
   }
 
   // Draw Candlestick
-  const candleX = w * 0.35;
-  const candleW = 34;
+  const candleX = w < 520 ? (w * 0.42) : (w * 0.35);
+  const candleW = w < 520 ? 22 : 34;
   const isGreen = c.close >= c.open;
   const candleColor = isGreen ? '#10b981' : '#ef4444';
 
@@ -4302,7 +4228,7 @@ function drawOptionChart(c) {
   // LTP Label
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 12.5px "IBM Plex Sans", sans-serif';
-  ctx.fillText('LTP: ₹' + fmtNum(c.close), candleX + 24, yClose + 4);
+  ctx.fillText('LTP: ₹' + fmtNum(c.close), candleX + (w < 520 ? 16 : 24), yClose + 4);
 }
 
 /* ============================================================
