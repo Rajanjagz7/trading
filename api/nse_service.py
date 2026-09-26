@@ -639,4 +639,53 @@ class NSEService:
             "strikes": strikes_data
         }
 
+    def clear_cached_data(self):
+        """
+        Deletes all stored CSV files from writable cache directory and clears in-memory state.
+        Ensures storage on Vercel is clean and forces fresh live data to be fetched on Monday.
+        """
+        deleted_files = []
+        errors = []
+
+        # 1. Clean WRITABLE_CACHE_DIR (/tmp/data_cache on Vercel)
+        if os.path.exists(WRITABLE_CACHE_DIR):
+            for fname in os.listdir(WRITABLE_CACHE_DIR):
+                fpath = os.path.join(WRITABLE_CACHE_DIR, fname)
+                try:
+                    if os.path.isfile(fpath) or os.path.islink(fpath):
+                        os.remove(fpath)
+                        deleted_files.append(fname)
+                except Exception as e:
+                    errors.append(f"Error deleting {fname}: {str(e)}")
+
+        # 2. Also check /tmp for any stray BhavCopy or CSV files
+        if os.environ.get("VERCEL") and os.path.exists("/tmp"):
+            try:
+                for fname in os.listdir("/tmp"):
+                    if fname.endswith(".csv") or fname.endswith(".zip") or fname.startswith("BhavCopy"):
+                        fpath = os.path.join("/tmp", fname)
+                        if os.path.isfile(fpath):
+                            os.remove(fpath)
+                            deleted_files.append(f"/tmp/{fname}")
+            except Exception as e:
+                errors.append(f"Error checking /tmp: {str(e)}")
+
+        # 3. Reset in-memory state so fresh live data is fetched on Monday
+        self.today_rows = []
+        self.prev_map = {}
+        self.today_date = None
+        self.prev_date = None
+        self.last_fetch_time = None
+        self.live_cache = {}
+        self.session = None
+
+        return {
+            "success": True,
+            "deletedFiles": deleted_files,
+            "deletedCount": len(deleted_files),
+            "errors": errors,
+            "message": f"Successfully cleared {len(deleted_files)} stored CSV data files. Storage is clean."
+        }
+
 nse_service = NSEService()
+

@@ -54,19 +54,44 @@ def get_status():
     status = nse_service.get_market_status()
     return status
 
+@app.get("/api/cleanup")
+@app.post("/api/cleanup")
+def cleanup_stored_csvs():
+    """
+    Weekly Cron Job running every Sunday at 12:00 AM (midnight).
+    Deletes all stored CSV bhavcopy files from /tmp and clears memory
+    so storage remains clean and Monday starts with 100% fresh live market data.
+    """
+    res = nse_service.clear_cached_data()
+    res["executedAt"] = datetime.now().isoformat()
+    return res
+
 @app.get("/api/cron")
 @app.post("/api/cron")
-def scheduled_cron():
+def scheduled_cron(action: Optional[str] = None):
     """
-    Automated Cron Job running at 9:16 AM IST (03:46 UTC) Mon-Fri.
-    Refreshes Bhavcopy data and primes cache right after market opening.
+    Automated Cron Job:
+    - If action=='cleanup' or executed on Sunday, executes weekly CSV cleanup.
+    - Otherwise (Mon-Fri 9:16 AM), refreshes Bhavcopy data and primes cache right after market opening.
     """
+    now = datetime.now()
+    if action == "cleanup" or now.weekday() == 6:  # 6 is Sunday
+        cleanup_res = nse_service.clear_cached_data()
+        return {
+            "success": True,
+            "action": "weekly_cleanup",
+            "message": "Sunday 12:00 AM weekly CSV cleanup executed. All stored data cleared for Monday.",
+            "executedAt": now.isoformat(),
+            **cleanup_res
+        }
+
     try:
         res = nse_service.fetch_latest_bhavcopy(force_refresh=True)
         return {
             "success": True,
+            "action": "daily_sync",
             "message": "9:16 AM IST cron sync executed successfully",
-            "executedAt": datetime.now().isoformat(),
+            "executedAt": now.isoformat(),
             "todayDate": res.get("todayDate"),
             "prevDate": res.get("prevDate"),
             "totalContracts": res.get("totalContracts", 0)
@@ -74,8 +99,9 @@ def scheduled_cron():
     except Exception as e:
         return {
             "success": False,
+            "action": "daily_sync",
             "message": f"9:16 AM sync notice: {str(e)}",
-            "executedAt": datetime.now().isoformat(),
+            "executedAt": now.isoformat(),
             "cachedContracts": len(nse_service.today_rows)
         }
 
