@@ -57,14 +57,14 @@ def get_status():
 @app.post("/api/cron")
 def scheduled_cron():
     """
-    Automated Cron Job running at 9:14 AM IST (03:44 UTC) Mon-Fri.
-    Refreshes Bhavcopy data and primes cache for market open at 9:15 AM IST.
+    Automated Cron Job running at 9:16 AM IST (03:46 UTC) Mon-Fri.
+    Refreshes Bhavcopy data and primes cache right after market opening.
     """
     try:
         res = nse_service.fetch_latest_bhavcopy(force_refresh=True)
         return {
             "success": True,
-            "message": "9:14 AM IST pre-market sync executed successfully",
+            "message": "9:16 AM IST cron sync executed successfully",
             "executedAt": datetime.now().isoformat(),
             "todayDate": res.get("todayDate"),
             "prevDate": res.get("prevDate"),
@@ -73,7 +73,7 @@ def scheduled_cron():
     except Exception as e:
         return {
             "success": False,
-            "message": f"Pre-market sync notice: {str(e)}",
+            "message": f"9:16 AM sync notice: {str(e)}",
             "executedAt": datetime.now().isoformat(),
             "cachedContracts": len(nse_service.today_rows)
         }

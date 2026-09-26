@@ -475,55 +475,15 @@ class NSEService:
         call_vol_tot = 0.0
         put_vol_tot = 0.0
 
-        def enrich_contract(r):
-            if not r:
-                return None
-            low = r.get("low", 0.0)
-            open_p = r.get("open", 0.0)
-            high = r.get("high", 0.0)
-            close_p = r.get("close", 0.0)
-            prev_close = r.get("prevClose", 0.0)
-            
-            tgt_9 = round(low * 1.09, 2) if low > 0 else 0.0
-            tgt_18 = round(low * 1.18, 2) if low > 0 else 0.0
-            sl_5 = round(low * 0.95, 2) if low > 0 else 0.0
-            sl_9 = round(low * 0.91, 2) if low > 0 else 0.0
-            sl_18 = round(low * 0.82, 2) if low > 0 else 0.0
-            div_8 = round(close_p / 8.0, 2) if close_p > 0 else 0.0
-            div_65 = round(close_p / 6.5, 2) if close_p > 0 else 0.0
-            is_ol = abs(open_p - low) <= 0.05 if open_p > 0 and low > 0 else False
-            is_oh = abs(open_p - high) <= 0.05 if open_p > 0 and high > 0 else False
-            is_match = (5.80 <= low <= 8.45) and (38.0 <= prev_close <= 48.0)
-            chg = round(close_p - prev_close, 2) if prev_close > 0 else 0.0
-            chg_pct = round((chg / prev_close) * 100.0, 2) if prev_close > 0 else 0.0
-
-            item = dict(r)
-            item.update({
-                "buyLow": low,
-                "tgt9": tgt_9,
-                "tgt18": tgt_18,
-                "sl5": sl_5,
-                "sl9": sl_9,
-                "sl18": sl_18,
-                "div8": div_8,
-                "div65": div_65,
-                "isOL": is_ol,
-                "isOH": is_oh,
-                "isMatch": is_match,
-                "chg": chg,
-                "chgPct": chg_pct,
-            })
-            return item
-
         for r in chain_rows:
             stk = r["strike"]
             if stk not in strikes_map:
                 strikes_map[stk] = {"strike": stk, "CE": None, "PE": None}
             if r["type"] == "CE":
-                strikes_map[stk]["CE"] = enrich_contract(r)
+                strikes_map[stk]["CE"] = r
                 call_vol_tot += r["vol"]
             elif r["type"] == "PE":
-                strikes_map[stk]["PE"] = enrich_contract(r)
+                strikes_map[stk]["PE"] = r
                 put_vol_tot += r["vol"]
 
         # Calculate 71% volume indicator
