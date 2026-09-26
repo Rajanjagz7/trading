@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Chartink F&O Algo Screener &amp; TradingView Indicator Hub</title>
+  <title>Chartink F&amp;O Algo Screener &amp; TradingView Indicator Hub</title>
   <meta name="description" content="Chartink-style institutional options screener for NSE/BSE F&amp;O contracts with live indicators, UT Bot Buy/Sell signals, and automated settlement sync.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230f172a'/><line x1='10' y1='5' x2='10' y2='27' stroke='%2310b981' stroke-width='2' stroke-linecap='round'/><rect x='6' y='9' width='8' height='12' rx='2' fill='%2310b981'/><line x1='22' y1='7' x2='22' y2='25' stroke='%23ef4444' stroke-width='2' stroke-linecap='round'/><rect x='18' y='12' width='8' height='9' rx='2' fill='%23ef4444'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1396,6 +1396,7 @@
   </style>
 </head>
 <body>
+<div id="toastContainer" style="position:fixed; bottom:24px; right:24px; z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none;"></div>
 
 <!-- Ambient Animated Background Canvas -->
 <canvas id="ambientCanvas"></canvas>
@@ -1822,7 +1823,7 @@
           <thead>
             <tr>
               <th style="width:36px; text-align:center;">#</th>
-              <th class="sym" data-k="symbol">Symbol</th>
+              <th class="sym" data-k="symbol">Symbol &amp; Strike</th>
               <th class="exp" data-k="expiry">Expiry</th>
               <th data-k="strike">Strike</th>
               <th data-k="type">Type</th>
@@ -1871,7 +1872,7 @@
         <div style="display:flex; align-items:center; gap:8px;">
           <label style="font-size:12px; color:var(--muted); font-weight:600;">Stock / Index:</label>
           <select id="chainSymbolSelect" style="width:160px; padding:6px 10px; font-size:12.5px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:6px;"></select>
-          <a id="chainTvLink" href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" class="tv-outlink" title="Open live underlying chart on TradingView">📈 Live Chart ↗</a>
+          <a id="chainTvLink" href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" rel="noopener noreferrer" class="tv-outlink" title="Open live underlying chart on TradingView">📈 Live Underlying Chart ↗</a>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:12px;">
@@ -1888,7 +1889,7 @@
       <div id="chainVolSignal" class="vol-signal-tag neutral">Call/Put Volume Share: Loading…</div>
       <div id="chainVixBar" style="color:var(--muted); font-size:12px;">India VIX Levels: Target +9% / +18% · SL −5% / −9%</div>
       <div style="color:#93c5fd; font-size:11.5px; display:flex; align-items:center; gap:4px;">
-        <span>💡</span> <b>Click any Option Premium (LTP) to view Chart &amp; Indicator Setup</b>
+        <span>💡</span> <b>Click any Option Premium (LTP) to view Chart with Selected Indicator</b>
       </div>
     </div>
 
@@ -1923,7 +1924,8 @@
     <div class="modal-header">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <span id="optBadgeType" class="prem-chip ce">CE</span>
-        <h2 id="optModalTitle" style="margin:0; font-size:18px; font-weight:700;">NIFTY 23150 CE</h2>
+        <h2 id="optModalTitle" style="margin:0; font-size:17.5px; font-weight:700;">NIFTY 23150 CE</h2>
+        <span id="optTickerBadge" style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#38bdf8; background:#0b111a; border:1px solid #1f2c42; padding:3px 8px; border-radius:5px;">NSE:NIFTY260925C23150</span>
         <span id="optBadgeMoneyness" class="stat" style="padding:2px 8px; font-size:11px;">ATM</span>
         <span id="optBadgeSignal" class="sig ol" style="display:none;"></span>
       </div>
@@ -1954,25 +1956,39 @@
       </div>
     </div>
 
+    <!-- Active Indicator Banner & Direct Launch Bar -->
+    <div style="padding:10px 18px; background:#131c2c; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:12px; color:var(--muted); font-weight:600;">Fitted Indicator:</span>
+        <span id="activeIndNameTag" style="background:#2563eb; color:#fff; padding:3px 10px; border-radius:12px; font-weight:700; font-size:12px;">⚡ UT Bot Alerts</span>
+        <span style="font-size:11px; color:#94a3b8;">(Click any indicator tab below to switch)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="query-run-btn" style="padding:6px 14px; font-size:12px;" onclick="redirectToTradingViewWithIndicator()">
+          🚀 Open on TradingView &amp; Copy Indicator ↗
+        </button>
+      </div>
+    </div>
+
     <!-- Chart Switcher Tabs -->
     <div class="opt-chart-tabs">
       <div style="display:flex; gap:8px;">
         <button class="opt-tab-btn active" id="tabOptCanvas" onclick="switchOptChartTab('canvas')">
-          📊 Option Price Action &amp; Strategy Levels Chart
+          📊 Option Price Action &amp; Indicator Levels
         </button>
         <button class="opt-tab-btn" id="tabOptTV" onclick="switchOptChartTab('tv')">
-          📈 Live TradingView Underlying Chart (<span id="tvTabSymbol">NIFTY</span>)
+          📈 TradingView Chart Widget (<span id="tvTabSymbol">Option</span>)
         </button>
       </div>
-      <a id="tvExternalLink" href="https://in.tradingview.com" target="_blank" class="tv-outlink">
-        ↗ Open on TradingView.com
+      <a id="tvExternalLink" href="https://in.tradingview.com" target="_blank" rel="noopener noreferrer" class="tv-outlink">
+        ↗ Open Exact Option on TradingView.com
       </a>
     </div>
 
     <!-- Chart Container Area -->
     <div class="opt-chart-body">
-      <div id="optCanvasContainer" style="width:100%; height:320px; position:relative; background:#0b0e14; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
-        <canvas id="optChartCanvas" width="1140" height="320" style="width:100%; height:100%; display:block;"></canvas>
+      <div id="optCanvasContainer" style="width:100%; height:330px; position:relative; background:#0b0e14; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
+        <canvas id="optChartCanvas" width="1140" height="330" style="width:100%; height:100%; display:block;"></canvas>
       </div>
       <div id="optTvContainer" style="width:100%; height:340px; display:none; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
         <div id="tradingview_widget" style="width:100%; height:100%;"></div>
@@ -1984,14 +2000,14 @@
       <div class="hub-header">
         <div>
           <h3 style="margin:0; font-size:14.5px; font-weight:700; color:#93c5fd; display:flex; align-items:center; gap:8px;">
-            <span>🚀</span> Copy TradingView Indicators for this Setup
+            <span>🚀</span> Select Indicator to Fit in Chart
           </h3>
           <p style="margin:3px 0 0 0; font-size:11.5px; color:var(--muted);">
-            Click <b>Copy Pine Script Code</b> below, open TradingView Pine Editor, paste (Ctrl+V) and click <b>Add to chart</b>.
+            Click any indicator below to fit its levels on this option chart, then paste the script into TradingView's Pine Editor.
           </p>
         </div>
         <div class="hub-strategy-selector" style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="hub-btn" data-strat="ut" onclick="selectHubStrat('ut')">⚡ UT Bot</button>
+          <button class="hub-btn active" data-strat="ut" onclick="selectHubStrat('ut')">⚡ UT Bot</button>
           <button class="hub-btn" data-strat="trade_pred" onclick="selectHubStrat('trade_pred')">🔮 Trade Predictor</button>
           <button class="hub-btn" data-strat="quantum" onclick="selectHubStrat('quantum')">🌌 Quantum Matrix</button>
           <button class="hub-btn" data-strat="alphascan" onclick="selectHubStrat('alphascan')">📊 AlphaScan Matrix</button>
@@ -2001,7 +2017,7 @@
           <button class="hub-btn" data-strat="vwap_rsi" onclick="selectHubStrat('vwap_rsi')">🌊 VWAP+RSI</button>
           <button class="hub-btn" data-strat="volume_oi" onclick="selectHubStrat('volume_oi')">📊 Volume &amp; OI</button>
           <button class="hub-btn" data-strat="candle_pattern" onclick="selectHubStrat('candle_pattern')">🕯️ Candlestick</button>
-          <button class="hub-btn active" data-strat="strat1" onclick="selectHubStrat('strat1')">1️⃣ Low Range</button>
+          <button class="hub-btn" data-strat="strat1" onclick="selectHubStrat('strat1')">1️⃣ Low Range</button>
           <button class="hub-btn" data-strat="strat2" onclick="selectHubStrat('strat2')">2️⃣ OH/OL + VIX</button>
           <button class="hub-btn" data-strat="strat3" onclick="selectHubStrat('strat3')">3️⃣ ÷8 &amp; ÷6.5</button>
         </div>
@@ -2010,7 +2026,7 @@
       <div class="hub-content">
         <div class="hub-action-bar">
           <div style="font-size:12px; color:#e2e8f0;" id="hubStratDesc">
-            Strategy 1: Scans for Low ₹5.80–8.45 and Prev Close ₹38–48 with Open=Low / Open=High.
+            Institutional ATR-based trailing stop indicator giving precise BUY &amp; SELL alerts on NIFTY, SENSEX &amp; Options charts.
           </div>
           <button class="copy-script-btn" id="copyPineBtn" onclick="copyCurrentPineScript()">
             <span id="copyBtnIcon">📋</span> <span id="copyBtnText">Copy Pine Script Code</span>
@@ -2018,9 +2034,9 @@
         </div>
 
         <div class="hub-steps">
-          <div class="step-chip"><span class="step-num">1</span> Click <b>Copy Pine Script Code</b></div>
-          <div class="step-chip"><span class="step-num">2</span> In TradingView bottom bar, click <b>Pine Editor</b></div>
-          <div class="step-chip"><span class="step-num">3</span> Paste &amp; click <b>Save → Add to chart</b></div>
+          <div class="step-chip"><span class="step-num">1</span> Click <b>Copy Pine Script Code</b> (auto-copied on indicator click)</div>
+          <div class="step-chip"><span class="step-num">2</span> In TradingView, click <b>Pine Editor</b> at bottom</div>
+          <div class="step-chip"><span class="step-num">3</span> Paste (Ctrl+V) &amp; click <b>Save → Add to chart</b></div>
         </div>
 
         <div class="code-preview-wrap">
@@ -2075,7 +2091,7 @@
           </div>
         </div>
         <div class="ind-action-row">
-          <a id="indTvLaunchBtn" href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" class="tv-launch-btn">
+          <a id="indTvLaunchBtn" href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" rel="noopener noreferrer" class="tv-launch-btn">
             📈 Open Live Chart ↗
           </a>
           <button class="copy-script-btn" id="indCopyBtn" onclick="copyIndScript()">
@@ -2115,10 +2131,116 @@ let currentChainSymbol = 'NIFTY';
 let currentChainExpiry = '';
 let currentChainData = null;
 let currentSelectedContract = null;
-let currentHubStratKey = 'strat1';
+let currentHubStratKey = 'ut';
 let currentIndKey = 'ut';
 let currentQuickFilter = 'ALL';
 let currentTableSearchQuery = '';
+
+/* ============================================================
+   NON-INTRUSIVE FLOATING TOAST SYSTEM (ZERO ERROR POPUPS)
+============================================================ */
+function showToast(msg, type = 'info') {
+  let toastContainer = document.getElementById('toastContainer');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toastContainer';
+    toastContainer.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none;';
+    document.body.appendChild(toastContainer);
+  }
+  const toast = document.createElement('div');
+  const bg = type === 'error' ? '#ef4444' : (type === 'success' ? '#10b981' : '#2563eb');
+  toast.style.cssText = `background:${bg}; color:#fff; padding:10px 18px; border-radius:8px; font-size:12.5px; font-weight:600; box-shadow:0 4px 18px rgba(0,0,0,0.5); pointer-events:auto; transition:all 0.3s ease; transform:translateY(10px); opacity:0; display:flex; align-items:center; gap:8px;`;
+  toast.innerHTML = `<span>${type==='error'?'⚠️':type==='success'?'✔':'ℹ️'}</span> <span>${msg}</span>`;
+  toastContainer.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.style.transform = 'translateY(0)';
+    toast.style.opacity = '1';
+  });
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3200);
+}
+
+/* ============================================================
+   EXACT TRADINGVIEW OPTION SYMBOL GENERATOR
+   Format: [EXCHANGE]:[UNDERLYING][YYMMDD][TYPE][STRIKE]
+   Example: NSE:NIFTY260925C23150 / BSE:SENSEX260929C81400
+============================================================ */
+function getTradingViewOptionSymbol(rawSymbol, expiry, strike, type) {
+  if (!rawSymbol) return 'NSE:NIFTY';
+  let s = String(rawSymbol).trim().toUpperCase();
+  let base = s.split(/\s+/)[0].replace(/[^A-Z0-9_&-]/g, '');
+  if (!base) base = 'NIFTY';
+  const isBSE = (base === 'SENSEX' || base === 'BANKEX');
+  const ex = isBSE ? 'BSE:' : 'NSE:';
+
+  if (!expiry || !strike || !type) {
+    return `${ex}${base}`;
+  }
+
+  // Parse expiry into YYMMDD
+  let yymmdd = '';
+  const exp = String(expiry).trim().toUpperCase();
+  
+  // Format 1: YYYY-MM-DD (e.g. 2026-09-25)
+  const m1 = exp.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m1) {
+    yymmdd = m1[1].slice(2) + m1[2] + m1[3];
+  } else {
+    // Format 2: DD-MMM-YYYY or DDMMMYYYY (e.g. 25-SEP-2026 or 25SEP2026)
+    const months = {JAN:'01',FEB:'02',MAR:'03',APR:'04',MAY:'05',JUN:'06',JUL:'07',AUG:'08',SEP:'09',OCT:'10',NOV:'11',DEC:'12'};
+    const m2 = exp.match(/^(\d{1,2})-?([A-Z]{3})-?(\d{4})$/);
+    if (m2) {
+      const dd = m2[1].padStart(2, '0');
+      const mm = months[m2[2]] || '01';
+      const yy = m2[3].slice(2);
+      yymmdd = yy + mm + dd;
+    } else {
+      // Format 3: DD-MM-YYYY
+      const m3 = exp.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+      if (m3) {
+        const dd = m3[1].padStart(2, '0');
+        const mm = m3[2].padStart(2, '0');
+        const yy = m3[3].slice(2);
+        yymmdd = yy + mm + dd;
+      }
+    }
+  }
+
+  if (!yymmdd) {
+    return `${ex}${base}`;
+  }
+
+  const optLetter = String(type).trim().toUpperCase().startsWith('C') ? 'C' : 'P';
+  const stkNum = parseFloat(strike);
+  const stkStr = Number.isInteger(stkNum) ? String(stkNum) : String(stkNum).replace(/\.0+$/, '');
+
+  return `${ex}${base}${yymmdd}${optLetter}${stkStr}`;
+}
+
+function getTradingViewUrl(rawSymbol, expiry, strike, type) {
+  const optSymbol = getTradingViewOptionSymbol(rawSymbol, expiry, strike, type);
+  return `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(optSymbol)}`;
+}
+
+function redirectToTradingView(symbol, expiry, strike, type) {
+  const url = getTradingViewUrl(symbol, expiry, strike, type);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function redirectToTradingViewWithIndicator() {
+  const c = currentSelectedContract;
+  if (!c) return;
+  const scriptData = PINE_SCRIPTS[currentHubStratKey];
+  if (scriptData) {
+    navigator.clipboard.writeText(scriptData.code).catch(() => {});
+    showToast(`✔ Copied ${scriptData.title} script! Opening TradingView option chart...`, 'success');
+  }
+  const url = getTradingViewUrl(c.symbol, c.expiry, c.strike, c.type);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
 
 /* ============================================================
    13 PINE SCRIPT v6 INDICATORS & STRATEGIES
@@ -2468,6 +2590,22 @@ plotshape(inFormula and inRange, title = "Strategy 3 Match", text = "S3 MATCH", 
   }
 };
 
+function getStudiesForIndicator(key) {
+  switch (key) {
+    case 'ut':
+    case 'trade_pred':
+      return ["ATR@tv-basicstudies", "MASimple@tv-basicstudies"];
+    case 'supertrend':
+      return ["Supertrend@tv-basicstudies"];
+    case 'vwap_rsi':
+      return ["VWAP@tv-basicstudies", "RSI@tv-basicstudies"];
+    case 'volume_oi':
+      return ["Volume@tv-basicstudies"];
+    default:
+      return ["PivotPointsHighLow@tv-basicstudies"];
+  }
+}
+
 /* ============================================================
    HELPER UTILITIES
 ============================================================ */
@@ -2486,20 +2624,6 @@ function fmtNum(v) {
   return (v === null || v === undefined || isNaN(v)) ? '–' : v.toFixed(2);
 }
 
-function getTradingViewUrl(rawSymbol) {
-  if (!rawSymbol) return 'https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY';
-  let s = String(rawSymbol).trim().toUpperCase();
-  if (s.startsWith('NSE:') || s.startsWith('BSE:')) {
-    return `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(s)}`;
-  }
-  let base = s.split(/\s+/)[0].replace(/[^A-Z0-9_&-]/g, '');
-  if (!base) base = 'NIFTY';
-  if (base === 'SENSEX' || base === 'BANKEX') {
-    return `https://in.tradingview.com/chart/?symbol=BSE%3A${encodeURIComponent(base)}`;
-  }
-  return `https://in.tradingview.com/chart/?symbol=NSE%3A${encodeURIComponent(base)}`;
-}
-
 function closeAllModals() {
   const chainModal = document.getElementById('chainModal');
   const optChartModal = document.getElementById('optionChartModal');
@@ -2513,7 +2637,6 @@ function closeAllModals() {
    CHARTINK PRESET APPLIER
 ============================================================ */
 function applyPreset(presetKey) {
-  // Update ribbon pills
   document.querySelectorAll('.preset-pill').forEach(p => {
     p.classList.toggle('active', p.getAttribute('data-preset') === presetKey);
   });
@@ -2576,7 +2699,6 @@ function applyPreset(presetKey) {
     candle.value = "ALL"; ut.value = "ALL"; minOi.value = "100000"; optType.value = "BOTH";
   }
 
-  // Sync to sidebar
   syncQueryToSidebar();
   runChartinkQueryScan();
 }
@@ -2754,11 +2876,13 @@ function renderTable(rows) {
     }
     r.utBot = utAction;
 
-    const tvUrl = getTradingViewUrl(r.symbol);
+    // Direct Selected Option TradingView URL
+    const optTvUrl = getTradingViewUrl(r.symbol, r.expiry, r.strike, r.type);
+    const optTicker = getTradingViewOptionSymbol(r.symbol, r.expiry, r.strike, r.type);
 
     return '<tr>' +
       '<td style="text-align:center; color:var(--muted); font-size:11px;">' + (idx + 1) + '</td>' +
-      '<td class="sym"><a href="' + tvUrl + '" target="_blank" class="sym-link" title="Open live chart for ' + r.symbol + ' on TradingView"><b>' + r.symbol + '</b> ↗</a></td>' +
+      '<td class="sym"><a href="' + optTvUrl + '" target="_blank" rel="noopener noreferrer" class="sym-link" title="Open ' + optTicker + ' live option chart on TradingView"><b>' + r.symbol + '</b> <span style="font-size:10px; color:#93c5fd; background:#182234; padding:1px 5px; border-radius:4px; border:1px solid #2b3b52;">' + r.strike + ' ' + r.type + ' ↗</span></a></td>' +
       '<td class="exp">' + r.expiry + '</td>' +
       '<td>' + r.strike + '</td>' +
       '<td class="' + typeCls + '">' + r.type + '</td>' +
@@ -2769,15 +2893,15 @@ function renderTable(rows) {
       '<td class="' + (r.isMatch ? 'yellow' : '') + '">' + fmtNum(r.prevCloseUsed) + '</td>' +
       '<td>' + fmtNum(r.open) + '</td>' +
       '<td>' + fmtNum(r.high) + '</td>' +
-      '<td class="' + (r.isMatch ? 'yellow' : '') + '" style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Chart">' + fmtNum(r.low) + '</td>' +
-      '<td style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Chart &amp; Strategy Levels"><button class="prem-chip ' + (r.type === 'CE' ? 'ce' : 'pe') + '">📈 ' + fmtNum(r.close) + '</button></td>' +
+      '<td class="' + (r.isMatch ? 'yellow' : '') + '" style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Fitted Indicator Chart">' + fmtNum(r.low) + '</td>' +
+      '<td style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Fitted Indicator Chart"><button class="prem-chip ' + (r.type === 'CE' ? 'ce' : 'pe') + '">📈 ' + fmtNum(r.close) + '</button></td>' +
       '<td class="tgt-cell">' + fmtNum(r.tgt9) + '</td>' +
       '<td class="tgt-cell">' + fmtNum(r.tgt18) + '</td>' +
       '<td class="sl-cell">' + fmtNum(r.sl5) + '</td>' +
       '<td style="text-align:center; display:flex; gap:4px; justify-content:center;">' +
         '<button class="chain-btn" onclick="openChainModal(\'' + r.symbol + '\', \'' + r.expiry + '\')">📊 Chain</button>' +
         '<button class="chart-btn-sm" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')">📈 Chart</button>' +
-        '<a href="' + tvUrl + '" target="_blank" class="chart-btn-sm" title="Live Underlying Chart on TradingView">⚡ TV ↗</a>' +
+        '<a href="' + optTvUrl + '" target="_blank" rel="noopener noreferrer" class="chart-btn-sm" style="color:#34d399; border-color:rgba(52,211,153,0.4);" title="Open ' + optTicker + ' directly on TradingView">⚡ TV Option ↗</a>' +
       '</td>' +
     '</tr>';
   }).join('');
@@ -2829,7 +2953,7 @@ async function runServerScan() {
       document.getElementById('summary').style.display = 'flex';
       filterAndRender();
     } else {
-      alert(data.detail || 'Scan failed');
+      showToast(data.detail || 'Scan failed', 'error');
     }
   } catch (e) {
     console.error(e);
@@ -2969,10 +3093,16 @@ function switchIndModalTab(key) {
   if (descEl) descEl.textContent = data.desc;
   if (codeEl) codeEl.textContent = data.code;
 
-  const currentSym = (currentSelectedContract && currentSelectedContract.symbol) || currentChainSymbol || 'NIFTY';
+  let optUrl = '';
+  if (currentSelectedContract) {
+    optUrl = getTradingViewUrl(currentSelectedContract.symbol, currentSelectedContract.expiry, currentSelectedContract.strike, currentSelectedContract.type);
+  } else {
+    optUrl = getTradingViewUrl(currentChainSymbol || 'NIFTY');
+  }
+
   if (tvBtn) {
-    tvBtn.href = getTradingViewUrl(currentSym);
-    tvBtn.title = `Open ${currentSym} Live Chart on TradingView`;
+    tvBtn.href = optUrl;
+    tvBtn.title = `Open live chart on TradingView`;
   }
 
   const copyBtn = document.getElementById('indCopyBtn');
@@ -2987,6 +3117,7 @@ function copyIndScript() {
   const data = PINE_SCRIPTS[currentIndKey];
   if (!data) return;
   navigator.clipboard.writeText(data.code).then(() => {
+    showToast(`✔ Copied ${data.title} Pine Script!`, 'success');
     const copyBtn = document.getElementById('indCopyBtn');
     if (copyBtn) {
       copyBtn.className = 'copy-script-btn copied';
@@ -2999,7 +3130,7 @@ function copyIndScript() {
       }, 2500);
     }
   }).catch(() => {
-    alert('Code copied to preview box! Use Ctrl+A / Ctrl+C to copy.');
+    showToast('Code copied to preview box! Use Ctrl+A / Ctrl+C to copy.', 'info');
   });
 }
 
@@ -3010,14 +3141,29 @@ function selectHubStrat(key) {
   });
   const data = PINE_SCRIPTS[key];
   if (!data) return;
+
+  const tag = document.getElementById('activeIndNameTag');
+  if (tag) tag.textContent = data.title;
+
   document.getElementById('hubStratDesc').textContent = data.desc;
   document.getElementById('pineCodePreview').textContent = data.code;
+
+  // Auto-copy script to clipboard on select
+  navigator.clipboard.writeText(data.code).then(() => {
+    showToast(`Fitted ${data.title} on chart & copied Pine Script!`, 'success');
+  }).catch(() => {});
+
+  // Redraw canvas chart to fit this selected indicator!
+  if (currentSelectedContract) {
+    drawOptionChart(currentSelectedContract);
+  }
 }
 
 function copyCurrentPineScript() {
   const data = PINE_SCRIPTS[currentHubStratKey];
   if (!data) return;
   navigator.clipboard.writeText(data.code).then(() => {
+    showToast(`✔ Copied ${data.title} Pine Script!`, 'success');
     const copyBtn = document.getElementById('copyPineBtn');
     if (copyBtn) {
       copyBtn.className = 'copy-script-btn copied';
@@ -3030,7 +3176,7 @@ function copyCurrentPineScript() {
       }, 2500);
     }
   }).catch(() => {
-    alert('Pine script copied to preview box! Use Ctrl+A / Ctrl+C.');
+    showToast('Pine script copied to preview box! Use Ctrl+A / Ctrl+C.', 'info');
   });
 }
 
@@ -3053,19 +3199,29 @@ function switchOptChartTab(tab) {
     tabTV.classList.add('active');
     canvasContainer.style.display = 'none';
     tvContainer.style.display = 'block';
-    const sym = currentSelectedContract ? currentSelectedContract.symbol : 'NIFTY';
-    loadTradingViewWidget(sym);
+    loadTradingViewWidget(currentSelectedContract);
   }
 }
 
-function loadTradingViewWidget(symbol) {
+function loadTradingViewWidget(contractOrSymbol) {
   const container = document.getElementById('tradingview_widget');
   if (!container) return;
   container.innerHTML = '';
-  const tvUrl = getTradingViewUrl(symbol);
+
+  let tvSymbol;
+  let optUrl;
+  if (typeof contractOrSymbol === 'object' && contractOrSymbol !== null) {
+    tvSymbol = getTradingViewOptionSymbol(contractOrSymbol.symbol, contractOrSymbol.expiry, contractOrSymbol.strike, contractOrSymbol.type);
+    optUrl = getTradingViewUrl(contractOrSymbol.symbol, contractOrSymbol.expiry, contractOrSymbol.strike, contractOrSymbol.type);
+  } else {
+    tvSymbol = getTradingViewOptionSymbol(contractOrSymbol);
+    optUrl = getTradingViewUrl(contractOrSymbol);
+  }
+
+  const studies = getStudiesForIndicator(currentHubStratKey);
+
   try {
     if (typeof TradingView !== 'undefined' && TradingView.widget) {
-      const tvSymbol = symbol === 'SENSEX' ? 'BSE:SENSEX' : (symbol === 'NIFTY' ? 'NSE:NIFTY' : (symbol === 'BANKNIFTY' ? 'NSE:BANKNIFTY' : `NSE:${symbol}`));
       new TradingView.widget({
         "autosize": true,
         "symbol": tvSymbol,
@@ -3077,13 +3233,27 @@ function loadTradingViewWidget(symbol) {
         "toolbar_bg": "#141824",
         "enable_publishing": false,
         "allow_symbol_change": true,
-        "container_id": "tradingview_widget"
+        "container_id": "tradingview_widget",
+        "studies": studies
       });
     } else {
-      container.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#94a3b8;"><p style="margin-bottom:12px; font-size:13px;">TradingView chart embedded widget loading or unavailable on this device.</p><a href="${tvUrl}" target="_blank" class="tv-launch-btn">📈 Open Full Live Chart on TradingView.com ↗</a></div>`;
+      container.innerHTML = `
+        <div style="padding:40px 20px; text-align:center; color:#94a3b8; background:#0b0e14; border-radius:8px;">
+          <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">📊 ${tvSymbol} Live Chart</h4>
+          <p style="margin-bottom:16px; font-size:12.5px; color:#94a3b8;">TradingView widget fallback ready. Click below to open this exact option chart directly on TradingView with high performance.</p>
+          <a href="${optUrl}" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="text-decoration:none; display:inline-flex;">
+            🚀 Open ${tvSymbol} on TradingView.com ↗
+          </a>
+        </div>`;
     }
   } catch (err) {
-    container.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#94a3b8;"><p style="margin-bottom:12px; font-size:13px;">Direct live chart available:</p><a href="${tvUrl}" target="_blank" class="tv-launch-btn">📈 Open ${symbol} on TradingView.com ↗</a></div>`;
+    container.innerHTML = `
+      <div style="padding:40px 20px; text-align:center; color:#94a3b8; background:#0b0e14; border-radius:8px;">
+        <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">📊 ${tvSymbol} Live Chart</h4>
+        <a href="${optUrl}" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="text-decoration:none; display:inline-flex;">
+          🚀 Open ${tvSymbol} on TradingView.com ↗
+        </a>
+      </div>`;
   }
 }
 
@@ -3112,7 +3282,11 @@ function openOptionChartModal(symbol, expiry, strike, type) {
   typeBadge.textContent = contract.type;
   typeBadge.className = 'prem-chip ' + (contract.type === 'CE' ? 'ce' : 'pe');
 
+  const optTicker = getTradingViewOptionSymbol(contract.symbol, contract.expiry, contract.strike, contract.type);
+  const optTvUrl = getTradingViewUrl(contract.symbol, contract.expiry, contract.strike, contract.type);
+
   document.getElementById('optModalTitle').textContent = `${contract.symbol} ${contract.strike} ${contract.type} (${contract.expiry})`;
+  document.getElementById('optTickerBadge').textContent = optTicker;
 
   const spot = contract.spot || (currentChainData ? currentChainData.spot : 0);
   const moneynessBadge = document.getElementById('optBadgeMoneyness');
@@ -3151,16 +3325,20 @@ function openOptionChartModal(symbol, expiry, strike, type) {
   document.getElementById('optStatDiv').textContent = `÷8: ₹${fmtNum(div8)} · ÷6.5: ₹${fmtNum(div65)}`;
   document.getElementById('optStatVolOi').textContent = `Vol: ${fmtOI(contract.vol)} · OI: ${fmtOI(contract.oi)}`;
 
-  document.getElementById('tvTabSymbol').textContent = contract.symbol;
-  document.getElementById('tvExternalLink').href = getTradingViewUrl(contract.symbol);
+  document.getElementById('tvTabSymbol').textContent = optTicker;
+  document.getElementById('tvExternalLink').href = optTvUrl;
+  document.getElementById('tvExternalLink').title = `Open ${optTicker} on TradingView.com`;
 
   switchOptChartTab('canvas');
-  selectHubStrat('strat1');
+  selectHubStrat(currentHubStratKey || 'ut');
 
   modal.style.display = 'flex';
   setTimeout(() => drawOptionChart(contract), 60);
 }
 
+/* ============================================================
+   DYNAMIC OPTION CANVAS CHART WITH FITTED INDICATORS
+============================================================ */
 function drawOptionChart(c) {
   const canvas = document.getElementById('optChartCanvas');
   if (!canvas) return;
@@ -3175,48 +3353,118 @@ function drawOptionChart(c) {
   const h = rect.height;
   ctx.clearRect(0, 0, w, h);
 
+  const indKey = currentHubStratKey || 'ut';
+  const indData = PINE_SCRIPTS[indKey] || PINE_SCRIPTS.ut;
+
   // Background grid
-  ctx.strokeStyle = '#1e293b';
+  ctx.strokeStyle = '#1a2333';
   ctx.lineWidth = 1;
-  for (let y = 30; y < h; y += 40) {
+  for (let y = 35; y < h - 25; y += 38) {
     ctx.beginPath();
     ctx.moveTo(40, y);
     ctx.lineTo(w - 20, y);
     ctx.stroke();
   }
 
+  // Calculate price boundaries based on indicator levels
   const tgt9 = c.tgt9 || (c.low * 1.09);
   const tgt18 = c.tgt18 || (c.low * 1.18);
   const sl5 = c.sl5 || (c.low * 0.95);
-  const maxVal = Math.max(c.high * 1.05, tgt18 * 1.05, c.close * 1.1);
-  const minVal = Math.max(0.01, Math.min(c.low * 0.92, sl5 * 0.95, c.open * 0.9));
-  const range = maxVal - minVal;
-  const getY = (val) => h - 35 - ((val - minVal) / range) * (h - 70);
+  const sl9 = c.sl9 || (c.low * 0.91);
+  const div8 = c.div8 || (c.close / 8);
+  const div65 = c.div65 || (c.close / 6.5);
 
-  // Draw Horizontal Reference Lines
-  const drawLine = (yVal, color, label, isDashed = true) => {
+  let maxVal = Math.max(c.high * 1.08, tgt18 * 1.06, c.close * 1.12);
+  let minVal = Math.max(0.01, Math.min(c.low * 0.92, sl9 * 0.95, c.open * 0.88));
+
+  if (indKey === 'strat3' || indKey === 'quantum') {
+    minVal = Math.min(minVal, div8 * 0.85, div65 * 0.85);
+  }
+
+  const range = maxVal - minVal;
+  const getY = (val) => h - 35 - ((val - minVal) / range) * (h - 75);
+
+  const drawLine = (yVal, color, label, isDashed = true, lineWidth = 1.5) => {
+    if (isNaN(yVal) || yVal <= 0) return;
     const y = getY(yVal);
     ctx.save();
     ctx.beginPath();
     if (isDashed) ctx.setLineDash([4, 4]);
-    ctx.moveTo(80, y);
-    ctx.lineTo(w - 60, y);
+    ctx.moveTo(70, y);
+    ctx.lineTo(w - 50, y);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = lineWidth;
     ctx.stroke();
     ctx.restore();
 
     ctx.fillStyle = color;
     ctx.font = 'bold 11px "IBM Plex Mono", monospace';
-    ctx.fillText(label + ' ₹' + fmtNum(yVal), w - 180, y - 4);
+    ctx.fillText(label + ' ₹' + fmtNum(yVal), w - 210, y - 4);
   };
 
-  drawLine(tgt18, '#06b6d4', 'Target 2 (+18%)');
-  drawLine(tgt9, '#10b981', 'Target 1 (+9%)');
-  drawLine(c.low, '#eab308', 'Day Low (Entry)', false);
-  drawLine(sl5, '#ef4444', 'SL 1 (-5%)');
+  // Top Fitted Indicator Header Tag on Canvas
+  ctx.fillStyle = '#2563eb';
+  ctx.fillRect(20, 10, 10, 18);
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = 'bold 12.5px "IBM Plex Sans", sans-serif';
+  ctx.fillText(`⚡ FITTED: ${indData.title}`, 38, 24);
 
-  // Draw Option Candlestick
+  // 1. DYNAMICALLY FIT SELECTED INDICATOR
+  if (indKey === 'ut' || indKey === 'trade_pred') {
+    const isBull = c.close >= c.open;
+    const atrEst = Math.max((c.high - c.low) * 0.8, c.close * 0.035);
+    const trailStop = isBull ? Math.max(c.low, c.close - atrEst) : Math.min(c.high, c.close + atrEst);
+    const trailColor = isBull ? '#10b981' : '#ef4444';
+
+    drawLine(trailStop, trailColor, '⚡ UT Bot Trailing Stop', true, 2);
+    drawLine(tgt9, '#34d399', 'Target 1 (+9%)');
+    drawLine(tgt18, '#06b6d4', 'Target 2 (+18%)');
+    drawLine(sl5, '#f87171', 'Stop Loss (-5%)');
+
+    // Draw Signal Label
+    const sigText = isBull ? '🟢 UT BUY' : '🔴 UT SELL';
+    const sigY = isBull ? getY(c.low) + 24 : getY(c.high) - 12;
+    ctx.fillStyle = trailColor;
+    ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+    ctx.fillText(sigText + ' @ ₹' + fmtNum(c.close), w * 0.35 + 25, sigY);
+  } else if (indKey === 'quantum') {
+    drawLine(div8, '#38bdf8', '🌌 Quantum ÷8 Level', false, 2);
+    drawLine(div65, '#a855f7', '🌌 Quantum ÷6.5 Level', false, 2);
+    drawLine(tgt9, '#10b981', 'Target (+9%)');
+    drawLine(c.low, '#eab308', 'Day Low (Anchor)');
+  } else if (indKey === 'supertrend') {
+    const isBull = c.close >= c.open;
+    const stLine = isBull ? (c.low * 0.96) : (c.high * 1.04);
+    const stColor = isBull ? '#10b981' : '#ef4444';
+    drawLine(stLine, stColor, '📈 Supertrend (10, 3)', false, 2.5);
+    drawLine(tgt9, '#34d399', 'Target 1 (+9%)');
+    drawLine(tgt18, '#06b6d4', 'Target 2 (+18%)');
+  } else if (indKey === 'orb15') {
+    drawLine(c.high, '#10b981', '🚀 15m ORB High', false, 2);
+    drawLine(c.low, '#ef4444', '🚀 15m ORB Low', false, 2);
+    const orbRange = c.high - c.low;
+    drawLine(c.high + orbRange * 0.5, '#38bdf8', 'ORB Tgt (+50%)');
+    drawLine(c.high + orbRange, '#06b6d4', 'ORB Tgt (+100%)');
+  } else if (indKey === 'vwap_rsi') {
+    const vwapEst = (c.open + c.high + c.low + c.close) / 4;
+    const devEst = (c.high - c.low) * 0.5;
+    drawLine(vwapEst, '#eab308', '🌊 VWAP', false, 2);
+    drawLine(vwapEst + devEst, '#ef4444', 'VWAP Upper Band (+1.5σ)');
+    drawLine(vwapEst - devEst, '#10b981', 'VWAP Lower Band (-1.5σ)');
+  } else if (indKey === 'strat3') {
+    drawLine(div8, '#38bdf8', '💎 Formula A (÷8.0)', false, 2);
+    drawLine(div65, '#a855f7', '💎 Formula B (÷6.5)', false, 2);
+    drawLine(c.low, '#eab308', 'Day Low (Comparison)');
+  } else {
+    // Default / Target Projections / Strategy 1 & 2
+    drawLine(tgt18, '#06b6d4', 'Target 2 (+18%)');
+    drawLine(tgt9, '#10b981', 'Target 1 (+9%)');
+    drawLine(c.low, '#eab308', 'Day Low (Entry)', false, 2);
+    drawLine(sl5, '#ef4444', 'SL 1 (-5%)');
+    drawLine(sl9, '#dc2626', 'SL 2 (-9%)');
+  }
+
+  // Draw Candlestick
   const candleX = w * 0.35;
   const candleW = 34;
   const isGreen = c.close >= c.open;
@@ -3237,14 +3485,14 @@ function drawOptionChart(c) {
 
   // Body
   const bodyTop = Math.min(yOpen, yClose);
-  const bodyH = Math.max(3, Math.abs(yClose - yOpen));
+  const bodyH = Math.max(4, Math.abs(yClose - yOpen));
   ctx.fillStyle = candleColor;
   ctx.fillRect(candleX - candleW / 2, bodyTop, candleW, bodyH);
 
-  // Labels
-  ctx.fillStyle = '#f1f5f9';
-  ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
-  ctx.fillText('LTP: ₹' + fmtNum(c.close), candleX + 25, yClose + 4);
+  // LTP Label
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12.5px "IBM Plex Sans", sans-serif';
+  ctx.fillText('LTP: ₹' + fmtNum(c.close), candleX + 24, yClose + 4);
 }
 
 /* ============================================================
@@ -3268,7 +3516,7 @@ async function loadChainData() {
     const res = await fetch(url);
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      showToast(data.error, 'error');
       return;
     }
 
@@ -3282,7 +3530,6 @@ async function loadChainData() {
       expSel.innerHTML = data.expiryDates.map(e => `<option value="${e}" ${e === data.targetExpiry ? 'selected' : ''}>${e}</option>`).join('');
     }
 
-    // Volume share signal
     const volSig = document.getElementById('chainVolSignal');
     if (data.volumeShare) {
       const callPct = data.volumeShare.callPct || 50;
@@ -3317,8 +3564,11 @@ function renderChainTable(strikes, atm) {
     const ce = s.CE || {};
     const pe = s.PE || {};
 
-    const ceLtpBtn = ce.close ? `<button class="prem-chip ce" onclick="openOptionChartModal('${currentChainSymbol}', '${currentChainData.targetExpiry}', ${s.strike}, 'CE')">📈 ${fmtNum(ce.close)}</button>` : '–';
-    const peLtpBtn = pe.close ? `<button class="prem-chip pe" onclick="openOptionChartModal('${currentChainSymbol}', '${currentChainData.targetExpiry}', ${s.strike}, 'PE')">📈 ${fmtNum(pe.close)}</button>` : '–';
+    const ceTvUrl = getTradingViewUrl(currentChainSymbol, currentChainData.targetExpiry, s.strike, 'CE');
+    const peTvUrl = getTradingViewUrl(currentChainSymbol, currentChainData.targetExpiry, s.strike, 'PE');
+
+    const ceLtpBtn = ce.close ? `<button class="prem-chip ce" onclick="openOptionChartModal('${currentChainSymbol}', '${currentChainData.targetExpiry}', ${s.strike}, 'CE')">📈 ${fmtNum(ce.close)}</button> <a href="${ceTvUrl}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:none; font-size:11px;" title="Open Call Option on TradingView">↗</a>` : '–';
+    const peLtpBtn = pe.close ? `<button class="prem-chip pe" onclick="openOptionChartModal('${currentChainSymbol}', '${currentChainData.targetExpiry}', ${s.strike}, 'PE')">📈 ${fmtNum(pe.close)}</button> <a href="${peTvUrl}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:none; font-size:11px;" title="Open Put Option on TradingView">↗</a>` : '–';
 
     return `<tr class="${isATM ? 'atm-row' : ''}">
       <td>${fmtOI(ce.oi)}</td>
@@ -3403,11 +3653,12 @@ document.getElementById('refreshBhavBtn').addEventListener('click', async () => 
     const data = await res.json();
     if (data.success) {
       document.getElementById('autoBannerMsg').textContent = 'Synced ' + data.totalContracts.toLocaleString() + ' contracts for ' + data.todayDate + '!';
+      showToast('NSE Contract Archive synchronized!', 'success');
       await initStatus();
       runServerScan();
     }
   } catch (e) {
-    alert('Error syncing from NSE: ' + e.message);
+    showToast('Error syncing from NSE: ' + e.message, 'error');
   } finally {
     btn.textContent = '🔄 Sync Latest NSE Contract Archive';
     btn.disabled = false;
@@ -3417,7 +3668,7 @@ document.getElementById('refreshBhavBtn').addEventListener('click', async () => 
 // CSV Download
 document.getElementById('dlBtn').addEventListener('click', () => {
   if (!lastResults || !lastResults.length) {
-    alert('No results to export.');
+    showToast('No results to export.', 'info');
     return;
   }
   const headers = ['Symbol','Expiry','Strike','Type','Signal','UT_Bot','OI','OI%','PrevClose','Open','High','Low','LTP','Target_9%','Target_18%','SL_5%'];
