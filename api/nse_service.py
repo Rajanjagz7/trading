@@ -344,6 +344,8 @@ class NSEService:
         include_untraded = filters.get("includeUntraded", False)
         show_mode = filters.get("showMode", "matches")
 
+        indicator = filters.get("indicator")
+
         nearest_map = {}
         if exp_select == "nearest":
             for r in options_list:
@@ -408,6 +410,69 @@ class NSEService:
             div_65 = round(prev_close_used / 6.5, 2) if prev_close_used > 0 else 0.0
             is_match3 = (300 <= prev_close_used <= 349) and ((52 <= r["low"] <= 58) or (div_8 <= r["low"] <= div_65))
 
+            # Indicator-specific evaluation across all stocks & indices
+            is_ind_match = False
+            ind_tag = ""
+
+            if indicator == "alphascan":
+                exact_match = (52.0 <= r["low"] <= 58.0) and (300.0 <= prev_close_used <= 349.0)
+                in_div = (div_8 > 0 and div_8 <= r["low"] <= div_65)
+                in_low = (52.0 <= r["low"] <= 58.0)
+                in_prem = (300.0 <= prev_close_used <= 349.0)
+                is_ind_match = exact_match or in_div or in_low or in_prem
+                ind_tag = "⭐ EXACT MATCH" if exact_match else ("÷8-÷6.5 Zone" if in_div else ("Low 52-58" if in_low else "Prem 300-349"))
+            elif indicator == "trade_pred":
+                is_buy = is_ol or (r["close"] > r["open"] and r["close"] >= prev_close_used)
+                is_sell = is_oh or (r["close"] < r["open"] and r["close"] <= prev_close_used)
+                is_ind_match = is_buy or is_sell
+                ind_tag = "🟢 TP BUY" if is_buy else "🔴 TP SELL"
+            elif indicator == "quantum":
+                is_sup = (r["low"] <= r["open"] * 0.98 and r["close"] > r["open"])
+                is_res = (r["high"] >= r["open"] * 1.02 and r["close"] < r["open"])
+                in_frac = (div_8 > 0 and abs(r["low"] - div_8) <= div_8 * 0.15)
+                is_ind_match = is_sup or is_res or in_frac
+                ind_tag = "🟢 Support" if is_sup else ("🔴 Resistance" if is_res else "Quantum Level")
+            elif indicator == "target_proj":
+                in_band = (div_8 > 0 and div_8 <= r["low"] <= div_65)
+                hit_t2 = r["high"] >= tgt_18
+                hit_t1 = r["close"] >= tgt_9
+                is_ind_match = in_band or hit_t2 or hit_t1
+                ind_tag = "🎯 Target 2" if hit_t2 else ("🎯 Target 1" if hit_t1 else "Target Band")
+            elif indicator == "ut":
+                is_buy = is_ol or (r["close"] > r["open"] and r["close"] >= prev_close_used and r["low"] <= r["open"] * 0.98)
+                is_sell = is_oh or (r["close"] < r["open"] and r["close"] <= prev_close_used)
+                is_ind_match = is_buy or is_sell
+                ind_tag = "🟢 UT BUY" if is_buy else "🔴 UT SELL"
+            elif indicator == "supertrend":
+                is_bull = (r["close"] >= r["open"] * 1.01 and r["close"] >= prev_close_used)
+                is_bear = (r["close"] <= r["open"] * 0.99 and r["close"] <= prev_close_used)
+                is_ind_match = is_bull or is_bear
+                ind_tag = "📈 Bull Trend" if is_bull else "📉 Bear Trend"
+            elif indicator == "orb15":
+                is_ind_match = is_ol or (r["close"] >= r["high"] * 0.98 and r["vol"] > 0)
+                ind_tag = "🚀 ORB Breakout"
+            elif indicator == "vwap_rsi":
+                is_ind_match = (r["low"] <= r["open"] * 0.97 and r["close"] > r["low"])
+                ind_tag = "🌊 VWAP Reversion"
+            elif indicator == "volume_oi":
+                is_ind_match = (r["vol"] >= 5000) or (abs(oi_pct or 0) >= 10.0)
+                ind_tag = "📊 Volume Spike"
+            elif indicator == "candle_pattern":
+                is_ind_match = is_ol or is_oh
+                ind_tag = "🟢 Open=Low" if is_ol else "🔴 Open=High"
+            elif indicator == "strat1":
+                is_ind_match = is_match
+                ind_tag = "1️⃣ S1 MATCH"
+            elif indicator == "strat2":
+                is_ind_match = is_ol or is_oh
+                ind_tag = "2️⃣ S2 VIX Tgt"
+            elif indicator == "strat3":
+                is_ind_match = is_match3
+                ind_tag = "3️⃣ S3 Formula"
+            else:
+                is_ind_match = is_match
+                ind_tag = sig or "Active"
+
             item = dict(r)
             item.update({
                 "prevCloseUsed": round(prev_close_used, 2),
@@ -416,6 +481,8 @@ class NSEService:
                 "isOH": is_oh,
                 "isMatch": is_match,
                 "isMatch3": is_match3,
+                "indicatorMatch": is_ind_match,
+                "indicatorTag": ind_tag,
                 "sig": sig,
                 "buyLow": buy_low,
                 "buyLow9": buy_low_9,
@@ -430,7 +497,10 @@ class NSEService:
                 "crossChecked": prev_r is not None
             })
 
-            if show_mode == "all":
+            if indicator:
+                if show_mode == "all" or is_ind_match:
+                    processed.append(item)
+            elif show_mode == "all":
                 processed.append(item)
             elif show_mode == "matches" and is_match:
                 processed.append(item)
@@ -444,13 +514,15 @@ class NSEService:
         stat_match = sum(1 for x in processed if x["isMatch"])
         stat_ol = sum(1 for x in processed if x["isOL"])
         stat_oh = sum(1 for x in processed if x["isOH"])
+        stat_ind = sum(1 for x in processed if x.get("indicatorMatch"))
 
         return {
             "totalContracts": len(options_list),
             "resultCount": len(processed),
-            "statMatch": stat_match,
+            "statMatch": stat_ind if indicator else stat_match,
             "statOL": stat_ol,
             "statOH": stat_oh,
+            "statInd": stat_ind,
             "results": processed
         }
 

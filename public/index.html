@@ -299,6 +299,37 @@
   .small-strat-btn.vol-btn:hover { background: #9333ea; color: #fff; }
   .small-strat-btn.candle-btn { border-color: rgba(234, 179, 8, 0.4); color: #fde047; }
   .small-strat-btn.candle-btn:hover { background: #ca8a04; color: #fff; }
+  .small-strat-btn.active {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+    border-color: #3b82f6 !important;
+    background: #1d4ed8 !important;
+    color: #fff !important;
+    font-weight: 700;
+  }
+  .active-scan-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, #0f2b5c 0%, #131d2e 100%);
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .indicator-tag-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    background: rgba(37, 99, 235, 0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+  }
 
   /* Mode Switcher Tabs */
   .mode-tabs {
@@ -1523,19 +1554,19 @@
       <span>⚡</span> <b>TradingView Indicators:</b>
     </div>
     <div class="indicator-btn-row">
-      <button class="small-strat-btn ut-btn" onclick="openIndicatorModal('ut')">⚡ UT Bot Alerts</button>
-      <button class="small-strat-btn pred-btn" onclick="openIndicatorModal('trade_pred')">🔮 Trade Predictor</button>
-      <button class="small-strat-btn quantum-btn" onclick="openIndicatorModal('quantum')">🌌 Quantum Matrix</button>
-      <button class="small-strat-btn alpha-btn" onclick="openIndicatorModal('alphascan')">📊 AlphaScan Matrix</button>
-      <button class="small-strat-btn target-btn" onclick="openIndicatorModal('target_proj')">🎯 Target Projections</button>
-      <button class="small-strat-btn super-btn" onclick="openIndicatorModal('supertrend')">📈 Supertrend MTF</button>
-      <button class="small-strat-btn orb-btn" onclick="openIndicatorModal('orb15')">🚀 15m ORB Breakout</button>
-      <button class="small-strat-btn vwap-btn" onclick="openIndicatorModal('vwap_rsi')">🌊 VWAP + RSI</button>
-      <button class="small-strat-btn vol-btn" onclick="openIndicatorModal('volume_oi')">📊 Volume &amp; OI</button>
-      <button class="small-strat-btn candle-btn" onclick="openIndicatorModal('candle_pattern')">🕯️ Candlestick Filters</button>
-      <button class="small-strat-btn" onclick="openIndicatorModal('strat1')">1️⃣ Low Range Setup</button>
-      <button class="small-strat-btn" onclick="openIndicatorModal('strat2')">2️⃣ OH/OL + VIX</button>
-      <button class="small-strat-btn" onclick="openIndicatorModal('strat3')">3️⃣ ÷8 &amp; ÷6.5</button>
+      <button class="small-strat-btn alpha-btn" data-ind="alphascan" onclick="runIndicatorScan('alphascan')" title="Scan all stocks & indices with AlphaScan Option Matrix">📊 AlphaScan Matrix</button>
+      <button class="small-strat-btn pred-btn" data-ind="trade_pred" onclick="runIndicatorScan('trade_pred')" title="Scan all stocks & indices with Trade Predictor">🔮 Trade Predictor</button>
+      <button class="small-strat-btn quantum-btn" data-ind="quantum" onclick="runIndicatorScan('quantum')" title="Scan all stocks & indices with Quantum Matrix Strategy">🌌 Quantum Matrix</button>
+      <button class="small-strat-btn target-btn" data-ind="target_proj" onclick="runIndicatorScan('target_proj')" title="Scan all stocks & indices with Option Target Projections">🎯 Target Proj</button>
+      <button class="small-strat-btn ut-btn" data-ind="ut" onclick="runIndicatorScan('ut')" title="Scan all stocks & indices with UT Bot Alerts">⚡ UT Bot</button>
+      <button class="small-strat-btn super-btn" data-ind="supertrend" onclick="runIndicatorScan('supertrend')" title="Scan all stocks & indices with Supertrend MTF">📈 Supertrend</button>
+      <button class="small-strat-btn orb-btn" data-ind="orb15" onclick="runIndicatorScan('orb15')" title="Scan all stocks & indices with 15m ORB Breakout">🚀 15m ORB</button>
+      <button class="small-strat-btn vwap-btn" data-ind="vwap_rsi" onclick="runIndicatorScan('vwap_rsi')" title="Scan all stocks & indices with VWAP + RSI">🌊 VWAP + RSI</button>
+      <button class="small-strat-btn vol-btn" data-ind="volume_oi" onclick="runIndicatorScan('volume_oi')" title="Scan all stocks & indices with Volume & OI Surge">📊 Volume &amp; OI</button>
+      <button class="small-strat-btn candle-btn" data-ind="candle_pattern" onclick="runIndicatorScan('candle_pattern')" title="Scan all stocks & indices with Candlestick Signals">🕯️ Candlestick</button>
+      <button class="small-strat-btn" data-ind="strat1" onclick="runIndicatorScan('strat1')" title="Scan all stocks & indices with Strategy 1">1️⃣ Low Range</button>
+      <button class="small-strat-btn" data-ind="strat2" onclick="runIndicatorScan('strat2')" title="Scan all stocks & indices with Strategy 2">2️⃣ OH/OL + VIX</button>
+      <button class="small-strat-btn" data-ind="strat3" onclick="runIndicatorScan('strat3')" title="Scan all stocks & indices with Strategy 3">3️⃣ ÷8 &amp; ÷6.5</button>
     </div>
   </div>
 
@@ -1835,6 +1866,7 @@
       </div>
 
       <!-- 📋 Results Filter Toolbar -->
+      <div id="activeScanBanner" class="active-scan-banner" style="display:none;"></div>
       <div class="results-filter-toolbar">
         <div class="quick-filter-pills">
           <span style="font-size:12px; color:var(--muted); font-weight:600; margin-right:4px;">Filter:</span>
@@ -2137,6 +2169,7 @@
           <button id="indTvLaunchBtn" class="tv-launch-btn" onclick="openIndicatorInAppChart()" style="cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px;">
             📈 Open Chart in Website
           </button>
+          <button class="query-run-btn" onclick="runIndicatorScan(currentIndKey); closeAllModals();" style="padding:6px 14px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">⚡ Scan All Stocks &amp; Indices</button>
           <button class="copy-script-btn" id="indCopyBtn" onclick="copyIndScript()">
             <span id="indCopyIcon">📋</span> <span id="indCopyText">Copy Pine Script</span>
           </button>
@@ -3186,6 +3219,150 @@ function runChartinkQueryScan() {
   }
 }
 
+let currentActiveIndicatorScan = null;
+
+async function runIndicatorScan(indKey) {
+  currentActiveIndicatorScan = indKey;
+  currentHubStratKey = indKey;
+
+  // 1. Highlight button in top indicator strip
+  document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
+    const attr = btn.getAttribute('data-ind');
+    btn.classList.toggle('active', attr === indKey);
+  });
+
+  // 2. Ensure Daily Settlement mode is active so all 216 symbols are scanned
+  if (typeof currentMode !== 'undefined' && currentMode !== 'auto') {
+    currentMode = 'auto';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'auto'));
+    const autoB = document.getElementById('autoBanner'); if (autoB) autoB.style.display = 'flex';
+    const liveB = document.getElementById('liveBar'); if (liveB) liveB.style.display = 'none';
+    const manB = document.getElementById('manualUploadRow'); if (manB) manB.style.display = 'none';
+    const symG = document.getElementById('symbolFilterGroup'); if (symG) symG.style.display = 'block';
+  }
+
+  // 3. Ensure ALL symbols, Index AND Stock options are enabled
+  const idxCheck = document.getElementById('instIdx');
+  const stkCheck = document.getElementById('instStk');
+  const symSel = document.getElementById('symSelect');
+  const showModeSel = document.getElementById('showMode');
+  if (idxCheck) idxCheck.checked = true;
+  if (stkCheck) stkCheck.checked = true;
+  if (symSel) symSel.value = '__ALL__';
+  if (showModeSel) showModeSel.value = 'matches';
+
+  // 4. Reset query builder filters so they do not hide indicator results
+  const rCandle = document.getElementById('ruleCandleMode');
+  const rUt = document.getElementById('ruleUtAction');
+  if (rCandle) rCandle.value = 'ALL';
+  if (rUt) rUt.value = 'ALL';
+
+  // 3. Clear quick filter and table search
+  currentQuickFilter = 'ALL';
+  currentTableSearchQuery = '';
+  const searchInp = document.getElementById('resultsSearchInput');
+  if (searchInp) searchInp.value = '';
+  document.querySelectorAll('.q-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-q') === 'ALL');
+  });
+
+  const indData = PINE_SCRIPTS[indKey] || { title: indKey };
+  showToast(`⚡ Scanning all stocks & index data for ${indData.title}…`, 'info');
+
+  // 4. Request scan with indicator
+  await runServerScanWithIndicator(indKey);
+
+  // 5. Update active scan banner
+  updateActiveScanBanner(indKey);
+
+  // 6. Scroll smoothly to results
+  const toolbar = document.querySelector('.results-filter-toolbar') || document.getElementById('resultsTable');
+  if (toolbar) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function runServerScanWithIndicator(indKey) {
+  const btn = document.getElementById('scanBtn');
+  if (btn) {
+    btn.textContent = 'Scanning…';
+    btn.disabled = true;
+  }
+
+  try {
+    const filters = getFilters();
+    filters.indicator = indKey;
+    filters.symSelect = '__ALL__';
+    filters.instIdx = true;
+    filters.instStk = true;
+    filters.showMode = 'matches';
+
+    const res = await fetch(`${API_BASE}/api/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(filters)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      lastResults = data.results || [];
+      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
+      document.getElementById('statMatch').textContent = (data.results ? data.results.length : 0).toLocaleString();
+      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
+      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
+      document.getElementById('summary').style.display = 'flex';
+      filterAndRender();
+
+      const indTitle = PINE_SCRIPTS[indKey] ? PINE_SCRIPTS[indKey].title : indKey;
+      showToast(`✔ Found ${lastResults.length} matching contracts across all stocks and indices for ${indTitle}!`, 'success');
+    } else {
+      showToast(data.detail || 'Scan failed', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    if (btn) {
+      btn.textContent = '⚡ Scan Market';
+      btn.disabled = false;
+    }
+  }
+}
+
+function clearIndicatorScan() {
+  currentActiveIndicatorScan = null;
+  document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const banner = document.getElementById('activeScanBanner');
+  if (banner) banner.style.display = 'none';
+  runServerScan();
+  showToast('Reset indicator scan. Showing general market scan.', 'info');
+}
+
+function updateActiveScanBanner(indKey) {
+  let banner = document.getElementById('activeScanBanner');
+  if (!banner) {
+    const toolbar = document.querySelector('.results-filter-toolbar');
+    if (!toolbar) return;
+    banner = document.createElement('div');
+    banner.id = 'activeScanBanner';
+    banner.className = 'active-scan-banner';
+    toolbar.parentNode.insertBefore(banner, toolbar);
+  }
+
+  const indData = PINE_SCRIPTS[indKey] || { title: indKey };
+  const count = lastResults ? lastResults.length : 0;
+  banner.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span style="font-size:16px;">⚡</span>
+      <span style="font-size:13.5px; color:#fff; font-weight:700;">Active Indicator Scan: <span style="color:#60a5fa;">${indData.title}</span></span>
+      <span style="font-size:11.5px; color:#38bdf8; background:#0b1320; padding:2px 8px; border-radius:12px; border:1px solid #1e3a8a; font-weight:700;">${count} contracts found across all stocks & indices</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="chain-btn" onclick="openIndicatorModal('${indKey}')" style="padding:4px 10px; font-size:11.5px;" title="View Pine Script v6 for this indicator">📋 View Pine Script</button>
+      <button class="dl-btn" onclick="clearIndicatorScan()" style="padding:4px 10px; font-size:11.5px;" title="Clear indicator scan filter">✕ Clear</button>
+    </div>
+  `;
+  banner.style.display = 'flex';
+}
+
 /* ============================================================
    TABLE RENDERING & FILTERING
 ============================================================ */
@@ -3418,7 +3595,7 @@ function renderTable(rows) {
       '<td class="exp">' + r.expiry + '</td>' +
       '<td>' + r.strike + '</td>' +
       '<td class="' + typeCls + '">' + r.type + '</td>' +
-      '<td class="sig ' + sigCls + '">' + (r.sig || '–') + '</td>' +
+      '<td class="sig ' + sigCls + '">' + (r.indicatorTag ? '<span class="indicator-tag-badge">' + r.indicatorTag + '</span>' : (r.sig || '–')) + '</td>' +
       '<td class="ut-cell"><span class="ut-badge ' + utCls + '">' + utAction + '</span></td>' +
       '<td>' + fmtOI(r.oi) + '</td>' +
       '<td class="' + (r.oiPct > 0 ? 'ce-cell' : r.oiPct < 0 ? 'pe-cell' : '') + '">' + fmtPct(r.oiPct) + '</td>' +
@@ -3469,6 +3646,9 @@ async function runServerScan() {
 
   try {
     const filters = getFilters();
+    if (currentActiveIndicatorScan) {
+      filters.indicator = currentActiveIndicatorScan;
+    }
     const res = await fetch(`${API_BASE}/api/scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

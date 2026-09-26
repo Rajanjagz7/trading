@@ -47,6 +47,7 @@ class ScanRequest(BaseModel):
     minOi: Optional[float] = 0.0
     includeUntraded: Optional[bool] = False
     showMode: Optional[str] = "matches"
+    indicator: Optional[str] = None
 
 @app.get("/api/status")
 def get_status():
@@ -126,7 +127,8 @@ def live_scan(
     tol: float = 0.0,
     minOi: float = 0.0,
     includeUntraded: bool = False,
-    showMode: str = "matches"
+    showMode: str = "matches",
+    indicator: Optional[str] = None
 ):
     try:
         live_res = nse_service.fetch_live_option_chain(symbol=symbol, expiry=expiry)
@@ -145,7 +147,8 @@ def live_scan(
             "tol": tol,
             "minOi": minOi,
             "includeUntraded": includeUntraded,
-            "showMode": showMode
+            "showMode": showMode,
+            "indicator": indicator
         }
         scan_output = nse_service.scan(live_res["rows"], filters)
         scan_output["symbol"] = live_res["symbol"]
