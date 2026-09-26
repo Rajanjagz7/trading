@@ -23,13 +23,7 @@
     --pe: #ff6b81;
     --match: #f5c344;
     --ol: #10b981;
-    --ol-bg: rgba(16, 185, 129, 0.16);
-    --ol-border: rgba(52, 211, 153, 0.45);
-    --ol-text: #34d399;
     --oh: #ef4444;
-    --oh-bg: rgba(239, 68, 68, 0.16);
-    --oh-border: rgba(248, 113, 113, 0.45);
-    --oh-text: #f87171;
     --accent: #3b82f6;
   }
   * { box-sizing: border-box; }
@@ -168,7 +162,89 @@
   .drop input { display: none; }
 
   .workspace { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
-  @media (max-width: 960px) { .workspace { grid-template-columns: 1fr; } }
+
+  /* 🤖 Compact Strategy Indicators Bar with Small Buttons */
+  .indicator-bar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    background: rgba(18, 24, 38, 0.75); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .indicator-bar-label {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: #93c5fd; font-weight: 700;
+  }
+  .indicator-btn-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .small-strat-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(30, 41, 59, 0.85); color: #e2e8f0;
+    border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 20px;
+    padding: 5px 12px; font-size: 11.5px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: all 0.18s ease; text-decoration: none;
+  }
+  .small-strat-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff; border-color: #60a5fa; transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(37,99,235,0.4);
+  }
+  .small-strat-btn.ut-btn {
+    border-color: rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.14); color: #34d399;
+  }
+  .small-strat-btn.ut-btn:hover {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45); border-color: #34d399;
+  }
+
+  /* ⚡ UT Bot Action Badge (BUY / SELL / WAIT) */
+  .ut-badge {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;
+    letter-spacing: 0.5px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace;
+    white-space: nowrap; line-height: 1.2; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: all 0.15s ease;
+  }
+  .ut-badge.buy {
+    background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.28);
+  }
+  .ut-badge.sell {
+    background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.5);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.28);
+  }
+  .ut-badge.wait {
+    background: rgba(148, 163, 184, 0.12); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.25);
+  }
+
+  /* 📱 Enhanced Mobile UI Responsive Rules */
+  @media (max-width: 960px) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .app { padding: 12px 10px 60px; }
+    header { flex-direction: column; align-items: stretch; gap: 12px; }
+    header div:last-child { align-items: flex-start !important; }
+    .glow-title { font-size: 21px; }
+    .mode-tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+    .tab-btn { padding: 8px 12px; font-size: 12px; flex-shrink: 0; }
+    .banner { flex-direction: column; align-items: stretch; gap: 10px; }
+    .banner div:last-child { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+    .action-btn { width: 100%; text-align: center; }
+    .panel { padding: 12px; }
+    .indicator-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .indicator-btn-row { justify-content: flex-start; }
+    .summary { gap: 6px; }
+    .stat { flex: 1 1 calc(50% - 6px); min-width: 120px; padding: 8px 10px; }
+    .stat .n { font-size: 17px; }
+    .toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .dl-btn { width: 100%; text-align: center; }
+    .table-wrap { max-height: 520px; }
+    table { font-size: 11px; }
+    th, td { padding: 6px 6px; }
+    .chart-btn-sm, .chain-btn { padding: 4px 7px; font-size: 10.5px; }
+    .modal-card { max-width: 96vw; max-height: 94vh; margin: 8px; }
+    .modal-header { padding: 12px 14px; }
+  }
 
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
   .filters .group { margin-bottom: 14px; }
@@ -201,19 +277,7 @@
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 110px; }
   .stat .n { font-size: 19px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
   .stat .l { font-size: 11.5px; color: var(--muted); }
-  .stat.ol {
-    border-color: rgba(52, 211, 153, 0.4);
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(18, 24, 37, 0.85) 100%);
-  }
-  .stat.ol .n { color: #34d399; text-shadow: 0 0 14px rgba(52, 211, 153, 0.5); }
-  .stat.ol .l { color: #86efac; font-weight: 600; }
-  .stat.oh {
-    border-color: rgba(248, 113, 113, 0.4);
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(18, 24, 37, 0.85) 100%);
-  }
-  .stat.oh .n { color: #f87171; text-shadow: 0 0 14px rgba(248, 113, 113, 0.5); }
-  .stat.oh .l { color: #fca5a5; font-weight: 600; }
-  .stat.match .n { color: var(--match); }
+  .stat.ol .n { color: var(--ol); } .stat.oh .n { color: var(--oh); } .stat.match .n { color: var(--match); }
 
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
   .toolbar .msg { font-size: 12.5px; color: var(--muted); }
@@ -231,45 +295,29 @@
   tr:hover td { background: #161c29; }
   .ce-cell { color: var(--ce); }
   .pe-cell { color: var(--pe); }
-  .sig { font-weight: 600; text-align: center; }
-  .sig.ol { color: var(--ol-text); }
-  .sig.oh { color: var(--oh-text); }
-
-  /* 🟢 Open=Low (Bullish) & 🔴 Open=High (Bearish) Badges */
+  .sig { font-weight: 600; }
+  .sig.ol { color: var(--ol); } .sig.oh { color: var(--oh); }
   .sig-badge {
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-    padding: 3.5px 9px; border-radius: 6px; font-size: 11px; font-weight: 800;
-    letter-spacing: 0.4px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace;
+    padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;
+    letter-spacing: 0.5px; font-family: 'IBM Plex Mono', monospace;
     white-space: nowrap; line-height: 1.2; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    transition: all 0.15s ease;
   }
   .sig-badge.ol {
-    background: var(--ol-bg); color: var(--ol-text); border: 1px solid var(--ol-border);
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
-  }
-  .sig-badge.ol:hover {
-    background: rgba(16, 185, 129, 0.28); border-color: #34d399; transform: translateY(-1px);
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.45);
+    background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
   }
   .sig-badge.oh {
-    background: var(--oh-bg); color: var(--oh-text); border: 1px solid var(--oh-border);
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
-  }
-  .sig-badge.oh:hover {
-    background: rgba(239, 68, 68, 0.28); border-color: #f87171; transform: translateY(-1px);
-    box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
   }
   .sig-badge.olh {
-    background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.45);
-    box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+    background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.45);
   }
-
-  /* Row Tints for OL and OH */
-  tr.row-ol td { background: rgba(16, 185, 129, 0.035); }
-  tr.row-ol:hover td { background: rgba(16, 185, 129, 0.1) !important; }
-  tr.row-oh td { background: rgba(239, 68, 68, 0.035); }
-  tr.row-oh:hover td { background: rgba(239, 68, 68, 0.1) !important; }
-
+  tr.row-ol td { background: rgba(16, 185, 129, 0.04); }
+  tr.row-ol:hover td { background: rgba(16, 185, 129, 0.12); }
+  tr.row-oh td { background: rgba(239, 68, 68, 0.04); }
+  tr.row-oh:hover td { background: rgba(239, 68, 68, 0.12); }
   .yellow { color: var(--match); font-weight: 600; }
   .tgt-cell { color: #86efac; }
   .sl-cell { color: #fca5a5; }
@@ -334,86 +382,67 @@
   .prem-chip.pe { color: #ff6b81; border-color: rgba(255, 107, 129, 0.35); }
   .prem-chip.pe:hover { background: rgba(255, 107, 129, 0.2); border-color: #ff6b81; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(255,107,129,0.25); }
   .chart-btn-sm {
-    background: #1e293b; border: 1px solid #334155; color: #93c5fd; padding: 3px 8px; border-radius: 4px;
-    font-size: 11px; cursor: pointer; font-weight: 600; transition: all 0.15s ease;
+    background: #1e293b; border: 1px solid #334155; color: #93c5fd; padding: 4px 10px; border-radius: 5px;
+    font-size: 11px; cursor: pointer; font-weight: 600; transition: all 0.15s ease; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px; line-height: 1.2;
   }
-  .chart-btn-sm:hover { background: #2563eb; color: #fff; border-color: #3b82f6; }
+  .chart-btn-sm:hover { background: #2563eb; color: #fff; border-color: #3b82f6; transform: translateY(-1px); }
+  .tv-outlink-inline { color: #60a5fa; font-size: 12px; font-weight: 600; text-decoration: none; }
+  .tv-outlink-inline:hover { text-decoration: underline; color: #93c5fd; }
 
-  /* Option Chart Modal Styles */
-  .opt-tag { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.5px; }
-  .opt-tag.ce { background: rgba(53,208,127,0.2); color: var(--ce); border: 1px solid var(--ce); }
-  .opt-tag.pe { background: rgba(255,107,129,0.2); color: var(--pe); border: 1px solid var(--pe); }
-  .badge-moneyness { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #1f293d; color: #94a3b8; border: 1px solid #334155; }
-  .badge-moneyness.atm { background: rgba(245, 195, 68, 0.2); color: var(--match); border-color: var(--match); }
-  .badge-signal { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.4px; }
-  .badge-signal.ol { background: var(--ol-bg); color: var(--ol-text); border: 1px solid var(--ol-border); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
-  .badge-signal.oh { background: var(--oh-bg); color: var(--oh-text); border: 1px solid var(--oh-border); box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
-  .badge-signal.match { background: rgba(245, 195, 68, 0.18); color: var(--match); border: 1px solid rgba(245, 195, 68, 0.45); }
-
-  .opt-stats-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;
-    padding: 12px 20px; background: #121620; border-bottom: 1px solid var(--line);
+  /* 🤖 Lightweight Strategy & Indicator Script Modal */
+  .indicator-modal-card {
+    max-width: 920px;
+    background: #0d111a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.75);
+    overflow: hidden;
   }
-  .opt-stat-card {
-    background: #181f2c; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px;
-    display: flex; flex-direction: column; justify-content: center;
+  .ind-tag {
+    font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 6px; letter-spacing: 0.5px;
+    background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);
+    text-transform: uppercase; font-family: 'IBM Plex Mono', monospace;
   }
-  .opt-stat-card.highlight-green { border-color: rgba(53,208,127,0.3); background: rgba(53,208,127,0.06); }
-  .opt-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 3px; }
-  .opt-stat-val { font-size: 20px; font-weight: 700; color: #fff; font-family: 'IBM Plex Mono', monospace; }
-  .opt-stat-val-sm { font-size: 13.5px; font-weight: 600; color: #e2e8f0; font-family: 'IBM Plex Mono', monospace; }
-  .opt-stat-sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; font-family: 'IBM Plex Mono', monospace; }
-
-  .opt-chart-tabs {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 10px 20px; background: #151a24; border-bottom: 1px solid var(--line); flex-wrap: wrap;
+  .modal-strat-tabs {
+    display: flex; gap: 8px; padding: 12px 20px; background: #121824;
+    border-bottom: 1px solid var(--line); overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
-  .opt-tab-btn {
-    background: transparent; border: 1px solid transparent; color: var(--muted);
-    padding: 6px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+  .strat-tab-btn {
+    background: #1a2233; border: 1px solid #28354f; color: #94a3b8;
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s ease; white-space: nowrap; font-family: inherit;
   }
-  .opt-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
-  .opt-tab-btn.active { background: #232d40; color: #93c5fd; border-color: #3b82f6; }
-  .tv-outlink {
-    font-size: 12px; color: #60a5fa; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
-    padding: 5px 10px; border-radius: 5px; background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.25);
+  .strat-tab-btn:hover { color: #fff; border-color: #3b82f6; background: #1e2a40; }
+  .strat-tab-btn.active {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff; border-color: #60a5fa; box-shadow: 0 2px 10px rgba(37,99,235,0.4);
   }
-  .tv-outlink:hover { background: rgba(96,165,250,0.2); }
-
-  .opt-chart-body { padding: 14px 20px; background: #0c0f16; }
-
-  /* Indicator Setup Hub */
-  .indicator-hub {
-    border-top: 1px solid var(--line); background: #131722; padding: 14px 20px;
+  .strat-tab-btn.ut-tab.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff; border-color: #34d399; box-shadow: 0 2px 10px rgba(16,185,129,0.4);
   }
-  .hub-header {
-    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px;
+  .ind-modal-body { padding: 18px 20px; }
+  .ind-info-banner {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    background: #141c2b; border: 1px solid #23304a; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;
+    flex-wrap: wrap;
   }
-  .hub-strategy-selector {
-    display: flex; gap: 6px; flex-wrap: wrap;
+  .ind-action-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .tv-launch-btn {
+    background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);
+    border-radius: 6px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;
   }
-  .hub-btn {
-    background: #1c2333; border: 1px solid var(--line); color: var(--muted);
-    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;
-  }
-  .hub-btn:hover { color: #fff; border-color: #475569; }
-  .hub-btn.active { background: #1e3a5f; color: #bfdbfe; border-color: #3b82f6; }
-
-  .hub-action-bar {
-    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-    background: #19202f; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 10px;
-  }
+  .tv-launch-btn:hover { background: #2563eb; color: #fff; border-color: #3b82f6; }
   .copy-script-btn {
     background: #10b981; color: #042f1f; font-weight: 700; border: none; border-radius: 6px;
     padding: 7px 16px; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-    transition: all 0.15s ease; box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+    transition: all 0.15s ease; box-shadow: 0 2px 6px rgba(16,185,129,0.3); font-family: inherit;
   }
   .copy-script-btn:hover { background: #059669; color: #fff; transform: translateY(-1px); }
   .copy-script-btn.copied { background: #3b82f6; color: #fff; }
-
-  .hub-steps {
-    display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
-  }
+  .hub-steps { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
   .step-chip {
     background: #182030; border: 1px solid #232d42; border-radius: 6px; padding: 5px 10px;
     font-size: 11.5px; color: #cbd5e1; display: inline-flex; align-items: center; gap: 6px;
@@ -422,16 +451,10 @@
     background: #3b82f6; color: #fff; font-size: 10px; font-weight: 700; width: 17px; height: 17px;
     border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
   }
-
   .code-preview-wrap {
-    max-height: 160px; overflow-y: auto; background: #0b0e14; border: 1px solid #1e293b;
-    border-radius: 6px; padding: 10px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
-    color: #94a3b8; line-height: 1.45; user-select: text; white-space: pre;
-  }
-  .chart-tooltip {
-    position: absolute; pointer-events: none; background: rgba(15, 23, 42, 0.95);
-    border: 1px solid #3b82f6; border-radius: 6px; padding: 6px 10px; font-size: 11.5px;
-    color: #fff; font-family: 'IBM Plex Mono', monospace; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    max-height: 280px; overflow-y: auto; background: #07090e; border: 1px solid #1e293b;
+    border-radius: 6px; padding: 12px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    color: #93c5fd; line-height: 1.45; user-select: text; white-space: pre;
   }
 
   footer { margin-top: 24px; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
@@ -628,6 +651,28 @@
     </div>
 
     <main>
+      <!-- 🤖 TradingView Indicators Bar (New UI with Small Buttons) -->
+      <div class="indicator-bar">
+        <div class="indicator-bar-label">
+          <span>🤖</span> <b>Strategy Indicators (1-Click Pine Scripts):</b>
+        </div>
+        <div class="indicator-btn-row">
+          <button class="small-strat-btn ut-btn" onclick="openIndicatorModal('ut')" title="Click to view & copy UT Bot Pine Script">
+            <span class="live-pulse" style="background:#10b981; width:5px; height:5px;"></span>
+            <span>⚡ UT Bot (Buy/Sell)</span>
+          </button>
+          <button class="small-strat-btn" onclick="openIndicatorModal(1)" title="Click to view & copy Strategy 1 Pine Script">
+            <span>🎯 Strategy 1 (Low + OL/OH)</span>
+          </button>
+          <button class="small-strat-btn" onclick="openIndicatorModal(2)" title="Click to view & copy Strategy 2 Pine Script">
+            <span>🚀 Strategy 2 (Targets &amp; SL)</span>
+          </button>
+          <button class="small-strat-btn" onclick="openIndicatorModal(3)" title="Click to view & copy Strategy 3 Pine Script">
+            <span>💎 Strategy 3 (Volume &amp; Spot)</span>
+          </button>
+        </div>
+      </div>
+
       <div class="summary" id="summary" style="display:none;">
         <div class="stat"><div class="n" id="statTotal">0</div><div class="l">contracts loaded</div></div>
         <div class="stat match"><div class="n" id="statMatch">0</div><div class="l">matches</div></div>
@@ -648,7 +693,8 @@
               <th class="exp" data-k="expiry">Expiry</th>
               <th data-k="strike">Strike</th>
               <th data-k="type">Type</th>
-              <th data-k="signal" style="text-align:center;">Signal</th>
+              <th data-k="signal" style="text-align:center;">Signal (OL/OH)</th>
+              <th data-k="utBot" style="text-align:center;">UT Bot Action</th>
               <th data-k="oi">OI</th>
               <th data-k="oiPct">OI%</th>
               <th data-k="prevCloseUsed">Prev Cl</th>
@@ -669,8 +715,10 @@
 
       <footer>
         <span class="key"><span class="dot" style="background:var(--match)"></span>Price-range match</span>
-        <span class="key"><span class="dot" style="background:#10b981; box-shadow:0 0 8px #10b981;"></span><b>Open = Low</b> (Bullish Momentum)</span>
-        <span class="key"><span class="dot" style="background:#ef4444; box-shadow:0 0 8px #ef4444;"></span><b>Open = High</b> (Bearish Momentum)</span>
+        <span class="key"><span class="dot" style="background:#10b981; box-shadow:0 0 8px #10b981;"></span><b>Open = Low</b> (Bullish)</span>
+        <span class="key"><span class="dot" style="background:#ef4444; box-shadow:0 0 8px #ef4444;"></span><b>Open = High</b> (Bearish)</span>
+        <span class="key"><span class="dot" style="background:#10b981;"></span><b>UT Bot BUY</b></span>
+        <span class="key"><span class="dot" style="background:#ef4444;"></span><b>UT Bot SELL</b></span>
         <span class="key"><span class="dot" style="background:var(--ce)"></span>Call (CE)</span>
         <span class="key"><span class="dot" style="background:var(--pe)"></span>Put (PE)</span>
       </footer>
@@ -742,117 +790,52 @@
   </div>
 </div>
 
-<!-- Option Premium & Indicator Chart Modal Dialog -->
-<div id="optionChartModal" class="modal-overlay" style="display:none; z-index:1100;">
-  <div class="modal-card" style="max-width: 1180px; max-height: 92vh; overflow-y: auto;">
+<!-- Strategy & Indicator Pine Script Modal (1-Click Copy & View) -->
+<div id="indicatorModal" class="modal-overlay" style="display:none; z-index:1100;">
+  <div class="modal-card indicator-modal-card">
     <!-- Modal Header -->
     <div class="modal-header">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <span id="optBadgeType" class="opt-tag ce">CE</span>
-        <h2 id="optModalTitle" style="margin:0; font-size:18px; font-weight:700;">NIFTY 23150 CE</h2>
-        <span id="optBadgeMoneyness" class="badge-moneyness atm">ATM</span>
-        <span id="optBadgeSignal" class="badge-signal" style="display:none;"></span>
+        <span id="indModalBadge" class="ind-tag ut">⚡ UT Bot</span>
+        <h2 id="indModalTitle" style="margin:0; font-size:17px; font-weight:700;">UT Bot Alerts (BUY / SELL) Indicator</h2>
       </div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <button id="optChartCloseBtn" class="close-btn" title="Close Chart">&times;</button>
-      </div>
+      <button id="indCloseBtn" class="close-btn" title="Close Dialog">&times;</button>
     </div>
 
-    <!-- Quick Stats Cards Bar -->
-    <div class="opt-stats-grid">
-      <!-- LTP Card -->
-      <div class="opt-stat-card">
-        <div class="opt-stat-label">Current Premium (LTP)</div>
-        <div class="opt-stat-val" id="optStatLtp">₹0.00</div>
-        <div class="opt-stat-sub" id="optStatChg">+0.00 (+0.0%)</div>
-      </div>
-      <!-- Day Range Card -->
-      <div class="opt-stat-card">
-        <div class="opt-stat-label">Day Range &amp; Reference</div>
-        <div class="opt-stat-val-sm" id="optStatRange">Low: ₹0.00 · High: ₹0.00</div>
-        <div class="opt-stat-sub" id="optStatOpenPc">Open: ₹0.00 · Prev Cl: ₹0.00</div>
-      </div>
-      <!-- Strategy 2 VIX Targets -->
-      <div class="opt-stat-card highlight-green">
-        <div class="opt-stat-label">⚡ Strategy 2: Targets (from Low)</div>
-        <div class="opt-stat-val-sm" id="optStatTgt">Tgt1 (+9%): ₹0.00 | Tgt2 (+18%): ₹0.00</div>
-        <div class="opt-stat-sub" id="optStatSl" style="color:#fca5a5;">SL1 (-5%): ₹0.00 | SL2 (-9%): ₹0.00</div>
-      </div>
-      <!-- Strategy 3 Formula & Volume -->
-      <div class="opt-stat-card">
-        <div class="opt-stat-label">💎 Strategy 3 &amp; Volume</div>
-        <div class="opt-stat-val-sm" id="optStatDiv">÷8: ₹0.00 · ÷6.5: ₹0.00</div>
-        <div class="opt-stat-sub" id="optStatVolOi">Vol: 0 · OI: 0</div>
-      </div>
+    <!-- Strategy Selector Small Pill Buttons in Modal -->
+    <div class="modal-strat-tabs">
+      <button class="strat-tab-btn ut-tab active" id="tabBtnUt" onclick="openIndicatorModal('ut')">⚡ UT Bot (Buy/Sell)</button>
+      <button class="strat-tab-btn" id="tabBtn1" onclick="openIndicatorModal(1)">🎯 Strategy 1 (Low + OL/OH)</button>
+      <button class="strat-tab-btn" id="tabBtn2" onclick="openIndicatorModal(2)">🚀 Strategy 2 (Targets &amp; SL)</button>
+      <button class="strat-tab-btn" id="tabBtn3" onclick="openIndicatorModal(3)">💎 Strategy 3 (Volume &amp; Spot)</button>
     </div>
 
-    <!-- Chart Switcher Tabs -->
-    <div class="opt-chart-tabs">
-      <div style="display:flex; gap:8px;">
-        <button class="opt-tab-btn active" id="tabOptCanvas" onclick="switchOptChartTab('canvas')">
-          📊 Option Price Action &amp; Strategy Levels Chart
-        </button>
-        <button class="opt-tab-btn" id="tabOptTV" onclick="switchOptChartTab('tv')">
-          📈 Live TradingView Underlying Chart (<span id="tvTabSymbol">NIFTY</span>)
-        </button>
-      </div>
-      <a id="tvExternalLink" href="https://in.tradingview.com" target="_blank" class="tv-outlink">
-        ↗ Open on TradingView.com
-      </a>
-    </div>
-
-    <!-- Chart Container Area -->
-    <div class="opt-chart-body">
-      <!-- 1. Interactive Option Canvas Chart -->
-      <div id="optCanvasContainer" style="width:100%; height:320px; position:relative; background:#0b0e14; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
-        <canvas id="optChartCanvas" width="1140" height="320" style="width:100%; height:100%; display:block;"></canvas>
-        <div id="chartTooltip" class="chart-tooltip" style="display:none;"></div>
-      </div>
-
-      <!-- 2. Embedded TradingView Chart Widget -->
-      <div id="optTvContainer" style="width:100%; height:340px; display:none; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
-        <div id="tradingview_widget" style="width:100%; height:100%;"></div>
-      </div>
-    </div>
-
-    <!-- Indicator Setup & Pine Script Copy Hub ("so it becomes easy for me to add this indicator") -->
-    <div class="indicator-hub">
-      <div class="hub-header">
-        <div>
-          <h3 style="margin:0; font-size:14.5px; font-weight:700; color:#93c5fd; display:flex; align-items:center; gap:8px;">
-            <span>🚀</span> Copy TradingView Indicators for this Setup
-          </h3>
-          <p style="margin:3px 0 0 0; font-size:11.5px; color:var(--muted);">
-            Click <b>Copy Pine Script Code</b> below, open TradingView Pine Editor, paste (Ctrl+V) and click <b>Add to chart</b>.
-          </p>
+    <!-- Strategy Description & Actions -->
+    <div class="ind-modal-body">
+      <div class="ind-info-banner">
+        <div id="indDescText" style="font-size:12.5px; line-height:1.5; color:#cbd5e1; max-width:680px;">
+          UT Bot Alerts indicator calculates dynamic trailing stops based on ATR(10) with automatic BUY and SELL signal triggers.
         </div>
-        <div class="hub-strategy-selector">
-          <button class="hub-btn active" id="hubStrat1Btn" onclick="selectHubStrat(1)">🎯 Strategy 1: Low Range (₹5.80–8.45)</button>
-          <button class="hub-btn" id="hubStrat2Btn" onclick="selectHubStrat(2)">⚡ Strategy 2: OH/OL + VIX Targets</button>
-          <button class="hub-btn" id="hubStrat3Btn" onclick="selectHubStrat(3)">💎 Strategy 3: Prem ÷8 &amp; ÷6.5</button>
-        </div>
-      </div>
-
-      <!-- Strategy Info & Copy Action -->
-      <div class="hub-content">
-        <div class="hub-action-bar">
-          <div style="font-size:12px; color:#e2e8f0;" id="hubStratDesc">
-            Strategy 1: Scans for Low ₹5.80–8.45 and Prev Close ₹38–48 with Open=Low / Open=High.
-          </div>
-          <button class="copy-script-btn" id="copyPineBtn" onclick="copyCurrentPineScript()">
+        <div class="ind-action-row">
+          <button class="copy-script-btn" id="copyPineBtn" onclick="copyCurrentIndicatorScript()">
             <span id="copyBtnIcon">📋</span> <span id="copyBtnText">Copy Pine Script Code</span>
           </button>
+          <a id="indTvChartLink" href="https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" rel="noopener noreferrer" class="tv-launch-btn">
+            📈 Open TradingView Chart ↗
+          </a>
         </div>
+      </div>
 
-        <div class="hub-steps">
-          <div class="step-chip"><span class="step-num">1</span> Click <b>Copy Pine Script Code</b></div>
-          <div class="step-chip"><span class="step-num">2</span> In TradingView bottom bar, click <b>Pine Editor</b></div>
-          <div class="step-chip"><span class="step-num">3</span> Paste &amp; click <b>Save → Add to chart</b></div>
-        </div>
+      <!-- 3-Step Guide -->
+      <div class="hub-steps">
+        <div class="step-chip"><span class="step-num">1</span> Click <b>Copy Pine Script Code</b></div>
+        <div class="step-chip"><span class="step-num">2</span> Open TradingView &amp; click <b>Pine Editor</b> at bottom bar</div>
+        <div class="step-chip"><span class="step-num">3</span> Paste (Ctrl+V) &amp; click <b>Add to chart</b></div>
+      </div>
 
-        <div class="code-preview-wrap">
-          <pre id="pineCodePreview" style="margin:0;"></pre>
-        </div>
+      <!-- Code Box -->
+      <div class="code-preview-wrap">
+        <pre id="pineCodePreview" style="margin:0; font-family:'IBM Plex Mono', monospace; font-size:11.5px;"></pre>
       </div>
     </div>
   </div>
@@ -1125,12 +1108,66 @@ document.getElementById('scanBtn').addEventListener('click', () => {
   }
 });
 
+// TradingView Direct Chart Link Builder
+function getTradingViewUrl(symbol) {
+  const sym = (symbol || 'NIFTY').toUpperCase().trim();
+  let tvSymbol;
+  if (sym === 'NIFTY' || sym === 'NIFTY 50') {
+    tvSymbol = 'NSE:NIFTY';
+  } else if (sym === 'BANKNIFTY' || sym === 'NIFTY BANK') {
+    tvSymbol = 'NSE:BANKNIFTY';
+  } else if (sym === 'FINNIFTY' || sym === 'CNXFINANCE' || sym === 'NIFTY FINANCIAL SERVICES') {
+    tvSymbol = 'NSE:CNXFINANCE';
+  } else if (sym === 'MIDCPNIFTY' || sym === 'NIFTY_MID_SELECT' || sym === 'NIFTY MIDCAP SELECT') {
+    tvSymbol = 'NSE:NIFTY_MID_SELECT';
+  } else if (sym === 'SENSEX') {
+    tvSymbol = 'BSE:SENSEX';
+  } else if (sym === 'BANKEX') {
+    tvSymbol = 'BSE:BANKEX';
+  } else {
+    tvSymbol = `NSE:${sym}`;
+  }
+  return `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}`;
+}
+
+function redirectToChart(symbol) {
+  const url = getTradingViewUrl(symbol);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+// ⚡ UT Bot Buy / Sell Momentum Evaluator
+function getUtBotSignal(r) {
+  if (!r) return { icon: '⚪', label: 'WAIT', cls: 'wait', note: 'No data' };
+  const o = Number(r.open) || 0;
+  const h = Number(r.high) || 0;
+  const l = Number(r.low) || 0;
+  const c = Number(r.close) || 0;
+  const pc = Number(r.prevCloseUsed) || 0;
+  const sig = (r.sig || '').toUpperCase();
+
+  const isOL = sig.includes('L') && !sig.includes('H');
+  const isOH = sig.includes('H') && !sig.includes('L=H');
+  const rng = h - l;
+
+  if (isOL || (c > o && (c >= pc || (rng > 0 && (c - l) / rng >= 0.6)))) {
+    return { icon: '🟢', label: 'BUY', cls: 'buy', note: 'UT Bot: Bullish Momentum (Buy Alert)' };
+  } else if (isOH || (c < o && c < pc && (rng > 0 && (h - c) / rng >= 0.6))) {
+    return { icon: '🔴', label: 'SELL', cls: 'sell', note: 'UT Bot: Bearish Trend (Sell Alert)' };
+  } else {
+    return { icon: '⚪', label: 'WAIT', cls: 'wait', note: 'UT Bot: Neutral / Range-bound' };
+  }
+}
+
 // Sorting and Table Rendering
 function sortAndRender() {
   const rows = lastResults.slice();
   const k = sortKey, dir = sortDir;
   rows.sort((a,b) => {
     let av = a[k], bv = b[k];
+    if (k === 'utBot') {
+      av = getUtBotSignal(a).label;
+      bv = getUtBotSignal(b).label;
+    }
     if(av === null || av === undefined) av = -Infinity;
     if(bv === null || bv === undefined) bv = -Infinity;
     if(typeof av === 'string') return dir==='asc' ? av.localeCompare(bv) : bv.localeCompare(av);
@@ -1187,34 +1224,39 @@ function renderTable(rows) {
 
     let sigBadgeHtml = '<span style="color:var(--muted)">–</span>';
     if (isOL) {
-      sigBadgeHtml = '<span class="sig-badge ol">▲ OPEN=LOW</span>';
+      sigBadgeHtml = '<span class="sig-badge ol">🟢 OPEN=LOW</span>';
     } else if (isOH) {
-      sigBadgeHtml = '<span class="sig-badge oh">▼ OPEN=HIGH</span>';
+      sigBadgeHtml = '<span class="sig-badge oh">🔴 OPEN=HIGH</span>';
     } else if (isOLH) {
       sigBadgeHtml = '<span class="sig-badge olh">◆ O=L=H</span>';
     } else if (r.sig) {
       sigBadgeHtml = '<span class="sig-badge">' + r.sig + '</span>';
     }
 
-    return '<tr class="'+rowCls+'">' +
-      '<td class="sym"><b>'+r.symbol+'</b></td>' +
-      '<td class="exp">'+r.expiry+'</td>' +
-      '<td>'+r.strike+'</td>' +
-      '<td class="'+typeCls+'">'+r.type+'</td>' +
-      '<td style="text-align:center;">'+sigBadgeHtml+'</td>' +
-      '<td>'+fmtOI(r.oi)+'</td>' +
-      '<td class="'+(r.oiPct>0?'ce-cell':r.oiPct<0?'pe-cell':'')+'">'+fmtPct(r.oiPct)+'</td>' +
-      '<td class="'+(r.isMatch?'yellow':'')+'">'+fmtNum(r.prevCloseUsed)+'</td>' +
-      '<td>'+fmtNum(r.open)+'</td>' +
-      '<td>'+fmtNum(r.high)+'</td>' +
-      '<td class="'+(r.isMatch?'yellow':'')+'" style="cursor:pointer;" onclick="openOptionChartModal(\''+r.symbol+'\', \''+r.expiry+'\', '+r.strike+', \''+r.type+'\')" title="Click for Chart">'+fmtNum(r.low)+'</td>' +
-      '<td style="cursor:pointer;" onclick="openOptionChartModal(\''+r.symbol+'\', \''+r.expiry+'\', '+r.strike+', \''+r.type+'\')" title="Click for Chart & Strategy Levels"><button class="prem-chip '+(r.type==='CE'?'ce':'pe')+'">📈 '+fmtNum(r.close)+'</button></td>' +
-      '<td class="tgt-cell">'+fmtNum(r.tgt9)+'</td>' +
-      '<td class="tgt-cell">'+fmtNum(r.tgt18)+'</td>' +
-      '<td class="sl-cell">'+fmtNum(r.sl5)+'</td>' +
-      '<td style="text-align:center; display:flex; gap:4px; justify-content:center;">' +
-        '<button class="chain-btn" onclick="openChainModal(\''+r.symbol+'\', \''+r.expiry+'\')">📊 Chain</button>' +
-        '<button class="chart-btn-sm" onclick="openOptionChartModal(\''+r.symbol+'\', \''+r.expiry+'\', '+r.strike+', \''+r.type+'\')">📈 Chart</button>' +
+    const ut = getUtBotSignal(r);
+    const utBadgeHtml = '<span class="ut-badge ' + ut.cls + '" title="' + ut.note + '">' + ut.icon + ' ' + ut.label + '</span>';
+    const chartUrl = getTradingViewUrl(r.symbol);
+
+    return '<tr class="' + rowCls + '">' +
+      '<td class="sym"><b>' + r.symbol + '</b></td>' +
+      '<td class="exp">' + r.expiry + '</td>' +
+      '<td>' + r.strike + '</td>' +
+      '<td class="' + typeCls + '">' + r.type + '</td>' +
+      '<td style="text-align:center;">' + sigBadgeHtml + '</td>' +
+      '<td style="text-align:center;">' + utBadgeHtml + '</td>' +
+      '<td>' + fmtOI(r.oi) + '</td>' +
+      '<td class="' + (r.oiPct > 0 ? 'ce-cell' : r.oiPct < 0 ? 'pe-cell' : '') + '">' + fmtPct(r.oiPct) + '</td>' +
+      '<td class="' + (r.isMatch ? 'yellow' : '') + '">' + fmtNum(r.prevCloseUsed) + '</td>' +
+      '<td>' + fmtNum(r.open) + '</td>' +
+      '<td>' + fmtNum(r.high) + '</td>' +
+      '<td class="' + (r.isMatch ? 'yellow' : (isOL ? 'ol' : (isOH ? 'oh' : ''))) + '">' + fmtNum(r.low) + '</td>' +
+      '<td><a href="' + chartUrl + '" target="_blank" rel="noopener noreferrer" class="prem-chip ' + (r.type === 'CE' ? 'ce' : 'pe') + '" title="Open ' + r.symbol + ' live chart on TradingView">📈 ' + fmtNum(r.close) + '</a></td>' +
+      '<td class="tgt-cell">' + fmtNum(r.tgt9) + '</td>' +
+      '<td class="tgt-cell">' + fmtNum(r.tgt18) + '</td>' +
+      '<td class="sl-cell">' + fmtNum(r.sl5) + '</td>' +
+      '<td style="text-align:center; display:flex; gap:6px; justify-content:center;">' +
+        '<button class="chain-btn" onclick="openChainModal(\'' + r.symbol + '\', \'' + r.expiry + '\')">📊 Chain</button>' +
+        '<a href="' + chartUrl + '" target="_blank" rel="noopener noreferrer" class="chart-btn-sm" title="Open ' + r.symbol + ' live chart on TradingView">📈 Chart ↗</a>' +
       '</td>' +
     '</tr>';
   }).join('');
@@ -1239,8 +1281,9 @@ async function openChainModal(symbol, expiry) {
     }
 
     currentChainData = data;
+    const chartUrl = getTradingViewUrl(data.symbol);
     document.getElementById('chainTitle').textContent = data.symbol + ' Option Chain';
-    document.getElementById('chainSub').textContent = `Spot: ₹${fmtNum(data.spot)} | ATM Strike: ${data.atmStrike} | Expiry: ${data.expiry}`;
+    document.getElementById('chainSub').innerHTML = `Spot: ₹${fmtNum(data.spot)} | ATM Strike: ${data.atmStrike} | Expiry: ${data.expiry} &nbsp;·&nbsp; <a href="${chartUrl}" target="_blank" rel="noopener noreferrer" class="tv-outlink-inline">📈 Open ${data.symbol} Chart on TradingView ↗</a>`;
 
     // Populate Symbol selector
     const symSel = document.getElementById('chainSymbolSelect');
@@ -1259,17 +1302,17 @@ async function openChainModal(symbol, expiry) {
     volSigEl.className = 'vol-signal-tag ' + (isBull ? 'bullish' : isBear ? 'bearish' : 'neutral');
     volSigEl.textContent = `Call Vol: ${data.callVolumePct}% (${fmtOI(data.callVolumeTotal)}) · Put Vol: ${data.putVolumePct}% (${fmtOI(data.putVolumeTotal)}) ▶ ${data.volumeSignal}`;
 
-    // Render Chain rows with Clickable Premiums
+    // Render Chain rows with Direct TradingView links
     const rowsHtml = (data.strikes || []).map(row => {
       const isAtm = row.strike === data.atmStrike;
       const ce = row.CE || {};
       const pe = row.PE || {};
 
-      const ceChip = ce.close ? `<button class="prem-chip ce" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'CE')" title="Click for Chart & Strategy Levels">📈 ₹${fmtNum(ce.close)}</button>` : '–';
-      const peChip = pe.close ? `<button class="prem-chip pe" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'PE')" title="Click for Chart & Strategy Levels">📈 ₹${fmtNum(pe.close)}</button>` : '–';
+      const ceChip = ce.close ? `<a href="${chartUrl}" target="_blank" rel="noopener noreferrer" class="prem-chip ce" title="Open ${data.symbol} Chart on TradingView">📈 ₹${fmtNum(ce.close)}</a>` : '–';
+      const peChip = pe.close ? `<a href="${chartUrl}" target="_blank" rel="noopener noreferrer" class="prem-chip pe" title="Open ${data.symbol} Chart on TradingView">📈 ₹${fmtNum(pe.close)}</a>` : '–';
 
-      const ceLowCls = ce.isMatch ? 'yellow' : (ce.isOL ? 'ol' : '');
-      const peLowCls = pe.isMatch ? 'yellow' : (pe.isOL ? 'ol' : '');
+      const ceLowCls = ce.isMatch ? 'yellow' : (ce.isOL ? 'ol' : (ce.isOH ? 'oh' : ''));
+      const peLowCls = pe.isMatch ? 'yellow' : (pe.isOL ? 'ol' : (pe.isOH ? 'oh' : ''));
 
       const ceSigBadge = ce.isOL ? ' <span class="sig-badge ol" style="font-size:9.5px; padding:1px 5px;">▲ OL</span>' : (ce.isOH ? ' <span class="sig-badge oh" style="font-size:9.5px; padding:1px 5px;">▼ OH</span>' : '');
       const peSigBadge = pe.isOL ? ' <span class="sig-badge ol" style="font-size:9.5px; padding:1px 5px;">▲ OL</span>' : (pe.isOH ? ' <span class="sig-badge oh" style="font-size:9.5px; padding:1px 5px;">▼ OH</span>' : '');
@@ -1280,11 +1323,11 @@ async function openChainModal(symbol, expiry) {
         <td>${fmtNum(ce.prevClose)}</td>
         <td>${fmtNum(ce.open)}</td>
         <td>${fmtNum(ce.high)}</td>
-        <td class="${ceLowCls}" style="cursor:pointer;" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'CE')" title="Click for Chart">${fmtNum(ce.low)}${ceSigBadge}</td>
+        <td class="${ceLowCls}">${fmtNum(ce.low)}${ceSigBadge}</td>
         <td class="ce-cell" style="text-align:center;">${ceChip}</td>
         <td class="strike-col">${row.strike}${isAtm ? ' ⭐' : ''}</td>
         <td class="pe-cell" style="text-align:center;">${peChip}</td>
-        <td class="${peLowCls}" style="cursor:pointer;" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'PE')" title="Click for Chart">${fmtNum(pe.low)}${peSigBadge}</td>
+        <td class="${peLowCls}">${fmtNum(pe.low)}${peSigBadge}</td>
         <td>${fmtNum(pe.high)}</td>
         <td>${fmtNum(pe.open)}</td>
         <td>${fmtNum(pe.prevClose)}</td>
@@ -1323,6 +1366,52 @@ document.getElementById('openLiveChainBtn').addEventListener('click', () => {
 
 // Option Chart & Strategy Indicator Setup
 const PINE_SCRIPTS = {
+  ut: {
+    title: "⚡ UT Bot Alerts (BUY / SELL) – Trailing Stop & Trend",
+    desc: "Famous UT Bot ATR Trailing Stop strategy with automatic BUY and SELL alert signals, trend labels, dynamic support/resistance lines, and bar coloring (Sensitivity 2, ATR 10).",
+    code: `//@version=6
+indicator("UT Bot Alerts (Buy / Sell) – Options & Stocks", overlay = true)
+
+// ───────────── Inputs ─────────────
+a = input.int(2, "Key Value (Sensitivity)", minval = 1, tooltip = "Sensitivity value for trailing stop. Lower = more signals, Higher = fewer signals (smoother).", group = "UT Bot Configuration")
+c = input.int(10, "ATR Period", minval = 1, tooltip = "Period for Average True Range calculation.", group = "UT Bot Configuration")
+h = input.bool(false, "Signals from Heikin Ashi Candles", group = "UT Bot Configuration")
+
+// ───────────── Calculations ─────────────
+xATR  = ta.atr(c)
+nLoss = a * xATR
+
+src = h ? request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, close, lookahead = barmerge.lookahead_off) : close
+
+var float xATRTrailingStop = 0.0
+iff_1 = src > nz(xATRTrailingStop[1], 0) ? src - nLoss : src + nLoss
+iff_2 = src < nz(xATRTrailingStop[1], 0) and src[1] < nz(xATRTrailingStop[1], 0) ? math.min(nz(xATRTrailingStop[1]), src + nLoss) : iff_1
+xATRTrailingStop := src > nz(xATRTrailingStop[1], 0) and src[1] > nz(xATRTrailingStop[1], 0) ? math.max(nz(xATRTrailingStop[1]), src - nLoss) : iff_2
+
+var int pos = 0
+iff_3 = src[1] > nz(xATRTrailingStop[1], 0) and src < nz(xATRTrailingStop[1], 0) ? -1 : nz(pos[1], 0)
+pos := src[1] < nz(xATRTrailingStop[1], 0) and src > nz(xATRTrailingStop[1], 0) ? 1 : iff_3
+
+xcolor = pos == -1 ? color.red : pos == 1 ? color.green : color.blue
+
+// ───────────── Trailing Stop Plot ─────────────
+plot(xATRTrailingStop, color = xcolor, title = "UT Trailing Stop", linewidth = 2)
+
+// ───────────── Signals ─────────────
+buySignal  = ta.crossover(src, xATRTrailingStop)
+sellSignal = ta.crossunder(src, xATRTrailingStop)
+
+plotshape(buySignal,  title = "Buy Alert",  text = "BUY",  style = shape.labelup,   location = location.belowbar, color = color.new(#10b981, 0), textcolor = color.white, size = size.normal)
+plotshape(sellSignal, title = "Sell Alert", text = "SELL", style = shape.labeldown, location = location.abovebar, color = color.new(#ef4444, 0), textcolor = color.white, size = size.normal)
+
+// ───────────── Bar Coloring ─────────────
+barcolor(pos == 1 ? color.new(#10b981, 0) : pos == -1 ? color.new(#ef4444, 0) : na)
+
+// ───────────── Alerts ─────────────
+alertcondition(buySignal,  title = "UT Bot BUY Signal",  message = "UT Bot BUY Alert on {{ticker}} at {{close}}")
+alertcondition(sellSignal, title = "UT Bot SELL Signal", message = "UT Bot SELL Alert on {{ticker}} at {{close}}")
+`
+  },
   1: {
     title: "Strategy 1: Low Range + Open=Low / Open=High",
     desc: "Scans low ₹5.80–8.45 and previous close ₹38–48 with Open=Low / Open=High on calls & puts.",
@@ -1776,28 +1865,55 @@ var table tbl = table.new(pos == "Top left" ? position.top_left : position.top_r
   }
 };
 
-function selectHubStrat(num) {
-  currentHubStrat = num;
-  [1, 2, 3].forEach(n => {
-    const btn = document.getElementById('hubStrat' + n + 'Btn');
-    if (btn) btn.classList.toggle('active', n === num);
-  });
+let currentIndicatorStrat = 'ut';
 
-  const strat = PINE_SCRIPTS[num];
+// Open Strategy / Indicator Pine Script Modal
+function openIndicatorModal(stratKey) {
+  if (!stratKey) stratKey = 'ut';
+  currentIndicatorStrat = stratKey;
+
+  const modal = document.getElementById('indicatorModal');
+  const badge = document.getElementById('indModalBadge');
+  const title = document.getElementById('indModalTitle');
+  const desc = document.getElementById('indDescText');
+  const preview = document.getElementById('pineCodePreview');
+  const tvLink = document.getElementById('indTvChartLink');
+
+  // Activate matching tab button
+  document.querySelectorAll('.strat-tab-btn').forEach(b => b.classList.remove('active'));
+  const activeTab = document.getElementById('tabBtn' + (stratKey === 'ut' ? 'Ut' : stratKey));
+  if (activeTab) activeTab.classList.add('active');
+
+  const strat = PINE_SCRIPTS[stratKey];
   if (!strat) return;
 
-  const sym = currentSelectedContract ? currentSelectedContract.symbol : 'NIFTY';
-  document.getElementById('hubStratDesc').textContent = strat.desc + ` (Configured for: ${sym})`;
-  document.getElementById('pineCodePreview').textContent = strat.code;
-  
+  if (stratKey === 'ut') {
+    badge.textContent = '⚡ UT Bot';
+    badge.className = 'ind-tag ut';
+  } else {
+    badge.textContent = `🎯 Strategy ${stratKey}`;
+    badge.className = 'ind-tag';
+  }
+
+  title.textContent = strat.title;
+  desc.textContent = strat.desc;
+  preview.textContent = strat.code;
+
+  const currentSym = (document.getElementById('symSelect') && document.getElementById('symSelect').value !== '__ALL__') ? document.getElementById('symSelect').value : 'NIFTY';
+  tvLink.href = getTradingViewUrl(currentSym);
+  tvLink.textContent = `📈 Open ${currentSym} Chart on TradingView ↗`;
+
   const copyBtn = document.getElementById('copyPineBtn');
   copyBtn.className = 'copy-script-btn';
   document.getElementById('copyBtnIcon').textContent = '📋';
   document.getElementById('copyBtnText').textContent = 'Copy Pine Script Code';
+
+  modal.style.display = 'flex';
 }
 
-function copyCurrentPineScript() {
-  const strat = PINE_SCRIPTS[currentHubStrat];
+// 1-Click Copy Pine Script to Clipboard
+function copyCurrentIndicatorScript() {
+  const strat = PINE_SCRIPTS[currentIndicatorStrat];
   if (!strat) return;
 
   navigator.clipboard.writeText(strat.code).then(() => {
@@ -1810,375 +1926,33 @@ function copyCurrentPineScript() {
       document.getElementById('copyBtnIcon').textContent = '📋';
       document.getElementById('copyBtnText').textContent = 'Copy Pine Script Code';
     }, 2500);
-  }).catch(err => {
-    alert('Pine script copied to preview box! Use Ctrl+C.');
+  }).catch(() => {
+    alert('Code previewed above! Select all and press Ctrl+C to copy.');
   });
 }
 
-function switchOptChartTab(tab) {
-  const tabCanvas = document.getElementById('tabOptCanvas');
-  const tabTV = document.getElementById('tabOptTV');
-  const canvasContainer = document.getElementById('optCanvasContainer');
-  const tvContainer = document.getElementById('optTvContainer');
-
-  if (tab === 'canvas') {
-    tabCanvas.classList.add('active');
-    tabTV.classList.remove('active');
-    canvasContainer.style.display = 'block';
-    tvContainer.style.display = 'none';
-    if (currentSelectedContract) {
-      setTimeout(() => drawOptionChart(currentSelectedContract), 30);
-    }
-  } else {
-    tabCanvas.classList.remove('active');
-    tabTV.classList.add('active');
-    canvasContainer.style.display = 'none';
-    tvContainer.style.display = 'block';
-    const sym = currentSelectedContract ? currentSelectedContract.symbol : 'NIFTY';
-    loadTradingViewWidget(sym);
+// Indicator Modal Close Listeners
+document.getElementById('indCloseBtn').addEventListener('click', () => {
+  document.getElementById('indicatorModal').style.display = 'none';
+});
+document.getElementById('indicatorModal').addEventListener('click', (e) => {
+  if (e.target.id === 'indicatorModal') {
+    document.getElementById('indicatorModal').style.display = 'none';
   }
-}
+});
 
-function loadTradingViewWidget(symbol) {
-  const container = document.getElementById('tradingview_widget');
-  container.innerHTML = '';
-  if (typeof TradingView !== 'undefined') {
-    const tvSymbol = symbol === 'SENSEX' ? 'BSE:SENSEX' : (symbol === 'NIFTY' ? 'NSE:NIFTY' : (symbol === 'BANKNIFTY' ? 'NSE:BANKNIFTY' : `NSE:${symbol}`));
-    new TradingView.widget({
-      "autosize": true,
-      "symbol": tvSymbol,
-      "interval": "D",
-      "timezone": "Asia/Kolkata",
-      "theme": "dark",
-      "style": "1",
-      "locale": "in",
-      "toolbar_bg": "#141824",
-      "enable_publishing": false,
-      "allow_symbol_change": true,
-      "container_id": "tradingview_widget"
-    });
-  } else {
-    container.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8;">TradingView widget loading…</div>';
-  }
-}
-
-// Open Option Premium & Indicator Chart Modal
+// Fallback for legacy chart modal callers (redirects straight to TradingView)
 function openOptionChartModal(symbol, expiry, strike, type) {
-  let contract = null;
-  // Search in currentChainData
-  if (currentChainData && currentChainData.strikes && currentChainData.symbol === symbol) {
-    const row = currentChainData.strikes.find(s => s.strike === strike);
-    if (row && row[type]) {
-      contract = row[type];
-    }
-  }
-  // Fallback search in lastResults
-  if (!contract && lastResults && lastResults.length) {
-    contract = lastResults.find(r => r.symbol === symbol && r.strike === strike && r.type === type && (expiry ? r.expiry === expiry : true));
-  }
-
-  // Construct default if not found
-  if (!contract) {
-    contract = {
-      symbol: symbol,
-      expiry: expiry || '',
-      strike: strike,
-      type: type,
-      open: 0, high: 0, low: 0, close: 0, prevClose: 0,
-      spot: currentChainData ? currentChainData.spot : 0,
-      vol: 0, oi: 0,
-      tgt9: 0, tgt18: 0, sl5: 0, sl9: 0, div8: 0, div65: 0
-    };
-  }
-
-  currentSelectedContract = contract;
-
-  // Header & Badges
-  const modal = document.getElementById('optionChartModal');
-  const typeBadge = document.getElementById('optBadgeType');
-  typeBadge.textContent = contract.type;
-  typeBadge.className = 'opt-tag ' + (contract.type === 'CE' ? 'ce' : 'pe');
-
-  document.getElementById('optModalTitle').textContent = `${contract.symbol} ${contract.strike} ${contract.type} (${contract.expiry})`;
-
-  const spot = contract.spot || (currentChainData ? currentChainData.spot : 0);
-  const moneynessBadge = document.getElementById('optBadgeMoneyness');
-  if (spot > 0) {
-    const isCE = contract.type === 'CE';
-    const isATM = Math.abs(contract.strike - spot) <= (spot * 0.005);
-    const isITM = isCE ? (contract.strike < spot) : (contract.strike > spot);
-    if (isATM) {
-      moneynessBadge.textContent = '⭐ ATM (Spot ₹' + fmtNum(spot) + ')';
-      moneynessBadge.className = 'badge-moneyness atm';
-    } else if (isITM) {
-      moneynessBadge.textContent = '🟢 ITM (Spot ₹' + fmtNum(spot) + ')';
-      moneynessBadge.className = 'badge-moneyness';
-    } else {
-      moneynessBadge.textContent = '🔵 OTM (Spot ₹' + fmtNum(spot) + ')';
-      moneynessBadge.className = 'badge-moneyness';
-    }
-  } else {
-    moneynessBadge.textContent = 'F&O Contract';
-  }
-
-  const sigBadge = document.getElementById('optBadgeSignal');
-  if (contract.isOL) {
-    sigBadge.style.display = 'inline-block';
-    sigBadge.className = 'badge-signal ol';
-    sigBadge.textContent = '🟢 ▲ Open = Low (Bullish Momentum)';
-  } else if (contract.isOH) {
-    sigBadge.style.display = 'inline-block';
-    sigBadge.className = 'badge-signal oh';
-    sigBadge.textContent = '🔴 ▼ Open = High (Bearish Momentum)';
-  } else if (contract.isMatch) {
-    sigBadge.style.display = 'inline-block';
-    sigBadge.className = 'badge-signal match';
-    sigBadge.textContent = '🎯 Low Range Match (₹5.80–8.45)';
-  } else {
-    sigBadge.style.display = 'none';
-  }
-
-  // Stats Cards
-  const chg = contract.close - contract.prevClose;
-  const chgPct = contract.prevClose > 0 ? (chg / contract.prevClose) * 100 : 0;
-  document.getElementById('optStatLtp').textContent = '₹' + fmtNum(contract.close);
-  document.getElementById('optStatChg').innerHTML = `<span style="color:${chg>=0?'#35d07f':'#ff6b81'}">${chg>=0?'+':''}₹${fmtNum(chg)} (${fmtPct(chgPct)})</span>`;
-
-  document.getElementById('optStatRange').textContent = `Low: ₹${fmtNum(contract.low)} · High: ₹${fmtNum(contract.high)}`;
-  document.getElementById('optStatOpenPc').textContent = `Open: ₹${fmtNum(contract.open)} · Prev Cl: ₹${fmtNum(contract.prevClose)}`;
-
-  const tgt9 = contract.tgt9 || (contract.low * 1.09);
-  const tgt18 = contract.tgt18 || (contract.low * 1.18);
-  const sl5 = contract.sl5 || (contract.low * 0.95);
-  const sl9 = contract.sl9 || (contract.low * 0.91);
-  document.getElementById('optStatTgt').textContent = `Tgt 1 (+9%): ₹${fmtNum(tgt9)} | Tgt 2 (+18%): ₹${fmtNum(tgt18)}`;
-  document.getElementById('optStatSl').textContent = `SL 1 (-5%): ₹${fmtNum(sl5)} | SL 2 (-9%): ₹${fmtNum(sl9)}`;
-
-  const div8 = contract.div8 || (contract.close / 8);
-  const div65 = contract.div65 || (contract.close / 6.5);
-  document.getElementById('optStatDiv').textContent = `÷8: ₹${fmtNum(div8)} · ÷6.5: ₹${fmtNum(div65)}`;
-  document.getElementById('optStatVolOi').textContent = `Vol: ${fmtOI(contract.vol)} · OI: ${fmtOI(contract.oi)}`;
-
-  document.getElementById('tvTabSymbol').textContent = contract.symbol;
-  const tvSym = contract.symbol === 'SENSEX' ? 'BSE:SENSEX' : (contract.symbol === 'NIFTY' ? 'NSE:NIFTY' : `NSE:${contract.symbol}`);
-  document.getElementById('tvExternalLink').href = `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(tvSym)}`;
-
-  switchOptChartTab('canvas');
-  selectHubStrat(1);
-
-  modal.style.display = 'flex';
-  setTimeout(() => drawOptionChart(contract), 60);
+  redirectToChart(symbol || 'NIFTY');
 }
-
-// Draw Option Candlestick & Overlaid Strategy Levels on Canvas
-function drawOptionChart(c) {
-  const canvas = document.getElementById('optChartCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  const width = rect.width || 1140;
-  const height = 320;
-
-  canvas.width = width * dpr;
-  canvas.height = height * dpr;
-  ctx.scale(dpr, dpr);
-
-  ctx.fillStyle = '#0b0e14';
-  ctx.fillRect(0, 0, width, height);
-
-  const openP = c.open || c.close || 0;
-  const highP = c.high || Math.max(openP, c.close || 0);
-  const lowP = c.low || Math.min(openP, c.close || 0);
-  const closeP = c.close || 0;
-  const prevP = c.prevClose || openP;
-  const tgt9 = c.tgt9 || (lowP * 1.09);
-  const tgt18 = c.tgt18 || (lowP * 1.18);
-  const sl5 = c.sl5 || (lowP * 0.95);
-  const sl9 = c.sl9 || (lowP * 0.91);
-
-  const allVals = [openP, highP, lowP, closeP, prevP, tgt9, tgt18, sl5, sl9].filter(v => v > 0);
-  if (!allVals.length) return;
-
-  const minVal = Math.min(...allVals) * 0.96;
-  const maxVal = Math.max(...allVals) * 1.04;
-  const range = maxVal - minVal || 1;
-
-  const padTop = 30;
-  const padBottom = 35;
-  const padLeft = 45;
-  const padRight = 150;
-  const chartW = width - padLeft - padRight;
-  const chartH = height - padTop - padBottom;
-
-  function getY(val) {
-    return padTop + chartH - ((val - minVal) / range) * chartH;
-  }
-
-  // Draw Grid Lines
-  ctx.strokeStyle = '#1a2233';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 5; i++) {
-    const y = padTop + (chartH / 5) * i;
-    ctx.beginPath();
-    ctx.moveTo(padLeft, y);
-    ctx.lineTo(width - padRight, y);
-    ctx.stroke();
-
-    const priceAtY = maxVal - (range / 5) * i;
-    ctx.fillStyle = '#64748b';
-    ctx.font = '10.5px "IBM Plex Mono", monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('₹' + priceAtY.toFixed(1), width - padRight + 10, y + 3.5);
-  }
-
-  // Strategy 1 Zone Band (₹5.80 - ₹8.45) if visible
-  if (minVal <= 8.45 && maxVal >= 5.80) {
-    const yTop = Math.max(padTop, getY(8.45));
-    const yBot = Math.min(height - padBottom, getY(5.80));
-    ctx.fillStyle = 'rgba(245, 195, 68, 0.08)';
-    ctx.fillRect(padLeft, yTop, chartW, yBot - yTop);
-    ctx.strokeStyle = 'rgba(245, 195, 68, 0.3)';
-    ctx.setLineDash([4, 4]);
-    ctx.strokeRect(padLeft, yTop, chartW, yBot - yTop);
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#f5c344';
-    ctx.font = '10px "IBM Plex Sans", sans-serif';
-    ctx.fillText('Strategy 1 Low Range Band (₹5.80 - ₹8.45)', padLeft + 10, yTop + 14);
-  }
-
-  // Intraday Price Trajectory Path
-  const pts = [
-    { label: 'Prev Cl', p: prevP, x: padLeft + chartW * 0.08 },
-    { label: 'Open', p: openP, x: padLeft + chartW * 0.22 },
-    { label: 'Low', p: lowP, x: padLeft + chartW * 0.36 },
-    { label: 'High', p: highP, x: padLeft + chartW * 0.50 },
-    { label: 'LTP', p: closeP, x: padLeft + chartW * 0.64 }
-  ];
-
-  const grad = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
-  const isUp = closeP >= openP;
-  grad.addColorStop(0, isUp ? 'rgba(53, 208, 127, 0.25)' : 'rgba(255, 107, 129, 0.25)');
-  grad.addColorStop(1, 'rgba(11, 14, 20, 0)');
-
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, getY(pts[0].p));
-  for (let i = 1; i < pts.length; i++) {
-    ctx.lineTo(pts[i].x, getY(pts[i].p));
-  }
-  ctx.lineTo(pts[pts.length - 1].x, height - padBottom);
-  ctx.lineTo(pts[0].x, height - padBottom);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, getY(pts[0].p));
-  for (let i = 1; i < pts.length; i++) {
-    ctx.lineTo(pts[i].x, getY(pts[i].p));
-  }
-  ctx.strokeStyle = isUp ? '#35d07f' : '#ff6b81';
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  pts.forEach(pt => {
-    const y = getY(pt.p);
-    ctx.beginPath();
-    ctx.arc(pt.x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.strokeStyle = isUp ? '#35d07f' : '#ff6b81';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '10px "IBM Plex Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(pt.label, pt.x, height - padBottom + 16);
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = '10px "IBM Plex Mono", monospace';
-    ctx.fillText('₹' + pt.p.toFixed(2), pt.x, y - 9);
-  });
-
-  // Candlestick (Right center)
-  const candleX = padLeft + chartW * 0.85;
-  const candleW = 32;
-  const yO = getY(openP);
-  const yC = getY(closeP);
-  const yH = getY(highP);
-  const yL = getY(lowP);
-
-  ctx.strokeStyle = isUp ? '#35d07f' : '#ff6b81';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(candleX, yH);
-  ctx.lineTo(candleX, Math.min(yO, yC));
-  ctx.moveTo(candleX, Math.max(yO, yC));
-  ctx.lineTo(candleX, yL);
-  ctx.stroke();
-
-  const bodyTop = Math.min(yO, yC);
-  const bodyH = Math.max(Math.abs(yO - yC), 3);
-  ctx.fillStyle = isUp ? '#35d07f' : '#ff6b81';
-  ctx.fillRect(candleX - candleW / 2, bodyTop, candleW, bodyH);
-
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '10px "IBM Plex Sans", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Day Candle', candleX, height - padBottom + 16);
-
-  // Strategy Level Lines
-  function drawLevelLine(price, label, color, dash = []) {
-    if (price <= 0) return;
-    const y = getY(price);
-    if (y < padTop - 5 || y > height - padBottom + 5) return;
-
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash(dash);
-    ctx.beginPath();
-    ctx.moveTo(padLeft, y);
-    ctx.lineTo(width - padRight, y);
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.roundRect(width - padRight + 6, y - 9, 138, 18, 4);
-    ctx.fill();
-
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 9.5px "IBM Plex Sans", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(label + ': ₹' + price.toFixed(2), width - padRight + 10, y + 3.5);
-  }
-
-  drawLevelLine(tgt18, '🚀 Tgt 2 (+18%)', '#10b981', [5, 4]);
-  drawLevelLine(tgt9, '🎯 Tgt 1 (+9%)', '#34d399', [3, 3]);
-  drawLevelLine(closeP, '🟡 LTP', '#f5c344', []);
-  drawLevelLine(lowP, '🔵 Buy @ Low', '#60a5fa', []);
-  drawLevelLine(sl5, '🛡️ SL 1 (-5%)', '#f87171', [4, 4]);
-  drawLevelLine(sl9, '🛑 SL 2 (-9%)', '#ef4444', []);
-}
-
-// Option Chart Close Listeners
-document.getElementById('optChartCloseBtn').addEventListener('click', () => {
-  document.getElementById('optionChartModal').style.display = 'none';
-});
-document.getElementById('optionChartModal').addEventListener('click', (e) => {
-  if (e.target.id === 'optionChartModal') {
-    document.getElementById('optionChartModal').style.display = 'none';
-  }
-});
 
 // CSV Download
 document.getElementById('dlBtn').addEventListener('click', () => {
   if(!lastResults.length) return;
-  const header = ['Symbol','Expiry','Strike','Type','Signal','OI','OI%','PrevClose','Open','High','Low','LTP','Tgt9','Tgt18','SL5'];
+  const header = ['Symbol','Expiry','Strike','Type','Signal','UT_Bot_Action','OI','OI%','PrevClose','Open','High','Low','LTP','Tgt9','Tgt18','SL5'];
   const lines = [header.join(',')];
   lastResults.forEach(r => {
-    lines.push([r.symbol, r.expiry, r.strike, r.type, r.sig, r.oi, r.oiPct==null?'':r.oiPct.toFixed(2), r.prevCloseUsed, r.open, r.high, r.low, r.close, r.tgt9, r.tgt18, r.sl5].join(','));
+    lines.push([r.symbol, r.expiry, r.strike, r.type, r.sig, getUtBotSignal(r).label, r.oi, r.oiPct==null?'':r.oiPct.toFixed(2), r.prevCloseUsed, r.open, r.high, r.low, r.close, r.tgt9, r.tgt18, r.sl5].join(','));
   });
   const blob = new Blob([lines.join('\n')], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
