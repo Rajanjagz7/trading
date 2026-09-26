@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bhavcopy & Live Option Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #12161f;
+    --panel-2: #161b26;
+    --line: #242a3a;
+    --text: #e8eaf0;
+    --muted: #8891a5;
+    --ce: #35d07f;
+    --pe: #ff6b81;
+    --match: #f5c344;
+    --ol: #4fc3f7;
+    --oh: #ffb74d;
+    --accent: #3b82f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .app { max-width: 1450px; margin: 0 auto; padding: 20px 20px 60px; }
+
+  header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
+    border-bottom: 1px solid var(--line); padding-bottom: 16px;
+  }
+  header h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+  header p { color: var(--muted); margin: 0; max-width: 680px; line-height: 1.5; font-size: 13px; }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--panel-2); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 20px; font-size: 12px;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; }
+  .status-dot.live { background: var(--ce); box-shadow: 0 0 8px rgba(53,208,127,0.6); }
+  .status-dot.closed { background: #f59e0b; }
+
+  /* Mode Switcher Tabs */
+  .mode-tabs {
+    display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid var(--line);
+  }
+  .tab-btn {
+    background: transparent; border: none; color: var(--muted);
+    font-family: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Notification Bar */
+  .banner {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 16px; display: flex;
+    justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .banner-text { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .action-btn {
+    background: #1e293b; color: #93c5fd; border: 1px solid #3b82f6;
+    padding: 6px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .action-btn:hover { background: #2563eb; color: #fff; }
+
+  /* Manual Drop Area */
+  .upload-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .drop {
+    flex: 1 1 260px; border: 1px dashed var(--line); border-radius: 8px;
+    background: var(--panel); padding: 14px; cursor: pointer; text-align: left;
+    transition: border-color .15s;
+  }
+  .drop:hover { border-color: #3a4256; }
+  .drop.filled { border-style: solid; border-color: var(--ce); }
+  .drop .tag { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .drop .title { font-weight: 600; margin: 4px 0 2px; }
+  .drop .detail { font-size: 12px; color: var(--muted); }
+  .drop input { display: none; }
+
+  .workspace { display: grid; grid-template-columns: 290px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 920px) { .workspace { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  .filters .group { margin-bottom: 15px; }
+  .filters .group:last-child { margin-bottom: 0; }
+  .filters label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+  .filters .row2 { display: flex; gap: 8px; }
+  select, input[type=text], input[type=number] {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    padding: 7px 8px; border-radius: 6px; font-size: 13px; font-family: inherit;
+  }
+  select:focus, input:focus { outline: 1px solid #4a5578; }
+  .checkline { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; color: var(--text); }
+  .checkline input { width: auto; cursor: pointer; }
+  .segbtns { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .segbtns button {
+    flex: 1; background: var(--panel-2); color: var(--muted); border: none; padding: 7px 4px;
+    font-size: 12px; cursor: pointer; font-family: inherit;
+  }
+  .segbtns button.active { background: #232a3d; color: var(--text); font-weight: 600; }
+  
+  .scan-btn {
+    width: 100%; margin-top: 6px; background: var(--ce); color: #06210f; font-weight: 700;
+    border: none; border-radius: 6px; padding: 10px; font-size: 13.5px; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .scan-btn:hover { opacity: .9; }
+  .scan-btn:disabled { background: #2a3040; color: var(--muted); cursor: not-allowed; }
+
+  .summary { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 110px; }
+  .stat .n { font-size: 19px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+  .stat .l { font-size: 11.5px; color: var(--muted); }
+  .stat.ol .n { color: var(--ol); } .stat.oh .n { color: var(--oh); } .stat.match .n { color: var(--match); }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
+  .toolbar .msg { font-size: 12.5px; color: var(--muted); }
+  .dl-btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 12.5px; cursor: pointer; }
+  .dl-btn:hover { border-color: #3a4256; }
+
+  .table-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; max-height: 680px; }
+  table { border-collapse: collapse; width: 100%; min-width: 980px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
+  th, td { padding: 7px 9px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+  th { position: sticky; top: 0; background: var(--panel-2); color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; font-family: 'IBM Plex Sans', sans-serif; font-size: 11.5px; z-index: 2; }
+  th:hover { color: var(--text); }
+  td.sym, td.exp, th.sym, th.exp { text-align: left; }
+  tr:hover td { background: #161c29; }
+  .ce-cell { color: var(--ce); }
+  .pe-cell { color: var(--pe); }
+  .sig { font-weight: 600; }
+  .sig.ol { color: var(--ol); } .sig.oh { color: var(--oh); }
+  .yellow { color: var(--match); font-weight: 600; }
+  .empty { padding: 50px 20px; text-align: center; color: var(--muted); font-size: 13.5px; }
+  .empty b { color: var(--text); }
+  
+  footer { margin-top: 24px; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+  footer .key { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; }
+  footer .dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Bhavcopy & Live Option Scanner</h1>
+      <p>Scan the whole NSE F&amp;O market for Day Low range, Previous Close range, and Open=Low / Open=High setups with automated API downloads and live market support.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+      <div class="status-badge" id="marketBadge">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="marketStatusText">Checking market status…</span>
+      </div>
+      <div id="loadedInfo" style="font-size:12px; color:var(--muted);"></div>
+    </div>
+  </header>
+
+  <!-- Mode Selector Tabs -->
+  <div class="mode-tabs">
+    <button class="tab-btn active" data-tab="auto">⚡ Auto Bhavcopy (API)</button>
+    <button class="tab-btn" data-tab="live">🔴 Live Market Scanner</button>
+    <button class="tab-btn" data-tab="manual">📁 Manual CSV Upload</button>
+  </div>
+
+  <!-- Auto Fetch Banner -->
+  <div class="banner" id="autoBanner">
+    <div class="banner-text">
+      <span>📥</span>
+      <span id="autoBannerMsg">Bhavcopy data automatically synced with NSE archives.</span>
+    </div>
+    <button class="action-btn" id="refreshBhavBtn">🔄 Force Re-Fetch Latest from NSE</button>
+  </div>
+
+  <!-- Manual Upload Section (visible only in manual tab) -->
+  <div class="upload-row" id="manualUploadRow" style="display:none;">
+    <label class="drop" id="dropToday">
+      <div class="tag">Required</div>
+      <div class="title" id="todayTitle">Today's bhavcopy</div>
+      <div class="detail" id="todayDetail">Click to choose a BhavCopy_NSE_FO CSV file</div>
+      <input type="file" id="fileToday" accept=".csv">
+    </label>
+    <label class="drop" id="dropPrev">
+      <div class="tag">Optional — cross-check</div>
+      <div class="title" id="prevTitle">Previous day's bhavcopy</div>
+      <div class="detail" id="prevDetail">Adds a real yesterday-vs-today OI &amp; close comparison</div>
+      <input type="file" id="filePrev" accept=".csv">
+    </label>
+  </div>
+
+  <!-- Live Market Bar (visible only in live tab) -->
+  <div class="banner" id="liveBar" style="display:none;">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <label style="font-size:13px; font-weight:600; color:var(--muted);">Live Symbol:</label>
+      <select id="liveSymbolSelect" style="width:160px; padding:5px 8px;">
+        <option value="NIFTY" selected>NIFTY</option>
+        <option value="BANKNIFTY">BANKNIFTY</option>
+        <option value="FINNIFTY">FINNIFTY</option>
+        <option value="MIDCPNIFTY">MIDCPNIFTY</option>
+        <option value="RELIANCE">RELIANCE</option>
+        <option value="HDFCBANK">HDFCBANK</option>
+        <option value="ICICIBANK">ICICIBANK</option>
+        <option value="INFY">INFY</option>
+        <option value="TCS">TCS</option>
+      </select>
+      <label class="checkline" style="margin:0;"><input type="checkbox" id="liveAutoRefresh"> <span>Auto-refresh (15s)</span></label>
+      <span id="liveLastTime" style="font-size:12px; color:var(--muted);"></span>
+    </div>
+    <button class="action-btn" id="liveScanBtn">⚡ Fetch Live Chain</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel filters">
+      <div class="group" id="symbolFilterGroup">
+        <label>Underlying</label>
+        <input type="text" id="symSearch" placeholder="Type to filter symbols…" style="margin-bottom:6px;">
+        <select id="symSelect"><option value="__ALL__">All symbols</option></select>
+      </div>
+
+      <div class="group" id="instrGroup">
+        <label>Instrument type</label>
+        <div class="checkline"><input type="checkbox" id="instIdx" checked><span>Index options</span></div>
+        <div class="checkline"><input type="checkbox" id="instStk" checked><span>Stock options</span></div>
+      </div>
+
+      <div class="group">
+        <label>Expiry</label>
+        <select id="expSelect">
+          <option value="nearest">Nearest expiry (per symbol)</option>
+          <option value="all">All expiries</option>
+        </select>
+      </div>
+
+      <div class="group">
+        <label>Option type</label>
+        <div class="segbtns" id="optTypeSeg">
+          <button data-v="BOTH" class="active">Both</button>
+          <button data-v="CE">CE</button>
+          <button data-v="PE">PE</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="checkline"><input type="checkbox" id="lowOn" checked><label style="margin:0;">Day low in range (₹)</label></div>
+        <div class="row2">
+          <input type="number" id="lowFrom" step="0.05" value="5.80">
+          <input type="number" id="lowTo" step="0.05" value="8.45">
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="checkline"><input type="checkbox" id="prevOn" checked><label style="margin:0;">Previous close in range (₹)</label></div>
+        <div class="row2">
+          <input type="number" id="prevFrom" step="0.05" value="38">
+          <input type="number" id="prevTo" step="0.05" value="48">
+        </div>
+      </div>
+
+      <div class="group">
+        <label>Open = Low / Open = High tolerance (₹)</label>
+        <input type="number" id="tol" step="0.05" value="0" min="0">
+      </div>
+
+      <div class="group">
+        <label>Minimum open interest</label>
+        <input type="number" id="minOi" step="1" value="0" min="0">
+        <div class="checkline" style="margin-top:8px;"><input type="checkbox" id="includeUntraded"><span>Include untraded (0-volume)</span></div>
+      </div>
+
+      <div class="group">
+        <label>Show</label>
+        <select id="showMode">
+          <option value="matches" selected>Matches only</option>
+          <option value="all">All strikes</option>
+          <option value="ol">Open = Low</option>
+          <option value="oh">Open = High</option>
+          <option value="any">Any signal</option>
+        </select>
+      </div>
+
+      <button class="scan-btn" id="scanBtn">Scan Market</button>
+    </div>
+
+    <main>
+      <div class="summary" id="summary" style="display:none;">
+        <div class="stat"><div class="n" id="statTotal">0</div><div class="l">contracts loaded</div></div>
+        <div class="stat match"><div class="n" id="statMatch">0</div><div class="l">matches</div></div>
+        <div class="stat ol"><div class="n" id="statOL">0</div><div class="l">open = low</div></div>
+        <div class="stat oh"><div class="n" id="statOH">0</div><div class="l">open = high</div></div>
+      </div>
+
+      <div class="toolbar" id="toolbar" style="display:none;">
+        <div class="msg" id="rowMsg"></div>
+        <button class="dl-btn" id="dlBtn">Download results as CSV</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="resultsTable" style="display:none;">
+          <thead>
+            <tr>
+              <th class="sym" data-k="symbol">Symbol</th>
+              <th class="exp" data-k="expiry">Expiry</th>
+              <th data-k="strike">Strike</th>
+              <th data-k="type">Type</th>
+              <th data-k="signal">Signal</th>
+              <th data-k="oi">OI</th>
+              <th data-k="oiPct">OI%</th>
+              <th data-k="prevCloseUsed">Prev Cl</th>
+              <th data-k="open">Open</th>
+              <th data-k="high">High</th>
+              <th data-k="low">Low</th>
+              <th data-k="close">LTP</th>
+              <th data-k="spot">Spot</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+        <div class="empty" id="emptyMsg">Ready to scan. Click <b>Scan Market</b> or select a filter.</div>
+      </div>
+
+      <footer>
+        <span class="key"><span class="dot" style="background:var(--match)"></span>Price-range match</span>
+        <span class="key"><span class="dot" style="background:var(--ol)"></span>Open = Low</span>
+        <span class="key"><span class="dot" style="background:var(--oh)"></span>Open = High</span>
+        <span class="key"><span class="dot" style="background:var(--ce)"></span>Call (CE)</span>
+        <span class="key"><span class="dot" style="background:var(--pe)"></span>Put (PE)</span>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+const API_BASE = window.location.origin.startsWith('http') ? '' : 'http://localhost:8000';
+let currentMode = 'auto'; // 'auto' | 'live' | 'manual'
+let lastResults = [];
+let sortKey = 'oi';
+let sortDir = 'desc';
+let liveTimer = null;
+let allSymbols = [];
+
+// Initialize status and load symbols
+async function initStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/status`);
+    const data = await res.json();
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('marketStatusText');
+    const loadedInfo = document.getElementById('loadedInfo');
+
+    if (data.marketStatus === 'Open') {
+      dot.className = 'status-dot live';
+      text.textContent = 'Market: LIVE (' + (data.tradeDate || '') + ')';
+    } else {
+      dot.className = 'status-dot closed';
+      text.textContent = 'Market: Closed (' + (data.tradeDate || '') + ')';
+    }
+
+    if (data.todayDateLoaded) {
+      loadedInfo.textContent = 'Bhavcopy: ' + data.todayDateLoaded + ' (' + data.totalLoaded.toLocaleString() + ' contracts)';
+      document.getElementById('autoBannerMsg').textContent = 'Bhavcopy for ' + data.todayDateLoaded + ' loaded (' + data.totalLoaded.toLocaleString() + ' contracts) — cross-checked with ' + (data.prevDateLoaded || 'previous day');
+    }
+    loadSymbols();
+  } catch (err) {
+    document.getElementById('marketStatusText').textContent = 'API connected';
+  }
+}
+
+async function loadSymbols() {
+  try {
+    const res = await fetch(`${API_BASE}/api/symbols`);
+    const data = await res.json();
+    if (data.symbols && data.symbols.length) {
+      allSymbols = data.symbols;
+      populateSymbols(allSymbols);
+    }
+  } catch (e) {}
+}
+
+function populateSymbols(list) {
+  const sel = document.getElementById('symSelect');
+  sel.innerHTML = '<option value="__ALL__">All symbols</option>' +
+    list.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+// Tab Switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.tab;
+
+    document.getElementById('autoBanner').style.display = currentMode === 'auto' ? 'flex' : 'none';
+    document.getElementById('liveBar').style.display = currentMode === 'live' ? 'flex' : 'none';
+    document.getElementById('manualUploadRow').style.display = currentMode === 'manual' ? 'flex' : 'none';
+    document.getElementById('symbolFilterGroup').style.display = currentMode === 'live' ? 'none' : 'block';
+
+    if (currentMode === 'live') {
+      runLiveScan();
+    } else if (currentMode === 'auto') {
+      runServerScan();
+    }
+  });
+});
+
+// Force Re-Fetch Bhavcopy
+document.getElementById('refreshBhavBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('refreshBhavBtn');
+  btn.textContent = '⏳ Fetching from NSE…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/fetch-latest?force=true`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('autoBannerMsg').textContent = 'Loaded ' + data.totalContracts.toLocaleString() + ' contracts for ' + data.todayDate + '!';
+      await initStatus();
+      runServerScan();
+    }
+  } catch (e) {
+    alert('Error fetching from NSE: ' + e.message);
+  } finally {
+    btn.textContent = '🔄 Force Re-Fetch Latest from NSE';
+    btn.disabled = false;
+  }
+});
+
+// Symbol Search Filter
+document.getElementById('symSearch').addEventListener('input', function() {
+  const q = this.value.trim().toUpperCase();
+  const filtered = q ? allSymbols.filter(s => s.includes(q)) : allSymbols;
+  populateSymbols(filtered);
+});
+
+// Option Type Segmented Buttons
+document.querySelectorAll('#optTypeSeg button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#optTypeSeg button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Collect Filter State
+function getFilters() {
+  return {
+    symSelect: document.getElementById('symSelect').value,
+    instIdx: document.getElementById('instIdx').checked,
+    instStk: document.getElementById('instStk').checked,
+    optType: document.querySelector('#optTypeSeg button.active').dataset.v,
+    expSelect: document.getElementById('expSelect').value,
+    lowOn: document.getElementById('lowOn').checked,
+    lowFrom: parseFloat(document.getElementById('lowFrom').value) || 0,
+    lowTo: parseFloat(document.getElementById('lowTo').value) || 0,
+    prevOn: document.getElementById('prevOn').checked,
+    prevFrom: parseFloat(document.getElementById('prevFrom').value) || 0,
+    prevTo: parseFloat(document.getElementById('prevTo').value) || 0,
+    tol: parseFloat(document.getElementById('tol').value) || 0,
+    minOi: parseFloat(document.getElementById('minOi').value) || 0,
+    includeUntraded: document.getElementById('includeUntraded').checked,
+    showMode: document.getElementById('showMode').value
+  };
+}
+
+// Server Scan
+async function runServerScan() {
+  const btn = document.getElementById('scanBtn');
+  btn.textContent = 'Scanning…';
+  btn.disabled = true;
+
+  try {
+    const filters = getFilters();
+    const res = await fetch(`${API_BASE}/api/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(filters)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      lastResults = data.results || [];
+      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
+      document.getElementById('statMatch').textContent = (data.statMatch || 0).toLocaleString();
+      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
+      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
+      document.getElementById('summary').style.display = 'flex';
+      document.getElementById('toolbar').style.display = 'flex';
+      sortAndRender();
+    } else {
+      alert(data.detail || 'Scan failed');
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    btn.textContent = 'Scan Market';
+    btn.disabled = false;
+  }
+}
+
+// Live Market Scan
+async function runLiveScan() {
+  const sym = document.getElementById('liveSymbolSelect').value;
+  const filters = getFilters();
+  const params = new URLSearchParams({
+    symbol: sym,
+    optType: filters.optType,
+    lowOn: filters.lowOn,
+    lowFrom: filters.lowFrom,
+    lowTo: filters.lowTo,
+    prevOn: filters.prevOn,
+    prevFrom: filters.prevFrom,
+    prevTo: filters.prevTo,
+    tol: filters.tol,
+    minOi: filters.minOi,
+    includeUntraded: filters.includeUntraded,
+    showMode: filters.showMode
+  });
+
+  try {
+    const res = await fetch(`${API_BASE}/api/live/scan?${params.toString()}`);
+    const data = await res.json();
+    if (res.ok) {
+      lastResults = data.results || [];
+      document.getElementById('liveLastTime').textContent = 'Last updated: ' + (data.liveTimestamp || '');
+      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
+      document.getElementById('statMatch').textContent = (data.statMatch || 0).toLocaleString();
+      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
+      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
+      document.getElementById('summary').style.display = 'flex';
+      document.getElementById('toolbar').style.display = 'flex';
+      sortAndRender();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Auto Refresh for Live Mode
+document.getElementById('liveAutoRefresh').addEventListener('change', (e) => {
+  if (e.target.checked) {
+    liveTimer = setInterval(runLiveScan, 15000);
+  } else {
+    clearInterval(liveTimer);
+  }
+});
+document.getElementById('liveScanBtn').addEventListener('click', runLiveScan);
+document.getElementById('liveSymbolSelect').addEventListener('change', runLiveScan);
+
+// Scan Button Trigger
+document.getElementById('scanBtn').addEventListener('click', () => {
+  if (currentMode === 'live') {
+    runLiveScan();
+  } else {
+    runServerScan();
+  }
+});
+
+// Sorting and Table Rendering
+function sortAndRender() {
+  const rows = lastResults.slice();
+  const k = sortKey, dir = sortDir;
+  rows.sort((a,b) => {
+    let av = a[k], bv = b[k];
+    if(av === null || av === undefined) av = -Infinity;
+    if(bv === null || bv === undefined) bv = -Infinity;
+    if(typeof av === 'string') return dir==='asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    return dir==='asc' ? av-bv : bv-av;
+  });
+  renderTable(rows);
+}
+
+document.querySelectorAll('#resultsTable th').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    if(sortKey === k) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+    else { sortKey = k; sortDir = 'desc'; }
+    sortAndRender();
+  });
+});
+
+const CAP = 500;
+function fmtOI(v) {
+  if(v === null || v === undefined || isNaN(v)) return '–';
+  if(v >= 100000) return (v/100000).toFixed(2) + 'L';
+  if(v >= 1000) return (v/1000).toFixed(1) + 'K';
+  return String(v);
+}
+function fmtPct(v) {
+  if(v === null || v === undefined || isNaN(v)) return '–';
+  return (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+}
+function fmtNum(v) { return (v === null || v === undefined || isNaN(v)) ? '–' : v.toFixed(2); }
+
+function renderTable(rows) {
+  const table = document.getElementById('resultsTable');
+  const empty = document.getElementById('emptyMsg');
+  const msg = document.getElementById('rowMsg');
+  if(rows.length === 0){
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.innerHTML = 'No contracts match these filters. Try widening the ranges or switching <b>Show</b> to "All strikes".';
+    msg.textContent = '';
+    return;
+  }
+  table.style.display = 'table';
+  empty.style.display = 'none';
+  const shown = rows.slice(0, CAP);
+  msg.textContent = 'Showing ' + shown.length.toLocaleString() + ' of ' + rows.length.toLocaleString() + ' rows' + (rows.length>CAP ? ' — narrow filters to see the rest' : '');
+
+  const body = shown.map(r => {
+    const typeCls = r.type === 'CE' ? 'ce-cell' : 'pe-cell';
+    const sigCls = r.sig.includes('L') && !r.sig.includes('H') ? 'ol' : r.sig.includes('H') && !r.sig.includes('L=H') ? 'oh' : (r.sig==='O=L=H' ? 'ol' : '');
+    return '<tr>' +
+      '<td class="sym">'+r.symbol+'</td>' +
+      '<td class="exp">'+r.expiry+'</td>' +
+      '<td>'+r.strike+'</td>' +
+      '<td class="'+typeCls+'">'+r.type+'</td>' +
+      '<td class="sig '+sigCls+'">'+(r.sig||'–')+'</td>' +
+      '<td>'+fmtOI(r.oi)+'</td>' +
+      '<td class="'+(r.oiPct>0?'ce-cell':r.oiPct<0?'pe-cell':'')+'">'+fmtPct(r.oiPct)+'</td>' +
+      '<td class="'+(r.isMatch?'yellow':'')+'">'+fmtNum(r.prevCloseUsed)+'</td>' +
+      '<td>'+fmtNum(r.open)+'</td>' +
+      '<td>'+fmtNum(r.high)+'</td>' +
+      '<td class="'+(r.isMatch?'yellow':'')+'">'+fmtNum(r.low)+'</td>' +
+      '<td>'+fmtNum(r.close)+'</td>' +
+      '<td>'+fmtNum(r.spot)+'</td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('resultsBody').innerHTML = body;
+}
+
+// CSV Download
+document.getElementById('dlBtn').addEventListener('click', () => {
+  if(!lastResults.length) return;
+  const header = ['Symbol','Expiry','Strike','Type','Signal','OI','OI%','PrevClose','Open','High','Low','LTP','Spot'];
+  const lines = [header.join(',')];
+  lastResults.forEach(r => {
+    lines.push([r.symbol, r.expiry, r.strike, r.type, r.sig, r.oi, r.oiPct==null?'':r.oiPct.toFixed(2), r.prevCloseUsed, r.open, r.high, r.low, r.close, r.spot].join(','));
+  });
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'option-scan-results.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Manual File Drop Handlers
+function bindDrop(dropId, inputId, isToday) {
+  const drop = document.getElementById(dropId);
+  const input = document.getElementById(inputId);
+  drop.addEventListener('click', () => input.click());
+  input.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('isToday', isToday);
+    const detailEl = document.getElementById(isToday ? 'todayDetail' : 'prevDetail');
+    detailEl.textContent = 'Uploading & parsing…';
+    const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData });
+    const data = await res.json();
+    if (res.ok) {
+      detailEl.textContent = data.contractsLoaded.toLocaleString() + ' contracts loaded';
+      drop.classList.add('filled');
+      loadSymbols();
+      runServerScan();
+    } else {
+      detailEl.textContent = 'Error: ' + data.detail;
+    }
+  });
+}
+bindDrop('dropToday', 'fileToday', true);
+bindDrop('dropPrev', 'filePrev', false);
+
+// Init on load
+initStatus().then(() => {
+  runServerScan();
+});
+</script>
+</body>
+</html>
