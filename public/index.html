@@ -75,19 +75,6 @@
   }
   .action-btn:hover { background: #2563eb; color: #fff; }
 
-  /* Strategy Presets */
-  .strat-btn {
-    display: flex; align-items: center; gap: 10px; text-align: left;
-    background: #141a26; border: 1px solid #232c40; border-radius: 6px;
-    padding: 8px 10px; color: var(--text); cursor: pointer; width: 100%;
-    transition: all .15s; font-family: inherit;
-  }
-  .strat-btn:hover { border-color: #3b82f6; background: #182030; }
-  .strat-btn.active { border-color: #3b82f6; background: #1a253d; box-shadow: 0 0 10px rgba(59,130,246,0.25); }
-  .strat-icon { font-size: 16px; }
-  .strat-title { font-size: 12.5px; font-weight: 600; color: #93c5fd; }
-  .strat-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
   /* Manual Drop Area */
   .upload-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
   .drop {
@@ -102,11 +89,11 @@
   .drop .detail { font-size: 12px; color: var(--muted); }
   .drop input { display: none; }
 
-  .workspace { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
-  @media (max-width: 960px) { .workspace { grid-template-columns: 1fr; } }
+  .workspace { display: grid; grid-template-columns: 290px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 920px) { .workspace { grid-template-columns: 1fr; } }
 
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
-  .filters .group { margin-bottom: 14px; }
+  .filters .group { margin-bottom: 15px; }
   .filters .group:last-child { margin-bottom: 0; }
   .filters label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
   .filters .row2 { display: flex; gap: 8px; }
@@ -142,11 +129,9 @@
   .toolbar .msg { font-size: 12.5px; color: var(--muted); }
   .dl-btn { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 12.5px; cursor: pointer; }
   .dl-btn:hover { border-color: #3a4256; }
-  .chain-btn { background: #1e293b; border: 1px solid #3b82f6; color: #93c5fd; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; cursor: pointer; font-weight: 600; }
-  .chain-btn:hover { background: #2563eb; color: #fff; }
 
   .table-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; max-height: 680px; }
-  table { border-collapse: collapse; width: 100%; min-width: 1100px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  table { border-collapse: collapse; width: 100%; min-width: 980px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
   th, td { padding: 7px 9px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
   th { position: sticky; top: 0; background: var(--panel-2); color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; font-family: 'IBM Plex Sans', sans-serif; font-size: 11.5px; z-index: 2; }
   th:hover { color: var(--text); }
@@ -157,49 +142,9 @@
   .sig { font-weight: 600; }
   .sig.ol { color: var(--ol); } .sig.oh { color: var(--oh); }
   .yellow { color: var(--match); font-weight: 600; }
-  .tgt-cell { color: #86efac; }
-  .sl-cell { color: #fca5a5; }
   .empty { padding: 50px 20px; text-align: center; color: var(--muted); font-size: 13.5px; }
-
-  /* Option Chain Modal */
-  .modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1000; padding: 20px;
-  }
-  .modal-card {
-    background: #0f131a; border: 1px solid var(--line); border-radius: 12px;
-    width: 100%; max-width: 1280px; max-height: 90vh; display: flex;
-    flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-  }
-  .modal-header {
-    padding: 16px 20px; border-bottom: 1px solid var(--line);
-    display: flex; justify-content: space-between; align-items: center; background: var(--panel);
-  }
-  .close-btn {
-    background: transparent; border: none; color: var(--muted);
-    font-size: 24px; cursor: pointer; line-height: 1; padding: 0 4px;
-  }
-  .close-btn:hover { color: #fff; }
-  .chain-signal-bar {
-    background: #141923; padding: 10px 20px; border-bottom: 1px solid var(--line);
-    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 12.5px;
-  }
-  .vol-signal-tag {
-    padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 12px;
-  }
-  .vol-signal-tag.bullish { background: rgba(53,208,127,0.15); color: var(--ce); border: 1px solid var(--ce); }
-  .vol-signal-tag.bearish { background: rgba(255,107,129,0.15); color: var(--pe); border: 1px solid var(--pe); }
-  .vol-signal-tag.neutral { background: #1e2433; color: var(--muted); border: 1px solid var(--line); }
-  .chain-table-wrap { overflow: auto; flex: 1; padding: 0; }
-  .chain-table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
-  .chain-table th, .chain-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
-  .chain-table th { background: var(--panel-2); font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; }
-  .chain-table tr.atm-row { background: rgba(245, 195, 68, 0.12); font-weight: 600; }
-  .chain-table tr.atm-row td.strike-col { background: var(--match); color: #000; font-weight: 700; }
-  .strike-col { text-align: center !important; font-weight: 700; background: #141824; }
-
+  .empty b { color: var(--text); }
+  
   footer { margin-top: 24px; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
   footer .key { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; }
   footer .dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
@@ -234,10 +179,7 @@
       <span>📥</span>
       <span id="autoBannerMsg">Bhavcopy data automatically synced with NSE archives.</span>
     </div>
-    <div style="display:flex; gap:8px;">
-      <button class="action-btn" id="openChainHeaderBtn">📊 View Option Chain</button>
-      <button class="action-btn" id="refreshBhavBtn">🔄 Force Re-Fetch Latest from NSE</button>
-    </div>
+    <button class="action-btn" id="refreshBhavBtn">🔄 Force Re-Fetch Latest from NSE</button>
   </div>
 
   <!-- Manual Upload Section (visible only in manual tab) -->
@@ -274,44 +216,11 @@
       <label class="checkline" style="margin:0;"><input type="checkbox" id="liveAutoRefresh"> <span>Auto-refresh (15s)</span></label>
       <span id="liveLastTime" style="font-size:12px; color:var(--muted);"></span>
     </div>
-    <div style="display:flex; gap:8px;">
-      <button class="action-btn" id="openLiveChainBtn">📊 View Option Chain</button>
-      <button class="action-btn" id="liveScanBtn">⚡ Fetch Live Chain</button>
-    </div>
+    <button class="action-btn" id="liveScanBtn">⚡ Fetch Live Chain</button>
   </div>
 
   <div class="workspace">
     <div class="panel filters">
-      <!-- Strategy Presets -->
-      <div class="group" style="background:#151b27; border:1px solid #232d40; border-radius:8px; padding:12px; margin-bottom:16px;">
-        <label style="color:#93c5fd; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-          <span>📈</span> TradingView Strategies
-        </label>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          <button class="strat-btn active" id="strat1Btn">
-            <span class="strat-icon">🎯</span>
-            <div>
-              <div class="strat-title">Strategy 1: Low Range (₹5.80–8.45)</div>
-              <div class="strat-desc">Prev Cl ₹38–48 + Open=Low / Open=High</div>
-            </div>
-          </button>
-          <button class="strat-btn" id="strat2Btn">
-            <span class="strat-icon">⚡</span>
-            <div>
-              <div class="strat-title">Strategy 2: OH/OL + VIX Targets</div>
-              <div class="strat-desc">Buy @ Low, Targets +9%/+18%, SL -5%/-9%</div>
-            </div>
-          </button>
-          <button class="strat-btn" id="strat3Btn">
-            <span class="strat-icon">💎</span>
-            <div>
-              <div class="strat-title">Strategy 3: Premium ÷8 & ÷6.5</div>
-              <div class="strat-desc">Prem ₹300–349, Low ₹52–58 / Formulas</div>
-            </div>
-          </button>
-        </div>
-      </div>
-
       <div class="group" id="symbolFilterGroup">
         <label>Underlying</label>
         <input type="text" id="symSearch" placeholder="Type to filter symbols…" style="margin-bottom:6px;">
@@ -411,10 +320,7 @@
               <th data-k="high">High</th>
               <th data-k="low">Low</th>
               <th data-k="close">LTP</th>
-              <th data-k="tgt9">Target (+9%)</th>
-              <th data-k="tgt18">Target (+18%)</th>
-              <th data-k="sl5">SL (−5%)</th>
-              <th style="text-align:center;">Action</th>
+              <th data-k="spot">Spot</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>
@@ -433,58 +339,6 @@
   </div>
 </div>
 
-<!-- Option Chain Modal Dialog -->
-<div id="chainModal" class="modal-overlay" style="display:none;">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div>
-        <h2 id="chainTitle" style="margin:0; font-size:18px; font-weight:700;">NIFTY Option Chain</h2>
-        <div id="chainSub" style="font-size:12px; color:var(--muted); margin-top:3px;">Spot: – | ATM: –</div>
-      </div>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <select id="chainExpirySelect" style="width:150px; padding:6px 10px; font-size:12.5px;"></select>
-        <button id="chainCloseBtn" class="close-btn">&times;</button>
-      </div>
-    </div>
-
-    <!-- 71% Volume Share & VIX Bar -->
-    <div class="chain-signal-bar">
-      <div id="chainVolSignal" class="vol-signal-tag neutral">Call/Put Volume Share: Loading…</div>
-      <div id="chainVixBar" style="color:var(--muted); font-size:12px;">India VIX Levels: Target +9% / +18% · SL −5% / −9%</div>
-    </div>
-
-    <!-- Option Chain Table (CE left, Strike middle, PE right) -->
-    <div class="chain-table-wrap">
-      <table class="chain-table">
-        <thead>
-          <tr>
-            <th colspan="7" style="background:#132d20; color:#35d07f; text-align:center;">CALLS (CE)</th>
-            <th rowspan="2" style="background:#1c2333; text-align:center; min-width:85px; color:#fff;">STRIKE</th>
-            <th colspan="7" style="background:#3d1a22; color:#ff6b81; text-align:center;">PUTS (PE)</th>
-          </tr>
-          <tr>
-            <th>OI</th>
-            <th>Vol</th>
-            <th>Prev Cl</th>
-            <th>Open</th>
-            <th>High</th>
-            <th>Low</th>
-            <th>LTP</th>
-            <th>LTP</th>
-            <th>Low</th>
-            <th>High</th>
-            <th>Open</th>
-            <th>Prev Cl</th>
-            <th>Vol</th>
-            <th>OI</th>
-          </tr>
-        </thead>
-        <tbody id="chainTableBody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
 <script>
 const API_BASE = window.location.origin.startsWith('http') ? '' : 'http://localhost:8000';
 let currentMode = 'auto'; // 'auto' | 'live' | 'manual'
@@ -493,7 +347,6 @@ let sortKey = 'oi';
 let sortDir = 'desc';
 let liveTimer = null;
 let allSymbols = [];
-let currentChainSymbol = 'NIFTY';
 
 // Initialize status and load symbols
 async function initStatus() {
@@ -538,42 +391,6 @@ function populateSymbols(list) {
   sel.innerHTML = '<option value="__ALL__">All symbols</option>' +
     list.map(s => `<option value="${s}">${s}</option>`).join('');
 }
-
-// Strategy Presets
-function setStrategy(n) {
-  document.querySelectorAll('.strat-btn').forEach(b => b.classList.remove('active'));
-  if (n === 1) {
-    document.getElementById('strat1Btn').classList.add('active');
-    document.getElementById('lowOn').checked = true;
-    document.getElementById('lowFrom').value = "5.80";
-    document.getElementById('lowTo').value = "8.45";
-    document.getElementById('prevOn').checked = true;
-    document.getElementById('prevFrom').value = "38";
-    document.getElementById('prevTo').value = "48";
-    document.getElementById('showMode').value = "matches";
-  } else if (n === 2) {
-    document.getElementById('strat2Btn').classList.add('active');
-    document.getElementById('lowOn').checked = true;
-    document.getElementById('lowFrom').value = "0.05";
-    document.getElementById('lowTo').value = "500";
-    document.getElementById('prevOn').checked = false;
-    document.getElementById('showMode').value = "any";
-  } else if (n === 3) {
-    document.getElementById('strat3Btn').classList.add('active');
-    document.getElementById('lowOn').checked = true;
-    document.getElementById('lowFrom').value = "52";
-    document.getElementById('lowTo').value = "58";
-    document.getElementById('prevOn').checked = true;
-    document.getElementById('prevFrom').value = "300";
-    document.getElementById('prevTo').value = "349";
-    document.getElementById('showMode').value = "matches";
-  }
-  runServerScan();
-}
-
-document.getElementById('strat1Btn').addEventListener('click', () => setStrategy(1));
-document.getElementById('strat2Btn').addEventListener('click', () => setStrategy(2));
-document.getElementById('strat3Btn').addEventListener('click', () => setStrategy(3));
 
 // Tab Switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -761,7 +578,6 @@ function sortAndRender() {
 document.querySelectorAll('#resultsTable th').forEach(th => {
   th.addEventListener('click', () => {
     const k = th.dataset.k;
-    if (!k) return;
     if(sortKey === k) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
     else { sortKey = k; sortDir = 'desc'; }
     sortAndRender();
@@ -801,7 +617,7 @@ function renderTable(rows) {
     const typeCls = r.type === 'CE' ? 'ce-cell' : 'pe-cell';
     const sigCls = r.sig.includes('L') && !r.sig.includes('H') ? 'ol' : r.sig.includes('H') && !r.sig.includes('L=H') ? 'oh' : (r.sig==='O=L=H' ? 'ol' : '');
     return '<tr>' +
-      '<td class="sym"><b>'+r.symbol+'</b></td>' +
+      '<td class="sym">'+r.symbol+'</td>' +
       '<td class="exp">'+r.expiry+'</td>' +
       '<td>'+r.strike+'</td>' +
       '<td class="'+typeCls+'">'+r.type+'</td>' +
@@ -812,104 +628,20 @@ function renderTable(rows) {
       '<td>'+fmtNum(r.open)+'</td>' +
       '<td>'+fmtNum(r.high)+'</td>' +
       '<td class="'+(r.isMatch?'yellow':'')+'">'+fmtNum(r.low)+'</td>' +
-      '<td><b>'+fmtNum(r.close)+'</b></td>' +
-      '<td class="tgt-cell">'+fmtNum(r.tgt9)+'</td>' +
-      '<td class="tgt-cell">'+fmtNum(r.tgt18)+'</td>' +
-      '<td class="sl-cell">'+fmtNum(r.sl5)+'</td>' +
-      '<td style="text-align:center;"><button class="chain-btn" onclick="openChainModal(\''+r.symbol+'\', \''+r.expiry+'\')">📊 Chain</button></td>' +
+      '<td>'+fmtNum(r.close)+'</td>' +
+      '<td>'+fmtNum(r.spot)+'</td>' +
     '</tr>';
   }).join('');
   document.getElementById('resultsBody').innerHTML = body;
 }
 
-// Option Chain Modal Logic
-async function openChainModal(symbol, expiry) {
-  currentChainSymbol = symbol || (document.getElementById('symSelect').value !== '__ALL__' ? document.getElementById('symSelect').value : 'NIFTY');
-  const modal = document.getElementById('chainModal');
-  const tbody = document.getElementById('chainTableBody');
-  tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:30px; color:var(--muted);">Loading option chain for ' + currentChainSymbol + '…</td></tr>';
-  modal.style.display = 'flex';
-
-  try {
-    const url = `${API_BASE}/api/chain?symbol=${currentChainSymbol}` + (expiry ? `&expiry=${expiry}` : '');
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:30px; color:var(--pe);">Error loading chain: ' + (data.error || 'Unknown error') + '</td></tr>';
-      return;
-    }
-
-    document.getElementById('chainTitle').textContent = data.symbol + ' Option Chain';
-    document.getElementById('chainSub').textContent = `Spot: ₹${fmtNum(data.spot)} | ATM Strike: ${data.atmStrike} | Expiry: ${data.expiry}`;
-
-    // Populate expiry selector
-    const expSel = document.getElementById('chainExpirySelect');
-    expSel.innerHTML = (data.allExpiries || [data.expiry]).map(e => `<option value="${e}" ${e === data.expiry ? 'selected' : ''}>${e}</option>`).join('');
-
-    // Volume Signal Bar
-    const volSigEl = document.getElementById('chainVolSignal');
-    const isBull = (data.volumeSignal || '').includes('BULLISH');
-    const isBear = (data.volumeSignal || '').includes('BEARISH');
-    volSigEl.className = 'vol-signal-tag ' + (isBull ? 'bullish' : isBear ? 'bearish' : 'neutral');
-    volSigEl.textContent = `Call Vol: ${data.callVolumePct}% (${fmtOI(data.callVolumeTotal)}) · Put Vol: ${data.putVolumePct}% (${fmtOI(data.putVolumeTotal)}) ▶ ${data.volumeSignal}`;
-
-    // Render Chain rows
-    const rowsHtml = (data.strikes || []).map(row => {
-      const isAtm = row.strike === data.atmStrike;
-      const ce = row.CE || {};
-      const pe = row.PE || {};
-
-      return `<tr class="${isAtm ? 'atm-row' : ''}">
-        <td>${fmtOI(ce.oi)}</td>
-        <td>${fmtOI(ce.vol)}</td>
-        <td>${fmtNum(ce.prevClose)}</td>
-        <td>${fmtNum(ce.open)}</td>
-        <td>${fmtNum(ce.high)}</td>
-        <td>${fmtNum(ce.low)}</td>
-        <td class="ce-cell"><b>${fmtNum(ce.close)}</b></td>
-        <td class="strike-col">${row.strike}${isAtm ? ' ⭐' : ''}</td>
-        <td class="pe-cell"><b>${fmtNum(pe.close)}</b></td>
-        <td>${fmtNum(pe.low)}</td>
-        <td>${fmtNum(pe.high)}</td>
-        <td>${fmtNum(pe.open)}</td>
-        <td>${fmtNum(pe.prevClose)}</td>
-        <td>${fmtOI(pe.vol)}</td>
-        <td>${fmtOI(pe.oi)}</td>
-      </tr>`;
-    }).join('');
-
-    tbody.innerHTML = rowsHtml || '<tr><td colspan="15" style="text-align:center; padding:30px;">No strikes available.</td></tr>';
-  } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:30px; color:var(--pe);">Fetch error: ' + err.message + '</td></tr>';
-  }
-}
-
-// Modal event listeners
-document.getElementById('chainCloseBtn').addEventListener('click', () => {
-  document.getElementById('chainModal').style.display = 'none';
-});
-document.getElementById('chainModal').addEventListener('click', (e) => {
-  if (e.target.id === 'chainModal') {
-    document.getElementById('chainModal').style.display = 'none';
-  }
-});
-document.getElementById('chainExpirySelect').addEventListener('change', (e) => {
-  openChainModal(currentChainSymbol, e.target.value);
-});
-document.getElementById('openChainHeaderBtn').addEventListener('click', () => {
-  openChainModal('NIFTY');
-});
-document.getElementById('openLiveChainBtn').addEventListener('click', () => {
-  openChainModal(document.getElementById('liveSymbolSelect').value);
-});
-
 // CSV Download
 document.getElementById('dlBtn').addEventListener('click', () => {
   if(!lastResults.length) return;
-  const header = ['Symbol','Expiry','Strike','Type','Signal','OI','OI%','PrevClose','Open','High','Low','LTP','Tgt9','Tgt18','SL5'];
+  const header = ['Symbol','Expiry','Strike','Type','Signal','OI','OI%','PrevClose','Open','High','Low','LTP','Spot'];
   const lines = [header.join(',')];
   lastResults.forEach(r => {
-    lines.push([r.symbol, r.expiry, r.strike, r.type, r.sig, r.oi, r.oiPct==null?'':r.oiPct.toFixed(2), r.prevCloseUsed, r.open, r.high, r.low, r.close, r.tgt9, r.tgt18, r.sl5].join(','));
+    lines.push([r.symbol, r.expiry, r.strike, r.type, r.sig, r.oi, r.oiPct==null?'':r.oiPct.toFixed(2), r.prevCloseUsed, r.open, r.high, r.low, r.close, r.spot].join(','));
   });
   const blob = new Blob([lines.join('\n')], {type:'text/csv'});
   const url = URL.createObjectURL(blob);

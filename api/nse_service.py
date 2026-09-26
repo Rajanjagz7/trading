@@ -393,21 +393,6 @@ class NSEService:
             elif is_oh:
                 sig = "O=H"
 
-            # Indicator 2: VIX-based targets and stop losses
-            buy_low = round(r["low"], 2)
-            buy_low_9 = round(r["low"] * 1.09, 2)
-            buy_open = round(r["open"], 2)
-            tgt_9 = round(r["low"] * 1.09, 2)
-            tgt_18 = round(r["low"] * 1.18, 2)
-            sl_5 = round(r["low"] * 0.95, 2)
-            sl_9 = round(r["low"] * 0.91, 2)
-            sl_18 = round(r["low"] * 0.82, 2)
-
-            # Indicator 3: Formula ÷8 and ÷6.5 levels
-            div_8 = round(prev_close_used / 8.0, 2) if prev_close_used > 0 else 0.0
-            div_65 = round(prev_close_used / 6.5, 2) if prev_close_used > 0 else 0.0
-            is_match3 = (300 <= prev_close_used <= 349) and ((52 <= r["low"] <= 58) or (div_8 <= r["low"] <= div_65))
-
             item = dict(r)
             item.update({
                 "prevCloseUsed": round(prev_close_used, 2),
@@ -415,18 +400,7 @@ class NSEService:
                 "isOL": is_ol,
                 "isOH": is_oh,
                 "isMatch": is_match,
-                "isMatch3": is_match3,
                 "sig": sig,
-                "buyLow": buy_low,
-                "buyLow9": buy_low_9,
-                "buyOpen": buy_open,
-                "tgt9": tgt_9,
-                "tgt18": tgt_18,
-                "sl5": sl_5,
-                "sl9": sl_9,
-                "sl18": sl_18,
-                "div8": div_8,
-                "div65": div_65,
                 "crossChecked": prev_r is not None
             })
 
@@ -452,79 +426,6 @@ class NSEService:
             "statOL": stat_ol,
             "statOH": stat_oh,
             "results": processed
-        }
-
-    def get_option_chain_for_symbol(self, symbol="NIFTY", expiry=None):
-        """
-        Returns a structured option chain table around ATM for the symbol,
-        including Call & Put volume totals and the 71% volume share indicator.
-        """
-        sym = symbol.upper()
-        candidates = [r for r in self.today_rows if r["symbol"] == sym]
-        if not candidates:
-            return {"symbol": sym, "error": f"No data found for symbol {sym}"}
-
-        expiries = sorted(list({r["expiry"] for r in candidates}))
-        target_expiry = expiry if expiry and expiry in expiries else expiries[0]
-
-        chain_rows = [r for r in candidates if r["expiry"] == target_expiry]
-        spot = chain_rows[0]["spot"] if chain_rows and chain_rows[0].get("spot") else 0.0
-
-        # Group by strike
-        strikes_map = {}
-        call_vol_tot = 0.0
-        put_vol_tot = 0.0
-
-        for r in chain_rows:
-            stk = r["strike"]
-            if stk not in strikes_map:
-                strikes_map[stk] = {"strike": stk, "CE": None, "PE": None}
-            if r["type"] == "CE":
-                strikes_map[stk]["CE"] = r
-                call_vol_tot += r["vol"]
-            elif r["type"] == "PE":
-                strikes_map[stk]["PE"] = r
-                put_vol_tot += r["vol"]
-
-        # Calculate 71% volume indicator
-        tot_vol = call_vol_tot + put_vol_tot
-        call_pct = round((call_vol_tot / tot_vol) * 100.0, 1) if tot_vol > 0 else 0.0
-        put_pct = round((put_vol_tot / tot_vol) * 100.0, 1) if tot_vol > 0 else 0.0
-        
-        vol_signal = "NEUTRAL"
-        if call_pct >= 71.0:
-            vol_signal = "BULLISH (BUY CALL) — Call Volume >= 71%"
-        elif put_pct >= 71.0:
-            vol_signal = "BEARISH (BUY PUT) — Put Volume >= 71%"
-
-        # Sort strikes
-        all_strikes = sorted(strikes_map.keys())
-        # Find ATM strike
-        atm_strike = min(all_strikes, key=lambda x: abs(x - spot)) if all_strikes and spot > 0 else (all_strikes[len(all_strikes)//2] if all_strikes else 0)
-
-        # Slice around ATM (±12 strikes)
-        if atm_strike in all_strikes:
-            atm_idx = all_strikes.index(atm_strike)
-            start_idx = max(0, atm_idx - 12)
-            end_idx = min(len(all_strikes), atm_idx + 13)
-            displayed_strikes = all_strikes[start_idx:end_idx]
-        else:
-            displayed_strikes = all_strikes[:25]
-
-        strikes_data = [strikes_map[s] for s in displayed_strikes]
-
-        return {
-            "symbol": sym,
-            "expiry": target_expiry,
-            "allExpiries": expiries,
-            "spot": spot,
-            "atmStrike": atm_strike,
-            "callVolumeTotal": call_vol_tot,
-            "putVolumeTotal": put_vol_tot,
-            "callVolumePct": call_pct,
-            "putVolumePct": put_pct,
-            "volumeSignal": vol_signal,
-            "strikes": strikes_data
         }
 
 nse_service = NSEService()
