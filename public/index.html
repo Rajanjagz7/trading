@@ -22,8 +22,14 @@
     --ce: #35d07f;
     --pe: #ff6b81;
     --match: #f5c344;
-    --ol: #4fc3f7;
-    --oh: #ffb74d;
+    --ol: #10b981;
+    --ol-bg: rgba(16, 185, 129, 0.16);
+    --ol-border: rgba(52, 211, 153, 0.45);
+    --ol-text: #34d399;
+    --oh: #ef4444;
+    --oh-bg: rgba(239, 68, 68, 0.16);
+    --oh-border: rgba(248, 113, 113, 0.45);
+    --oh-text: #f87171;
     --accent: #3b82f6;
   }
   * { box-sizing: border-box; }
@@ -195,7 +201,19 @@
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 110px; }
   .stat .n { font-size: 19px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
   .stat .l { font-size: 11.5px; color: var(--muted); }
-  .stat.ol .n { color: var(--ol); } .stat.oh .n { color: var(--oh); } .stat.match .n { color: var(--match); }
+  .stat.ol {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(18, 24, 37, 0.85) 100%);
+  }
+  .stat.ol .n { color: #34d399; text-shadow: 0 0 14px rgba(52, 211, 153, 0.5); }
+  .stat.ol .l { color: #86efac; font-weight: 600; }
+  .stat.oh {
+    border-color: rgba(248, 113, 113, 0.4);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(18, 24, 37, 0.85) 100%);
+  }
+  .stat.oh .n { color: #f87171; text-shadow: 0 0 14px rgba(248, 113, 113, 0.5); }
+  .stat.oh .l { color: #fca5a5; font-weight: 600; }
+  .stat.match .n { color: var(--match); }
 
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
   .toolbar .msg { font-size: 12.5px; color: var(--muted); }
@@ -213,8 +231,45 @@
   tr:hover td { background: #161c29; }
   .ce-cell { color: var(--ce); }
   .pe-cell { color: var(--pe); }
-  .sig { font-weight: 600; }
-  .sig.ol { color: var(--ol); } .sig.oh { color: var(--oh); }
+  .sig { font-weight: 600; text-align: center; }
+  .sig.ol { color: var(--ol-text); }
+  .sig.oh { color: var(--oh-text); }
+
+  /* 🟢 Open=Low (Bullish) & 🔴 Open=High (Bearish) Badges */
+  .sig-badge {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 3.5px 9px; border-radius: 6px; font-size: 11px; font-weight: 800;
+    letter-spacing: 0.4px; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace;
+    white-space: nowrap; line-height: 1.2; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: all 0.15s ease;
+  }
+  .sig-badge.ol {
+    background: var(--ol-bg); color: var(--ol-text); border: 1px solid var(--ol-border);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  }
+  .sig-badge.ol:hover {
+    background: rgba(16, 185, 129, 0.28); border-color: #34d399; transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.45);
+  }
+  .sig-badge.oh {
+    background: var(--oh-bg); color: var(--oh-text); border: 1px solid var(--oh-border);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+  }
+  .sig-badge.oh:hover {
+    background: rgba(239, 68, 68, 0.28); border-color: #f87171; transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
+  }
+  .sig-badge.olh {
+    background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.45);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+  }
+
+  /* Row Tints for OL and OH */
+  tr.row-ol td { background: rgba(16, 185, 129, 0.035); }
+  tr.row-ol:hover td { background: rgba(16, 185, 129, 0.1) !important; }
+  tr.row-oh td { background: rgba(239, 68, 68, 0.035); }
+  tr.row-oh:hover td { background: rgba(239, 68, 68, 0.1) !important; }
+
   .yellow { color: var(--match); font-weight: 600; }
   .tgt-cell { color: #86efac; }
   .sl-cell { color: #fca5a5; }
@@ -290,10 +345,10 @@
   .opt-tag.pe { background: rgba(255,107,129,0.2); color: var(--pe); border: 1px solid var(--pe); }
   .badge-moneyness { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #1f293d; color: #94a3b8; border: 1px solid #334155; }
   .badge-moneyness.atm { background: rgba(245, 195, 68, 0.2); color: var(--match); border-color: var(--match); }
-  .badge-signal { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
-  .badge-signal.ol { background: rgba(79, 195, 247, 0.2); color: var(--ol); border: 1px solid var(--ol); }
-  .badge-signal.oh { background: rgba(255, 183, 77, 0.2); color: var(--oh); border: 1px solid var(--oh); }
-  .badge-signal.match { background: rgba(245, 195, 68, 0.2); color: var(--match); border: 1px solid var(--match); }
+  .badge-signal { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.4px; }
+  .badge-signal.ol { background: var(--ol-bg); color: var(--ol-text); border: 1px solid var(--ol-border); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+  .badge-signal.oh { background: var(--oh-bg); color: var(--oh-text); border: 1px solid var(--oh-border); box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+  .badge-signal.match { background: rgba(245, 195, 68, 0.18); color: var(--match); border: 1px solid rgba(245, 195, 68, 0.45); }
 
   .opt-stats-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;
@@ -563,9 +618,9 @@
         <select id="showMode">
           <option value="matches" selected>Matches only</option>
           <option value="all">All strikes</option>
-          <option value="ol">Open = Low</option>
-          <option value="oh">Open = High</option>
-          <option value="any">Any signal</option>
+          <option value="ol">🟢 Open = Low (Bullish)</option>
+          <option value="oh">🔴 Open = High (Bearish)</option>
+          <option value="any">⚡ Any Signal (OL or OH)</option>
         </select>
       </div>
 
@@ -576,8 +631,8 @@
       <div class="summary" id="summary" style="display:none;">
         <div class="stat"><div class="n" id="statTotal">0</div><div class="l">contracts loaded</div></div>
         <div class="stat match"><div class="n" id="statMatch">0</div><div class="l">matches</div></div>
-        <div class="stat ol"><div class="n" id="statOL">0</div><div class="l">open = low</div></div>
-        <div class="stat oh"><div class="n" id="statOH">0</div><div class="l">open = high</div></div>
+        <div class="stat ol"><div class="n" id="statOL">0</div><div class="l">🟢 Open = Low (Bullish)</div></div>
+        <div class="stat oh"><div class="n" id="statOH">0</div><div class="l">🔴 Open = High (Bearish)</div></div>
       </div>
 
       <div class="toolbar" id="toolbar" style="display:none;">
@@ -593,7 +648,7 @@
               <th class="exp" data-k="expiry">Expiry</th>
               <th data-k="strike">Strike</th>
               <th data-k="type">Type</th>
-              <th data-k="signal">Signal</th>
+              <th data-k="signal" style="text-align:center;">Signal</th>
               <th data-k="oi">OI</th>
               <th data-k="oiPct">OI%</th>
               <th data-k="prevCloseUsed">Prev Cl</th>
@@ -614,8 +669,8 @@
 
       <footer>
         <span class="key"><span class="dot" style="background:var(--match)"></span>Price-range match</span>
-        <span class="key"><span class="dot" style="background:var(--ol)"></span>Open = Low</span>
-        <span class="key"><span class="dot" style="background:var(--oh)"></span>Open = High</span>
+        <span class="key"><span class="dot" style="background:#10b981; box-shadow:0 0 8px #10b981;"></span><b>Open = Low</b> (Bullish Momentum)</span>
+        <span class="key"><span class="dot" style="background:#ef4444; box-shadow:0 0 8px #ef4444;"></span><b>Open = High</b> (Bearish Momentum)</span>
         <span class="key"><span class="dot" style="background:var(--ce)"></span>Call (CE)</span>
         <span class="key"><span class="dot" style="background:var(--pe)"></span>Put (PE)</span>
       </footer>
@@ -1125,13 +1180,28 @@ function renderTable(rows) {
 
   const body = shown.map(r => {
     const typeCls = r.type === 'CE' ? 'ce-cell' : 'pe-cell';
-    const sigCls = r.sig.includes('L') && !r.sig.includes('H') ? 'ol' : r.sig.includes('H') && !r.sig.includes('L=H') ? 'oh' : (r.sig==='O=L=H' ? 'ol' : '');
-    return '<tr>' +
+    const isOL = r.sig && r.sig.includes('L') && !r.sig.includes('H');
+    const isOH = r.sig && r.sig.includes('H') && !r.sig.includes('L=H');
+    const isOLH = r.sig === 'O=L=H';
+    const rowCls = isOL ? 'row-ol' : (isOH ? 'row-oh' : '');
+
+    let sigBadgeHtml = '<span style="color:var(--muted)">–</span>';
+    if (isOL) {
+      sigBadgeHtml = '<span class="sig-badge ol">▲ OPEN=LOW</span>';
+    } else if (isOH) {
+      sigBadgeHtml = '<span class="sig-badge oh">▼ OPEN=HIGH</span>';
+    } else if (isOLH) {
+      sigBadgeHtml = '<span class="sig-badge olh">◆ O=L=H</span>';
+    } else if (r.sig) {
+      sigBadgeHtml = '<span class="sig-badge">' + r.sig + '</span>';
+    }
+
+    return '<tr class="'+rowCls+'">' +
       '<td class="sym"><b>'+r.symbol+'</b></td>' +
       '<td class="exp">'+r.expiry+'</td>' +
       '<td>'+r.strike+'</td>' +
       '<td class="'+typeCls+'">'+r.type+'</td>' +
-      '<td class="sig '+sigCls+'">'+(r.sig||'–')+'</td>' +
+      '<td style="text-align:center;">'+sigBadgeHtml+'</td>' +
       '<td>'+fmtOI(r.oi)+'</td>' +
       '<td class="'+(r.oiPct>0?'ce-cell':r.oiPct<0?'pe-cell':'')+'">'+fmtPct(r.oiPct)+'</td>' +
       '<td class="'+(r.isMatch?'yellow':'')+'">'+fmtNum(r.prevCloseUsed)+'</td>' +
@@ -1201,17 +1271,20 @@ async function openChainModal(symbol, expiry) {
       const ceLowCls = ce.isMatch ? 'yellow' : (ce.isOL ? 'ol' : '');
       const peLowCls = pe.isMatch ? 'yellow' : (pe.isOL ? 'ol' : '');
 
+      const ceSigBadge = ce.isOL ? ' <span class="sig-badge ol" style="font-size:9.5px; padding:1px 5px;">▲ OL</span>' : (ce.isOH ? ' <span class="sig-badge oh" style="font-size:9.5px; padding:1px 5px;">▼ OH</span>' : '');
+      const peSigBadge = pe.isOL ? ' <span class="sig-badge ol" style="font-size:9.5px; padding:1px 5px;">▲ OL</span>' : (pe.isOH ? ' <span class="sig-badge oh" style="font-size:9.5px; padding:1px 5px;">▼ OH</span>' : '');
+
       return `<tr class="${isAtm ? 'atm-row' : ''}">
         <td>${fmtOI(ce.oi)}</td>
         <td>${fmtOI(ce.vol)}</td>
         <td>${fmtNum(ce.prevClose)}</td>
         <td>${fmtNum(ce.open)}</td>
         <td>${fmtNum(ce.high)}</td>
-        <td class="${ceLowCls}" style="cursor:pointer;" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'CE')" title="Click for Chart">${fmtNum(ce.low)}${ce.isOL ? ' [OL]' : ''}</td>
+        <td class="${ceLowCls}" style="cursor:pointer;" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'CE')" title="Click for Chart">${fmtNum(ce.low)}${ceSigBadge}</td>
         <td class="ce-cell" style="text-align:center;">${ceChip}</td>
         <td class="strike-col">${row.strike}${isAtm ? ' ⭐' : ''}</td>
         <td class="pe-cell" style="text-align:center;">${peChip}</td>
-        <td class="${peLowCls}" style="cursor:pointer;" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'PE')" title="Click for Chart">${fmtNum(pe.low)}${pe.isOL ? ' [OL]' : ''}</td>
+        <td class="${peLowCls}" style="cursor:pointer;" onclick="openOptionChartModal('${data.symbol}', '${data.expiry}', ${row.strike}, 'PE')" title="Click for Chart">${fmtNum(pe.low)}${peSigBadge}</td>
         <td>${fmtNum(pe.high)}</td>
         <td>${fmtNum(pe.open)}</td>
         <td>${fmtNum(pe.prevClose)}</td>
@@ -1852,11 +1925,11 @@ function openOptionChartModal(symbol, expiry, strike, type) {
   if (contract.isOL) {
     sigBadge.style.display = 'inline-block';
     sigBadge.className = 'badge-signal ol';
-    sigBadge.textContent = '🔵 Open = Low (Bullish)';
+    sigBadge.textContent = '🟢 ▲ Open = Low (Bullish Momentum)';
   } else if (contract.isOH) {
     sigBadge.style.display = 'inline-block';
     sigBadge.className = 'badge-signal oh';
-    sigBadge.textContent = '🟠 Open = High (Bearish)';
+    sigBadge.textContent = '🔴 ▼ Open = High (Bearish Momentum)';
   } else if (contract.isMatch) {
     sigBadge.style.display = 'inline-block';
     sigBadge.className = 'badge-signal match';
