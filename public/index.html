@@ -6230,6 +6230,25 @@ async function loadIndicatorOptionChain(symbol, expiry, indicator) {
       if (tbody) {
         tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:30px; color:#f87171;">⚠️ ${data.error}</td></tr>`;
       }
+      // Clear the header/badges instead of leaving the previous symbol's spot,
+      // ATM strike and counts on screen — otherwise switching to an unsupported
+      // symbol (e.g. SENSEX has no NSE bhavcopy contracts) silently shows the
+      // last-loaded symbol's stale numbers under the newly-selected symbol's name.
+      currentIndChainData = null;
+      const spotAtmErr = document.getElementById('indAtmSpotBadge');
+      if (spotAtmErr) spotAtmErr.textContent = `${currentIndSymbol} Spot: – | ATM Strike: –`;
+      const spotValErr = document.getElementById('indChainSpotVal');
+      if (spotValErr) spotValErr.textContent = '₹–';
+      const atmValErr = document.getElementById('indChainAtmVal');
+      if (atmValErr) atmValErr.textContent = '–';
+      const buyCountErr = document.getElementById('indChainBuyCount');
+      if (buyCountErr) buyCountErr.textContent = '🟢 0 BUY Signals';
+      const sellCountErr = document.getElementById('indChainSellCount');
+      if (sellCountErr) sellCountErr.textContent = '🔴 0 SELL Signals';
+      const matchCountErr = document.getElementById('indChainMatchCount');
+      if (matchCountErr) matchCountErr.textContent = '💎 0 Matches';
+      const volShareErr = document.getElementById('indChainVolShare');
+      if (volShareErr) volShareErr.textContent = 'Vol Share: –';
       return;
     }
 
@@ -6847,6 +6866,14 @@ async function loadChainData() {
     const data = await res.json();
     if (data.error) {
       showToast(data.error, 'error');
+      // Same stale-data problem as the indicator chain panel: without this,
+      // the modal keeps showing the previously-loaded symbol's spot/ATM/rows
+      // under the newly-selected (unsupported) symbol's title.
+      currentChainData = null;
+      document.getElementById('chainTitle').textContent = `Option Chain: ${sym} — Unavailable`;
+      document.getElementById('chainSub').textContent = 'No option-chain data available for this symbol.';
+      const tbodyErr = document.getElementById('chainTableBody');
+      if (tbodyErr) tbodyErr.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:30px; color:#f87171;">⚠️ ${data.error}</td></tr>`;
       return;
     }
 
