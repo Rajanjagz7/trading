@@ -2020,35 +2020,198 @@
     .results-view-toggle { display: flex; }
   }
 
-  /* Specific Adjustments for CMF Phone 2 / Nothing Phone 2 & Mobile Chrome (~360px - 430px Viewports) */
+  /* Top Update Notification Banner & Update Button */
+  .top-update-banner {
+    background: linear-gradient(90deg, #1e3a8a, #0284c7);
+    color: #fff;
+    padding: 7px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11.5px;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+    animation: pulseSell 3s infinite alternate;
+  }
+  .app-update-pill {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    color: #93c5fd;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+  }
+  .app-update-pill:hover, .app-update-pill.has-update {
+    background: #2563eb;
+    color: #fff;
+    border-color: #60a5fa;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+  .update-pulse-dot, .update-glow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #60a5fa;
+    box-shadow: 0 0 6px #60a5fa;
+    animation: pulseSell 1.5s infinite;
+  }
+  .update-reload-btn {
+    background: #fff;
+    color: #0369a1;
+    border: none;
+    font-weight: 800;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .update-reload-btn:hover {
+    background: #f0f9ff;
+  }
+  .update-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: #bae6fd;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+
+  /* Day High & Day Low Visual Bar in Option Cards */
+  .opt-card-hl-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #090e17;
+    border: 1px solid #162030;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .hl-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .hl-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+  .hl-item.low .hl-val {
+    color: #f87171;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+  }
+  .hl-item.high .hl-val {
+    color: #34d399;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+  }
+  .hl-range-track {
+    flex: 1;
+    height: 4px;
+    background: #1e293b;
+    border-radius: 2px;
+    position: relative;
+    min-width: 35px;
+  }
+  .hl-range-marker {
+    position: absolute;
+    top: -3px;
+    width: 3px;
+    height: 10px;
+    background: #38bdf8;
+    border-radius: 1px;
+    box-shadow: 0 0 4px #38bdf8;
+    transform: translateX(-50%);
+  }
+
+  /* CE and PE Open Interest Row in Option Cards */
+  .opt-card-oi-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+    font-size: 10.5px;
+  }
+  .oi-pill {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .oi-pill.ce-oi {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+  }
+  .oi-pill.pe-oi {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+  }
+  .oi-pill.strike-oi {
+    background: #151d2e;
+    border-color: #27354f;
+    color: #cbd5e1;
+    margin-left: auto;
+  }
+
+  /* Ultra-Compact & High-Density UI for Android Chrome 4.5" to 6.5" Displays (320px - 430px) */
   @media (max-width: 600px) {
     .app-container {
-      padding: max(6px, env(safe-area-inset-top)) 8px max(36px, env(safe-area-inset-bottom)) 8px !important;
+      padding: max(4px, env(safe-area-inset-top)) 6px max(24px, env(safe-area-inset-bottom)) 6px !important;
       width: 100% !important;
       max-width: 100vw !important;
       box-sizing: border-box !important;
     }
     header {
-      padding: 10px 12px !important;
-      border-radius: 8px !important;
-    }
-    .brand-badge-row {
+      padding: 6px 10px !important;
+      border-radius: 6px !important;
       gap: 4px !important;
     }
-    .brand-pill, .live-pill {
-      font-size: 9.5px !important;
-      padding: 2px 7px !important;
+    header p {
+      display: -webkit-box !important;
+      -webkit-line-clamp: 1 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      font-size: 10px !important;
+      line-height: 1.2 !important;
+      margin: 2px 0 0 0 !important;
     }
     .glow-title {
-      font-size: 16px !important;
-      line-height: 1.25 !important;
+      font-size: 14.5px !important;
+      line-height: 1.2 !important;
     }
-    header p {
-      font-size: 11px !important;
-      line-height: 1.35 !important;
+    .brand-badge-row {
+      gap: 3px !important;
+      margin-bottom: 2px !important;
     }
-    .cron-badge, .ist-clock-badge {
-      font-size: 9.5px !important;
+    .brand-pill, .live-pill {
+      font-size: 8.5px !important;
+      padding: 1px 5px !important;
+    }
+    .cron-badge, .ist-clock-badge, .status-badge {
+      font-size: 9px !important;
+      padding: 2px 5px !important;
+    }
+    .app-update-pill {
+      font-size: 9px !important;
       padding: 2px 6px !important;
     }
     .market-bar-tabs {
@@ -2056,21 +2219,22 @@
       flex-wrap: nowrap !important;
       -webkit-overflow-scrolling: touch !important;
       scrollbar-width: none !important;
-      padding: 4px 6px !important;
-      gap: 5px !important;
-      margin-bottom: 8px !important;
+      padding: 3px 4px !important;
+      gap: 4px !important;
+      margin-bottom: 6px !important;
     }
     .market-bar-tabs::-webkit-scrollbar { display: none; }
     .market-tab-btn, .market-refresh-btn {
       white-space: nowrap !important;
-      font-size: 11px !important;
-      padding: 6px 10px !important;
+      font-size: 10.5px !important;
+      padding: 4px 8px !important;
+      border-radius: 5px !important;
       flex-shrink: 0 !important;
     }
     .chartink-indices-bar, .global-markets-bar {
-      padding: 6px 6px !important;
-      gap: 6px !important;
-      margin-bottom: 8px !important;
+      padding: 4px 4px !important;
+      gap: 5px !important;
+      margin-bottom: 6px !important;
       scroll-snap-type: x mandatory !important;
       overflow-x: auto !important;
       -webkit-overflow-scrolling: touch !important;
@@ -2078,41 +2242,42 @@
     }
     .chartink-indices-bar::-webkit-scrollbar, .global-markets-bar::-webkit-scrollbar { display: none; }
     .index-ticker-card, .global-ticker-card {
-      min-width: 145px !important;
-      padding: 5px 8px !important;
+      min-width: 130px !important;
+      padding: 4px 6px !important;
+      border-radius: 6px !important;
       scroll-snap-align: start !important;
       flex-shrink: 0 !important;
     }
     .index-ticker-name {
-      font-size: 10.5px !important;
+      font-size: 9.5px !important;
     }
     .index-ticker-val {
-      font-size: 12px !important;
+      font-size: 11.5px !important;
     }
     .indicator-bar {
-      padding: 6px 8px !important;
-      margin-bottom: 8px !important;
+      padding: 4px 6px !important;
+      margin-bottom: 6px !important;
     }
     .indicator-bar-label {
-      font-size: 11.5px !important;
+      font-size: 10.5px !important;
       width: 100% !important;
     }
     .small-strat-btn {
-      font-size: 10.5px !important;
-      padding: 4px 9px !important;
+      font-size: 9.5px !important;
+      padding: 3px 6px !important;
     }
     .banner {
-      padding: 8px 10px !important;
+      padding: 6px 8px !important;
       flex-direction: column !important;
       align-items: stretch !important;
-      gap: 8px !important;
+      gap: 6px !important;
     }
     .banner-text {
-      font-size: 11.5px !important;
+      font-size: 11px !important;
     }
     .action-btn {
-      font-size: 11.5px !important;
-      padding: 6px 10px !important;
+      font-size: 11px !important;
+      padding: 5px 8px !important;
       justify-content: center !important;
     }
     .index-pulse-grid {
@@ -2120,11 +2285,11 @@
       flex-wrap: nowrap !important;
       overflow-x: auto !important;
       scroll-snap-type: x mandatory !important;
-      gap: 8px !important;
-      padding-bottom: 6px !important;
+      gap: 6px !important;
+      padding-bottom: 4px !important;
     }
     .pulse-card {
-      min-width: 235px !important;
+      min-width: 220px !important;
       flex-shrink: 0 !important;
     }
     .chartink-preset-ribbon {
@@ -2132,21 +2297,21 @@
       flex-wrap: nowrap !important;
       -webkit-overflow-scrolling: touch !important;
       scrollbar-width: none !important;
-      padding-bottom: 4px !important;
-      margin-bottom: 8px !important;
+      padding-bottom: 3px !important;
+      margin-bottom: 6px !important;
     }
     .chartink-preset-ribbon::-webkit-scrollbar { display: none; }
     .preset-pill {
       white-space: nowrap !important;
-      font-size: 11px !important;
-      padding: 5px 10px !important;
+      font-size: 10px !important;
+      padding: 3px 8px !important;
       flex-shrink: 0 !important;
     }
     .clause-row {
       flex-wrap: wrap !important;
-      gap: 6px !important;
-      font-size: 11px !important;
-      padding: 6px 8px !important;
+      gap: 4px !important;
+      font-size: 10.5px !important;
+      padding: 5px 6px !important;
     }
     .mobile-filter-toggle {
       display: flex !important;
@@ -2156,13 +2321,13 @@
       background: #141c2c;
       border: 1px solid #2b394f;
       color: #93c5fd;
-      padding: 10px 14px;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
       font-weight: 700;
-      font-size: 12.5px;
-      margin-bottom: 8px;
+      font-size: 11.5px;
+      margin-bottom: 6px;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     .panel.filters.collapsed {
       display: none !important;
@@ -2170,16 +2335,63 @@
     .results-view-toggle {
       display: flex !important;
     }
+    .opt-mobile-card {
+      padding: 7px 9px !important;
+      border-radius: 7px !important;
+      margin-bottom: 5px !important;
+      background: #0f1523 !important;
+      border: 1px solid #1e293b !important;
+    }
+    .opt-card-header {
+      margin-bottom: 4px !important;
+    }
+    .opt-card-sym span {
+      font-size: 12px !important;
+    }
+    .opt-card-ltp {
+      font-size: 13.5px !important;
+    }
     .opt-card-actions {
-      flex-wrap: wrap;
+      gap: 4px !important;
     }
     .opt-card-btn {
-      min-height: 36px;
-      font-size: 11px;
+      min-height: 28px !important;
+      padding: 3px 6px !important;
+      font-size: 9.5px !important;
+      border-radius: 4px !important;
     }
     .active-filters-bar {
-      padding: 6px 8px !important;
-      font-size: 11px !important;
+      padding: 4px 6px !important;
+      font-size: 10.5px !important;
+      margin-bottom: 6px !important;
+    }
+    #resultsTable th, #resultsTable td {
+      padding: 3px 5px !important;
+      font-size: 10px !important;
+    }
+    #optCanvasContainer {
+      height: 240px !important;
+    }
+  }
+
+  /* Extra compact styling for 4.5" to 5.0" screens (width <= 360px) */
+  @media (max-width: 360px) {
+    .opt-card-sym {
+      gap: 3px !important;
+    }
+    .prem-chip {
+      font-size: 9.5px !important;
+      padding: 1px 4px !important;
+    }
+    .opt-card-ltp {
+      font-size: 13px !important;
+    }
+    .opt-card-btn {
+      font-size: 9px !important;
+      padding: 2px 4px !important;
+    }
+    .index-ticker-card, .global-ticker-card {
+      min-width: 115px !important;
     }
   }
 
@@ -2448,6 +2660,19 @@
 <!-- Ambient Animated Background Canvas -->
 <canvas id="ambientCanvas"></canvas>
 
+<!-- Top Update Notification Banner (Anti-Snap Protection) -->
+<div id="topUpdateBanner" class="top-update-banner" style="display:none;">
+  <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
+    <span class="update-pulse-dot"></span>
+    <b style="color:#fef08a; white-space:nowrap;">⚡ Update Available:</b>
+    <span id="topUpdateBannerText" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">A new algo screener version is available. Update now to avoid browser snap.</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+    <button class="update-reload-btn" onclick="applyAppUpdate(true)">🚀 Update Now</button>
+    <button class="update-dismiss-btn" onclick="dismissUpdateBanner()" title="Dismiss">✕</button>
+  </div>
+</div>
+
 <div class="app-container">
   <!-- Header -->
   <header>
@@ -2461,6 +2686,10 @@
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="app-update-pill" id="appUpdateBtn" onclick="checkForAppUpdate(true)" title="Check for updates or refresh without browser snap">
+          <span class="update-glow-dot"></span>
+          <span id="appUpdateBtnText">⚡ Check Update</span>
+        </button>
         <span class="cron-badge" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
         <span class="ist-clock-badge" id="liveClockIst">--:--:-- IST</span>
         <div class="status-badge" id="marketBadge">
@@ -3129,6 +3358,8 @@
               <th data-k="utBot">UT Bot Action</th>
               <th data-k="oi">OI</th>
               <th data-k="oiPct">OI%</th>
+              <th data-k="ceOi" title="Call Open Interest for this Strike">CE OI</th>
+              <th data-k="peOi" title="Put Open Interest for this Strike">PE OI</th>
               <th data-k="prevCloseUsed">Prev Cl</th>
               <th data-k="open">Open</th>
               <th data-k="high">High</th>
@@ -5003,11 +5234,17 @@ function renderMobileCards(shown) {
     const chgPctVal = r.prevCloseUsed > 0 ? (chgVal / r.prevCloseUsed) * 100 : 0;
     const isUp = chgVal >= 0;
 
+    const low = r.low != null ? r.low : 0;
+    const high = r.high != null ? r.high : (r.close > low ? r.close : low);
+    const ltp = r.close != null ? r.close : low;
+    const hlSpan = high > low ? (high - low) : 1;
+    const ltpPosPct = Math.max(0, Math.min(100, Math.round(((ltp - low) / hlSpan) * 100)));
+
     return `
       <div class="opt-mobile-card">
         <div class="opt-card-header">
           <div class="opt-card-sym">
-            <span style="font-size:14px; font-weight:800; color:#fff;">${r.symbol}</span>
+            <span style="font-size:13.5px; font-weight:800; color:#fff;">${r.symbol}</span>
             <span class="prem-chip ${r.type === 'CE' ? 'ce' : 'pe'}" style="font-size:11px; padding:2px 7px;">${r.strike} ${r.type}</span>
             <span style="font-size:10px; color:#94a3b8; font-family:'IBM Plex Mono', monospace;">${r.expiry}</span>
           </div>
@@ -5019,10 +5256,31 @@ function renderMobileCards(shown) {
           </div>
         </div>
 
+        <!-- Day Low & Day High Visual Bar with LTP Position -->
+        <div class="opt-card-hl-bar" title="Day Low: ₹${fmtNum(low)} | Day High: ₹${fmtNum(high)}">
+          <div class="hl-item low">
+            <span class="hl-label">LOW:</span>
+            <span class="hl-val">₹${fmtNum(low)}</span>
+          </div>
+          <div class="hl-range-track">
+            <div class="hl-range-marker" style="left: ${ltpPosPct}%;" title="LTP: ₹${fmtNum(ltp)} (${ltpPosPct}% of day range)"></div>
+          </div>
+          <div class="hl-item high">
+            <span class="hl-label">HIGH:</span>
+            <span class="hl-val">₹${fmtNum(high)}</span>
+          </div>
+        </div>
+
+        <!-- CE OI and PE OI Breakdown -->
+        <div class="opt-card-oi-row">
+          <span class="oi-pill ce-oi" title="Call OI for Strike ${r.strike}">CE OI: ${fmtOI(r.ceOi || 0)}</span>
+          <span class="oi-pill pe-oi" title="Put OI for Strike ${r.strike}">PE OI: ${fmtOI(r.peOi || 0)}</span>
+          <span class="oi-pill strike-oi" title="Contract OI">OI: ${fmtOI(r.oi)} <span style="color:${r.oiPct > 0 ? '#34d399' : '#f87171'};">(${fmtPct(r.oiPct)})</span></span>
+        </div>
+
         <div class="opt-card-signals-row">
           ${utBadgeHtml}
           ${sigHtml}
-          <span style="font-size:10.5px; color:#cbd5e1; margin-left:auto;">OI: <b>${fmtOI(r.oi)}</b> <span style="color:${r.oiPct > 0 ? '#34d399' : '#f87171'};">(${fmtPct(r.oiPct)})</span></span>
         </div>
 
         <div class="opt-card-levels-grid">
@@ -5039,12 +5297,12 @@ function renderMobileCards(shown) {
             <b style="color:#ef4444;">₹${fmtNum(r.sl5)}</b>
           </div>
           <div>
-            <span style="color:#94a3b8;">Open:</span><br>
-            <span>₹${fmtNum(r.open)}</span>
+            <span style="color:#94a3b8;">Day Low:</span><br>
+            <b style="color:${r.isMatch ? '#fbbf24' : '#f87171'};">₹${fmtNum(r.low)}</b>
           </div>
           <div>
-            <span style="color:#94a3b8;">Day Low:</span><br>
-            <b style="color:${r.isMatch ? '#fbbf24' : '#cbd5e1'};">₹${fmtNum(r.low)}</b>
+            <span style="color:#94a3b8;">Day High:</span><br>
+            <b style="color:#34d399;">₹${fmtNum(r.high)}</b>
           </div>
           <div>
             <span style="color:#94a3b8;">Prev Close:</span><br>
@@ -5136,6 +5394,8 @@ function renderTable(rows) {
       '<td class="ut-cell">' + utBadgeHtml + '</td>' +
       '<td>' + fmtOI(r.oi) + '</td>' +
       '<td class="' + (r.oiPct > 0 ? 'ce-cell' : r.oiPct < 0 ? 'pe-cell' : '') + '">' + fmtPct(r.oiPct) + '</td>' +
+      '<td style="color:#60a5fa; font-weight:600; font-family:\'IBM Plex Mono\', monospace;">' + fmtOI(r.ceOi || 0) + '</td>' +
+      '<td style="color:#f87171; font-weight:600; font-family:\'IBM Plex Mono\', monospace;">' + fmtOI(r.peOi || 0) + '</td>' +
       '<td class="' + (r.isMatch ? 'yellow' : '') + '">' + fmtNum(r.prevCloseUsed) + '</td>' +
       '<td>' + fmtNum(r.open) + '</td>' +
       '<td>' + fmtNum(r.high) + '</td>' +
@@ -5619,15 +5879,110 @@ async function runLiveScan() {
 }
 
 /* ============================================================
+   APP UPDATE & ANTI-SNAP PROTECTION ENGINE
+   Prevents browser snaps when new builds are deployed,
+   and enables instant 1-click safe reloads with fresh caches.
+============================================================ */
+const APP_BUILD_VERSION = '2.2.0';
+
+function showTopUpdateBanner(msg) {
+  const banner = document.getElementById('topUpdateBanner');
+  const txt = document.getElementById('topUpdateBannerText');
+  if (banner) {
+    if (txt && msg) txt.textContent = msg;
+    banner.style.display = 'flex';
+  }
+}
+
+function dismissUpdateBanner() {
+  const banner = document.getElementById('topUpdateBanner');
+  if (banner) banner.style.display = 'none';
+}
+
+function applyAppUpdate(forceReload = true) {
+  try {
+    if (window.caches) {
+      caches.keys().then(keys => {
+        keys.forEach(k => caches.delete(k));
+      });
+    }
+    sessionStorage.clear();
+  } catch (e) {}
+
+  const sep = window.location.pathname.includes('?') ? '&' : '?';
+  const cleanUrl = window.location.origin + window.location.pathname + sep + 'build=' + Date.now();
+  window.location.replace(cleanUrl);
+}
+
+async function checkForAppUpdate(isManual = false) {
+  const btn = document.getElementById('appUpdateBtn');
+  const btnText = document.getElementById('appUpdateBtnText');
+  if (isManual && btnText) {
+    btnText.textContent = 'Checking…';
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/status?_t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Status ping failed');
+    const data = await res.json();
+    const serverVer = data.version || null;
+
+    if (serverVer && serverVer !== APP_BUILD_VERSION) {
+      showTopUpdateBanner(`⚡ New algo screener version v${serverVer} is available! Update now to prevent browser snap.`);
+      if (btn) btn.classList.add('has-update');
+      if (btnText) btnText.textContent = '🚀 Update Ready!';
+      if (isManual) {
+        showToast(`Update available: v${serverVer}. Click "Update Now" to reload cleanly without snap.`, 'warning');
+      }
+      return true;
+    } else {
+      if (btn) btn.classList.remove('has-update');
+      if (btnText) btnText.textContent = '⚡ Up to Date';
+      if (isManual) {
+        showToast(`Screener is running latest build v${APP_BUILD_VERSION}. Anti-snap shield active.`, 'success');
+      }
+      setTimeout(() => {
+        if (btnText) btnText.textContent = '⚡ Check Update';
+      }, 3000);
+      return false;
+    }
+  } catch (err) {
+    if (isManual) {
+      showToast('Could not reach backend update service. Local cache verified.', 'warning');
+      if (btnText) btnText.textContent = '⚡ Check Update';
+    }
+    return false;
+  }
+}
+
+// Anti-Snap Error Boundary: If a stale chunk or unhandled asset error occurs, notify user cleanly
+window.addEventListener('error', (event) => {
+  const msg = (event && event.message) ? event.message : '';
+  if (msg.includes('Loading chunk') || msg.includes('Script error') || msg.includes('Failed to fetch dynamically imported module')) {
+    showTopUpdateBanner('A fresh screener build was detected. Click Update to prevent browser snap.');
+  }
+});
+
+// Periodic background check every 5 minutes
+setInterval(() => {
+  checkForAppUpdate(false);
+}, 5 * 60 * 1000);
+
+/* ============================================================
    STATUS & SYMBOL INITIALIZATION
 ============================================================ */
 async function initStatus() {
   try {
-    const res = await fetch(`${API_BASE}/api/status`);
+    const res = await fetch(`${API_BASE}/api/status?_t=${Date.now()}`);
     const data = await res.json();
     const dot = document.getElementById('statusDot');
     const txt = document.getElementById('marketStatusText');
     const info = document.getElementById('loadedInfo');
+
+    if (data.version && data.version !== APP_BUILD_VERSION) {
+      showTopUpdateBanner(`⚡ New algo screener version v${data.version} is available! Update now.`);
+      const btn = document.getElementById('appUpdateBtn');
+      if (btn) btn.classList.add('has-update');
+    }
 
     if (data.isMarketOpen) {
       dot.className = 'status-dot live';

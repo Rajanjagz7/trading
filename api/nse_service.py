@@ -468,6 +468,15 @@ class NSEService:
                 if s not in nearest_map or r["expiry"] < nearest_map[s]:
                     nearest_map[s] = r["expiry"]
 
+        # Map (symbol, expiry, strike) -> {CE: oi, PE: oi}
+        strike_oi_map = {}
+        for r in options_list:
+            s_key = (r["symbol"], r["expiry"], r["strike"])
+            if s_key not in strike_oi_map:
+                strike_oi_map[s_key] = {"CE": 0.0, "PE": 0.0}
+            if r["type"] in ("CE", "PE"):
+                strike_oi_map[s_key][r["type"]] = r["oi"]
+
         processed = []
         for r in options_list:
             if sym != "__ALL__" and r["symbol"] != sym:
@@ -588,10 +597,17 @@ class NSEService:
                 is_ind_match = is_match
                 ind_tag = sig or "Active"
 
+            s_key = (r["symbol"], r["expiry"], r["strike"])
+            ois = strike_oi_map.get(s_key, {})
+            ce_oi = ois.get("CE", 0.0)
+            pe_oi = ois.get("PE", 0.0)
+
             item = dict(r)
             item.update({
                 "prevCloseUsed": round(prev_close_used, 2),
                 "oiPct": round(oi_pct, 2) if oi_pct is not None else None,
+                "ceOi": ce_oi,
+                "peOi": pe_oi,
                 "isOL": is_ol,
                 "isOH": is_oh,
                 "isMatch": is_match,
