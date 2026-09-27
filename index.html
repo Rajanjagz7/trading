@@ -2020,7 +2020,7 @@
       padding-bottom: 6px;
     }
     .results-filter-toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
-    .quick-filter-pills { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .quick-filter-pills { flex-wrap: wrap; row-gap: 6px; }
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
     table { min-width: 880px; }
     .results-view-toggle { display: flex; }
@@ -3136,7 +3136,7 @@
           <!-- Clause 3: Candlestick Action -->
           <div class="clause-row">
             <span class="clause-idx">Rule 3</span>
-            <span class="clause-field">[ 0 ] Candlestick Action</span>
+            <label class="clause-toggle"><input type="checkbox" id="ruleCandleOn"> <span>[ 0 ] Candlestick Action</span></label>
             <span class="clause-op">Equals</span>
             <select id="ruleCandleMode" class="clause-select">
               <option value="ALL">Any Pattern (Open=Low or Open=High or All)</option>
@@ -3151,7 +3151,7 @@
           <!-- Clause 4: UT Bot Action -->
           <div class="clause-row">
             <span class="clause-idx">Rule 4</span>
-            <span class="clause-field">[ 0 ] UT Bot Indicator</span>
+            <label class="clause-toggle"><input type="checkbox" id="ruleUtOn"> <span>[ 0 ] UT Bot Indicator</span></label>
             <span class="clause-op">Has Signal</span>
             <select id="ruleUtAction" class="clause-select">
               <option value="ALL">All Signals (BUY, SELL, WAIT)</option>
@@ -3166,7 +3166,7 @@
           <!-- Clause 5: Contract Parameters -->
           <div class="clause-row">
             <span class="clause-idx">Rule 5</span>
-            <span class="clause-field">[ 0 ] Expiry</span>
+            <label class="clause-toggle"><input type="checkbox" id="ruleParamsOn"> <span>[ 0 ] Expiry</span></label>
             <span class="clause-op">Equals</span>
             <select id="ruleExpiry" class="clause-select">
               <option value="nearest">Nearest Expiry</option>
@@ -4878,56 +4878,85 @@ function applyPreset(presetKey) {
   const prevOn = document.getElementById('rulePrevOn');
   const prevFrom = document.getElementById('rulePrevFrom');
   const prevTo = document.getElementById('rulePrevTo');
+  const candleOn = document.getElementById('ruleCandleOn');
   const candle = document.getElementById('ruleCandleMode');
   const tol = document.getElementById('ruleTol');
+  const utOn = document.getElementById('ruleUtOn');
   const ut = document.getElementById('ruleUtAction');
+  const paramsOn = document.getElementById('ruleParamsOn');
   const minOi = document.getElementById('ruleMinOi');
   const optType = document.getElementById('ruleOptType');
 
   if (presetKey === 'strat1') {
     lowOn.checked = true; lowFrom.value = "5.80"; lowTo.value = "8.45";
     prevOn.checked = true; prevFrom.value = "38.00"; prevTo.value = "48.00";
-    candle.value = "ALL"; tol.value = "0.00"; ut.value = "ALL"; minOi.value = "0"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL"; tol.value = "0.00";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
   } else if (presetKey === 'strat2') {
     lowOn.checked = true; lowFrom.value = "0.05"; lowTo.value = "500";
     prevOn.checked = false;
-    candle.value = "OL"; tol.value = "0.00"; ut.value = "ALL"; minOi.value = "0"; optType.value = "BOTH";
+    candleOn.checked = true; candle.value = "OL"; tol.value = "0.00";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
   } else if (presetKey === 'strat3') {
     lowOn.checked = true; lowFrom.value = "52.00"; lowTo.value = "58.00";
     prevOn.checked = true; prevFrom.value = "300.00"; prevTo.value = "349.00";
-    candle.value = "ALL"; tol.value = "0.00"; ut.value = "ALL"; minOi.value = "0"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL"; tol.value = "0.00";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
   } else if (presetKey === 'strat_ol') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "OL"; tol.value = "0.00"; ut.value = "ALL"; minOi.value = "0"; optType.value = "BOTH";
+    candleOn.checked = true; candle.value = "OL"; tol.value = "0.00";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
   } else if (presetKey === 'strat_oh') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "OH"; tol.value = "0.00"; ut.value = "ALL"; minOi.value = "0"; optType.value = "BOTH";
+    candleOn.checked = true; candle.value = "OH"; tol.value = "0.00";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
   } else if (presetKey === 'strat_ut') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "ALL"; ut.value = "BUY"; minOi.value = "0"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL";
+    utOn.checked = true; ut.value = "BUY";
+    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
   } else if (presetKey === 'strat_pred') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "ALL"; ut.value = "BUY"; minOi.value = "50000"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL";
+    utOn.checked = true; ut.value = "BUY";
+    paramsOn.checked = true; minOi.value = "50000"; optType.value = "BOTH";
   } else if (presetKey === 'strat_quantum') {
     lowOn.checked = true; lowFrom.value = "35.00"; lowTo.value = "80.00";
     prevOn.checked = true; prevFrom.value = "250.00"; prevTo.value = "500.00";
-    candle.value = "ALL"; ut.value = "ALL"; minOi.value = "10000"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = true; minOi.value = "10000"; optType.value = "BOTH";
   } else if (presetKey === 'strat_target') {
     lowOn.checked = true; lowFrom.value = "10.00"; lowTo.value = "250.00";
     prevOn.checked = false;
-    candle.value = "OL"; ut.value = "BUY"; minOi.value = "0"; optType.value = "BOTH";
+    candleOn.checked = true; candle.value = "OL";
+    utOn.checked = true; ut.value = "BUY";
+    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
   } else if (presetKey === 'strat_supertrend') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "ALL"; ut.value = "BUY"; minOi.value = "25000"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL";
+    utOn.checked = true; ut.value = "BUY";
+    paramsOn.checked = true; minOi.value = "25000"; optType.value = "BOTH";
   } else if (presetKey === 'strat_orb15') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "OL"; ut.value = "BUY"; minOi.value = "25000"; optType.value = "BOTH";
+    candleOn.checked = true; candle.value = "OL";
+    utOn.checked = true; ut.value = "BUY";
+    paramsOn.checked = true; minOi.value = "25000"; optType.value = "BOTH";
   } else if (presetKey === 'strat_vwap') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "ALL"; ut.value = "ALL"; minOi.value = "50000"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = true; minOi.value = "50000"; optType.value = "BOTH";
   } else if (presetKey === 'strat_volume') {
     lowOn.checked = false; prevOn.checked = false;
-    candle.value = "ALL"; ut.value = "ALL"; minOi.value = "100000"; optType.value = "BOTH";
+    candleOn.checked = false; candle.value = "ALL";
+    utOn.checked = false; ut.value = "ALL";
+    paramsOn.checked = true; minOi.value = "100000"; optType.value = "BOTH";
   }
 
   syncQueryToSidebar();
@@ -4942,11 +4971,14 @@ function syncQueryToSidebar() {
   document.getElementById('prevFrom').value = document.getElementById('rulePrevFrom').value;
   document.getElementById('prevTo').value = document.getElementById('rulePrevTo').value;
   document.getElementById('tol').value = document.getElementById('ruleTol').value;
-  document.getElementById('minOi').value = document.getElementById('ruleMinOi').value;
-  document.getElementById('expSelect').value = document.getElementById('ruleExpiry').value;
   document.getElementById('includeUntraded').checked = !document.getElementById('ruleExcludeUntraded').checked;
 
-  const optVal = document.getElementById('ruleOptType').value;
+  // Rule 5 (Expiry / Option Type / Min OI) only takes effect when its checkbox is on —
+  // otherwise fall back to the app's normal defaults (nearest expiry, both option types, no OI floor).
+  const paramsOn = document.getElementById('ruleParamsOn').checked;
+  document.getElementById('minOi').value = paramsOn ? document.getElementById('ruleMinOi').value : '0';
+  document.getElementById('expSelect').value = paramsOn ? document.getElementById('ruleExpiry').value : 'nearest';
+  const optVal = paramsOn ? document.getElementById('ruleOptType').value : 'BOTH';
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
     b.classList.toggle('active', b.dataset.v === optVal);
   });
@@ -4968,6 +5000,13 @@ function syncSidebarToQuery() {
   if (activeOpt) {
     document.getElementById('ruleOptType').value = activeOpt.dataset.v;
   }
+
+  // Infer Rule 5's on/off state from whatever the sidebar currently holds,
+  // so the two views of the same filters never contradict each other.
+  const minOiVal = parseFloat(document.getElementById('minOi').value) || 0;
+  const expVal = document.getElementById('expSelect').value;
+  const optVal = activeOpt ? activeOpt.dataset.v : 'BOTH';
+  document.getElementById('ruleParamsOn').checked = (minOiVal > 0 || expVal !== 'nearest' || optVal !== 'BOTH');
 }
 
 function resetChartinkQueryDefaults() {
@@ -5016,9 +5055,13 @@ async function runIndicatorScan(indKey) {
   if (showModeSel) showModeSel.value = 'matches';
 
   // 4. Reset query builder filters so they do not hide indicator results
+  const rCandleOn = document.getElementById('ruleCandleOn');
   const rCandle = document.getElementById('ruleCandleMode');
+  const rUtOn = document.getElementById('ruleUtOn');
   const rUt = document.getElementById('ruleUtAction');
+  if (rCandleOn) rCandleOn.checked = false;
   if (rCandle) rCandle.value = 'ALL';
+  if (rUtOn) rUtOn.checked = false;
   if (rUt) rUt.value = 'ALL';
 
   // 3. Clear quick filter and table search
@@ -5246,20 +5289,22 @@ function handleTableSearchKeydown(event) {
 function filterAndRender() {
   let rows = lastResults.slice();
 
-  // 1. Chartink Query Candle Pattern Filter
+  // 1. Chartink Query Candle Pattern Filter (only when Rule 3 is checked on)
+  const candleOn = document.getElementById('ruleCandleOn').checked;
   const candleMode = document.getElementById('ruleCandleMode').value;
   const tol = parseFloat(document.getElementById('ruleTol').value) || 0;
-  if (candleMode === 'OL') {
+  if (candleOn && candleMode === 'OL') {
     rows = rows.filter(r => r.isOL || Math.abs(r.open - r.low) <= tol);
-  } else if (candleMode === 'OH') {
+  } else if (candleOn && candleMode === 'OH') {
     rows = rows.filter(r => r.isOH || Math.abs(r.open - r.high) <= tol);
   }
 
-  // 2. Chartink Query UT Bot Filter
+  // 2. Chartink Query UT Bot Filter (only when Rule 4 is checked on)
+  const utOn = document.getElementById('ruleUtOn').checked;
   const utMode = document.getElementById('ruleUtAction').value;
-  if (utMode === 'BUY') {
+  if (utOn && utMode === 'BUY') {
     rows = rows.filter(r => r.utBot === '🟢 BUY' || r.isOL || (r.close > r.open && r.close >= r.prevCloseUsed));
-  } else if (utMode === 'SELL') {
+  } else if (utOn && utMode === 'SELL') {
     rows = rows.filter(r => r.utBot === '🔴 SELL' || r.isOH || (r.close < r.open && r.close <= r.prevCloseUsed));
   }
 
@@ -7495,10 +7540,16 @@ function clearAllChartinkQueryRules() {
   if (rLow) rLow.checked = false;
   const rPrev = document.getElementById('rulePrevOn');
   if (rPrev) rPrev.checked = false;
+  const rCandleOn = document.getElementById('ruleCandleOn');
+  if (rCandleOn) rCandleOn.checked = false;
   const rCandle = document.getElementById('ruleCandleMode');
   if (rCandle) rCandle.value = 'ALL';
+  const rUtOn = document.getElementById('ruleUtOn');
+  if (rUtOn) rUtOn.checked = false;
   const rUt = document.getElementById('ruleUtAction');
   if (rUt) rUt.value = 'ALL';
+  const rParamsOn = document.getElementById('ruleParamsOn');
+  if (rParamsOn) rParamsOn.checked = false;
   const rExp = document.getElementById('ruleExpiry');
   if (rExp) rExp.value = 'all';
   const rType = document.getElementById('ruleOptType');
@@ -7636,31 +7687,37 @@ function resetRulePrev() {
 }
 
 function resetRuleCandle() {
+  const chk = document.getElementById('ruleCandleOn');
+  if (chk) chk.checked = false;
   const c = document.getElementById('ruleCandleMode');
   if (c) c.value = 'ALL';
   const tol = document.getElementById('ruleTol');
   if (tol) tol.value = '0.00';
-  showToast('↺ Candlestick Action rule reset', 'info');
+  showToast('↺ Candlestick Action rule reset & disabled', 'info');
   runChartinkQueryScan();
 }
 
 function resetRuleUt() {
+  const chk = document.getElementById('ruleUtOn');
+  if (chk) chk.checked = false;
   const u = document.getElementById('ruleUtAction');
   if (u) u.value = 'ALL';
   const s = document.getElementById('ruleUtSens');
   if (s) s.value = '1';
-  showToast('↺ UT Bot rule reset', 'info');
+  showToast('↺ UT Bot rule reset & disabled', 'info');
   runChartinkQueryScan();
 }
 
 function resetRuleParams() {
+  const chk = document.getElementById('ruleParamsOn');
+  if (chk) chk.checked = false;
   const e = document.getElementById('ruleExpiry');
   if (e) e.value = 'nearest';
   const t = document.getElementById('ruleOptType');
   if (t) t.value = 'BOTH';
   const o = document.getElementById('ruleMinOi');
   if (o) o.value = '0';
-  showToast('↺ Contract Parameter rules reset', 'info');
+  showToast('↺ Contract Parameter rules reset & disabled', 'info');
   runChartinkQueryScan();
 }
 
