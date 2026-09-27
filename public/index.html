@@ -1983,7 +1983,7 @@
   }
 
   @media (max-width: 900px) {
-    .workspace { flex-direction: column; }
+    .workspace { flex-direction: column; align-items: stretch; }
     .panel.filters { width: 100%; }
     .chartink-indices-bar { flex-wrap: nowrap; overflow-x: auto; }
     .clause-row { font-size: 11.5px; gap: 6px; }
@@ -2106,10 +2106,20 @@
     }
     .chartink-indices-bar::-webkit-scrollbar, .global-markets-bar::-webkit-scrollbar { display: none; }
     .index-ticker-card, .global-ticker-card {
-      min-width: 145px !important;
+      min-width: 120px !important;
       padding: 5px 8px !important;
       scroll-snap-align: start !important;
       flex-shrink: 0 !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 2px !important;
+    }
+    .index-ticker-right {
+      align-items: flex-start !important;
+      text-align: left !important;
+    }
+    .index-ticker-chg {
+      justify-content: flex-start !important;
     }
     .index-ticker-name {
       font-size: 10.5px !important;

@@ -56,3 +56,96 @@ Then visit:
 ```text
 http://localhost:8000
 ```
+
+---
+
+## 📊 All New Index Details
+
+Install `jugaad-data` for pulling historical NSE derivatives (futures & options) data via CLI:
+
+```bash
+pip install jugaad-data
+```
+
+```text
+$ jdata deriviatives --help
+Usage: cli.py derivatives [OPTIONS]
+
+  Sample usage-
+
+  Download stock futures-
+
+  jdata derivatives -s SBIN -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i FUTSTK -o file_name.csv
+
+  Download index futures-
+
+  jdata derivatives -s NIFTY -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i FUTIDX -o file_name.csv
+
+  Download stock options-
+
+  jdata derivatives -s SBIN -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i OPTSTK -p 330 --ce -o file_name.csv
+
+  Download index options-
+
+  jdata derivatives -s NIFTY -f 2020-01-01 -t 2020-01-30 -e 2020-01-23 -i OPTIDX -p 11000 --pe -o file_name.csv
+
+Options:
+  -s, --symbol TEXT  Stock/Index symbol  [required]
+  -f, --from TEXT    From date - yyyy-mm-dd  [required]
+  -t, --to TEXT      To date - yyyy-mm-dd  [required]
+  -e, --expiry TEXT  Expiry date - yyyy-mm-dd  [required]
+  -i, --instru TEXT  FUTSTK - Stock futures, FUTIDX - Index Futures, OPTSTK -
+                     Stock Options, OPTIDX - Index Options  [required]
+
+  -p, --price TEXT   Strike price (Only for OPTSTK and OPTIDX)
+  --ce / --pe        --ce for call and --pe for put (Only for OPTSTK and
+                     OPTIDX)
+
+  -o, --output TEXT  Full path of output file
+  --help             Show this message and exit.
+```
+
+---
+
+## 🟢 For Dhan Users
+
+If you have a [Dhan](https://dhan.co) trading account, you can pull live option chain data directly via the official **DhanHQ API** instead of (or alongside) the NSE bhavcopy source.
+
+**1. Get your API credentials**
+- Log in at [web.dhan.co](https://web.dhan.co)
+- Click your profile icon (top-right) → **Access DhanHQ APIs**
+- Generate your `access-token` (JWT) and note your `client-id`
+
+**2. Install the official Python client**
+```bash
+pip install dhanhq
+```
+
+**3. Fetch a live option chain**
+```python
+from dhanhq import DhanContext, dhanhq
+
+dhan_context = DhanContext("client_id", "access_token")
+dhan = dhanhq(dhan_context)
+
+# Example: NIFTY option chain for a given expiry
+option_chain = dhan.option_chain(
+    under_security_id=13,          # NIFTY security ID
+    under_exchange_segment="IDX_I",
+    expiry="2026-10-30"
+)
+print(option_chain)
+```
+
+**Raw API reference** (if not using the Python client):
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/v2/optionchain` | Full option chain (OI, Greeks, IV, LTP, bid/ask, volume) for an underlying + expiry |
+| `POST` | `/v2/optionchain/expirylist` | List of available expiry dates for an underlying |
+
+Required headers on every request: `access-token`, `client-id`, `Content-Type: application/json`.
+
+> ⚠️ **Rate limit:** Option Chain API allows **1 request per 3 seconds** per unique underlying/expiry — plan polling intervals accordingly (this is stricter than NSE's own live endpoints used elsewhere in this project).
+
+Docs: [DhanHQ Option Chain API](https://dhanhq.co/docs/v2/option-chain/) · [DhanHQ-py on GitHub](https://github.com/dhan-oss/DhanHQ-py)
