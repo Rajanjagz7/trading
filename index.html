@@ -6370,8 +6370,8 @@ function renderIndChainTable(strikes, atm, ind) {
       peBadge = `<span class="${cls}" title="${pe.indNote || ''}">${pe.indBadge}</span>`;
     }
 
-    const ceLtpBtn = ce.close ? `<button class="prem-chip ce" onclick="openOptionChartModal('${sym}', '${targetExp}', ${s.strike}, 'CE'); selectHubStrat('${ind}'); switchOptChartTab('canvas');" title="Open ${sym} ${s.strike} CE chart with ${ind} fitted">📈 ${fmtNum(ce.close)}</button>` : '–';
-    const peLtpBtn = pe.close ? `<button class="prem-chip pe" onclick="openOptionChartModal('${sym}', '${targetExp}', ${s.strike}, 'PE'); selectHubStrat('${ind}'); switchOptChartTab('canvas');" title="Open ${sym} ${s.strike} PE chart with ${ind} fitted">📈 ${fmtNum(pe.close)}</button>` : '–';
+    const ceLtpBtn = ce.close ? `<button class="prem-chip ce" onclick="currentHubStratKey='${ind}'; openOptionChartModal('${sym}', '${targetExp}', ${s.strike}, 'CE');" title="Open ${sym} ${s.strike} CE chart with ${ind} fitted">📈 ${fmtNum(ce.close)}</button>` : '–';
+    const peLtpBtn = pe.close ? `<button class="prem-chip pe" onclick="currentHubStratKey='${ind}'; openOptionChartModal('${sym}', '${targetExp}', ${s.strike}, 'PE');" title="Open ${sym} ${s.strike} PE chart with ${ind} fitted">📈 ${fmtNum(pe.close)}</button>` : '–';
 
     const rowCls = isATM ? 'atm-row atm-row-highlight' : '';
     const strikeDisplay = isATM ? `<span class="atm-badge">${s.strike} ★ ATM</span>` : `<b>${s.strike}</b>`;
@@ -6402,9 +6402,8 @@ function openIndicatorInAppChart(key) {
   const exp = c ? c.expiry : '';
   const strk = c ? c.strike : 0;
   const typ = c ? c.type : '';
+  currentHubStratKey = indKey;
   openOptionChartModal(sym, exp, strk, typ);
-  selectHubStrat(indKey);
-  switchOptChartTab('canvas');
 }
 
 function switchIndModalTab(key) {
@@ -6468,7 +6467,11 @@ function copyIndScript() {
   });
 }
 
-function selectHubStrat(key) {
+// Applies a strategy's display (label/description/code preview + chart redraw)
+// without any clipboard/toast side effects — used whenever the app itself is
+// just restoring or setting up which indicator is fitted (e.g. opening a chart
+// modal), as opposed to the user explicitly picking one from the tab strip.
+function applyHubStrat(key) {
   currentHubStratKey = key;
   document.querySelectorAll('.hub-strategy-selector .hub-btn').forEach(b => {
     b.classList.toggle('active', b.getAttribute('data-strat') === String(key));
@@ -6482,15 +6485,20 @@ function selectHubStrat(key) {
   document.getElementById('hubStratDesc').textContent = data.desc;
   document.getElementById('pineCodePreview').textContent = data.code;
 
-  // Auto-copy script to clipboard on select
-  navigator.clipboard.writeText(data.code).then(() => {
-    showToast(`Fitted ${data.title} on chart & copied Pine Script!`, 'success');
-  }).catch(() => {});
-
-  // Redraw canvas chart to fit this selected indicator!
   if (currentSelectedContract) {
     drawOptionChart(currentSelectedContract);
   }
+}
+
+// User-facing action for clicking a strategy tab: applies it, then copies its
+// Pine script to the clipboard as a convenience and confirms with a toast.
+function selectHubStrat(key) {
+  applyHubStrat(key);
+  const data = PINE_SCRIPTS[key];
+  if (!data) return;
+  navigator.clipboard.writeText(data.code).then(() => {
+    showToast(`Fitted ${data.title} on chart & copied Pine Script!`, 'success');
+  }).catch(() => {});
 }
 
 function copyCurrentPineScript() {
@@ -6524,48 +6532,85 @@ function loadTradingViewWidget(contractOrSymbol) {
   // TradingView disabled: Web and Mobile native canvas chart active
 }
 
-function openOptionChartModal(symbol, expiry, strike, type) {
-  let contract = null;
+function findLocalContract(symbol, expiry, strike, type) {
   if (currentChainData && currentChainData.strikes && currentChainData.symbol === symbol) {
     const row = currentChainData.strikes.find(s => s.strike === strike);
-    if (row && row[type]) contract = row[type];
+    if (row && row[type]) return row[type];
   }
-  if (!contract && lastResults && lastResults.length) {
+  if (lastResults && lastResults.length) {
     if (strike != null && strike > 0 && type) {
-      contract = lastResults.find(r => r.symbol === symbol && r.strike === strike && r.type === type && (expiry ? r.expiry === expiry : true));
+      const hit = lastResults.find(r => r.symbol === symbol && r.strike === strike && r.type === type && (expiry ? r.expiry === expiry : true));
+      if (hit) return hit;
     } else {
-      // Find first contract or best matching contract for this symbol
-      contract = lastResults.find(r => r.symbol === symbol);
+      const hit = lastResults.find(r => r.symbol === symbol);
+      if (hit) return hit;
     }
   }
-  if (!contract) {
-    let defaultPrice = 100.0;
-    const symUpper = (symbol || 'NIFTY').toUpperCase();
-    if (symUpper.includes('BANK')) defaultPrice = 51785.0;
-    else if (symUpper.includes('SENSEX')) defaultPrice = 81424.0;
-    else if (symUpper.includes('MIDCAP')) defaultPrice = 13105.0;
-    else if (symUpper.includes('VIX')) defaultPrice = 12.82;
-    else if (symUpper.includes('GOLD')) defaultPrice = 75840.0;
-    else if (symUpper.includes('CRUDE')) defaultPrice = 6120.0;
-    else if (symUpper.includes('BTC') || symUpper.includes('BITCOIN')) defaultPrice = 8081600.0;
-    else if (symUpper.includes('DOW')) defaultPrice = 42850.0;
-    else if (symUpper.includes('SP500')) defaultPrice = 5860.0;
-    else if (symUpper.includes('NASDAQ')) defaultPrice = 20450.0;
-    else if (symUpper.includes('GIFT')) defaultPrice = 24920.0;
-    else if (symUpper.includes('NIFTY')) defaultPrice = 24852.0;
-    else if (symUpper.includes('RELIANCE')) defaultPrice = 2980.0;
-    else if (symUpper.includes('TCS')) defaultPrice = 4250.0;
-    else if (symUpper.includes('INFY')) defaultPrice = 1890.0;
+  return null;
+}
 
-    contract = {
-      symbol: symbol || 'NIFTY', expiry: expiry || '', strike: strike || 0, type: type || '',
-      open: defaultPrice, high: defaultPrice * 1.008, low: defaultPrice * 0.994, close: defaultPrice, prevClose: defaultPrice * 0.996,
-      spot: defaultPrice, vol: 1500000, oi: 25000000,
-      tgt9: defaultPrice * 1.09, tgt18: defaultPrice * 1.18, sl5: defaultPrice * 0.95, sl9: defaultPrice * 0.91,
-      div8: defaultPrice / 8, div65: defaultPrice / 6.5
-    };
+function syntheticFallbackContract(symbol, expiry, strike, type) {
+  let defaultPrice = 100.0;
+  const symUpper = (symbol || 'NIFTY').toUpperCase();
+  if (symUpper.includes('BANK')) defaultPrice = 51785.0;
+  else if (symUpper.includes('SENSEX')) defaultPrice = 81424.0;
+  else if (symUpper.includes('MIDCAP')) defaultPrice = 13105.0;
+  else if (symUpper.includes('VIX')) defaultPrice = 12.82;
+  else if (symUpper.includes('GOLD')) defaultPrice = 75840.0;
+  else if (symUpper.includes('CRUDE')) defaultPrice = 6120.0;
+  else if (symUpper.includes('BTC') || symUpper.includes('BITCOIN')) defaultPrice = 8081600.0;
+  else if (symUpper.includes('DOW')) defaultPrice = 42850.0;
+  else if (symUpper.includes('SP500')) defaultPrice = 5860.0;
+  else if (symUpper.includes('NASDAQ')) defaultPrice = 20450.0;
+  else if (symUpper.includes('GIFT')) defaultPrice = 24920.0;
+  else if (symUpper.includes('NIFTY')) defaultPrice = 24852.0;
+  else if (symUpper.includes('RELIANCE')) defaultPrice = 2980.0;
+  else if (symUpper.includes('TCS')) defaultPrice = 4250.0;
+  else if (symUpper.includes('INFY')) defaultPrice = 1890.0;
+
+  return {
+    symbol: symbol || 'NIFTY', expiry: expiry || '', strike: strike || 0, type: type || '',
+    open: defaultPrice, high: defaultPrice * 1.008, low: defaultPrice * 0.994, close: defaultPrice, prevClose: defaultPrice * 0.996,
+    spot: defaultPrice, vol: 1500000, oi: 25000000,
+    tgt9: defaultPrice * 1.09, tgt18: defaultPrice * 1.18, sl5: defaultPrice * 0.95, sl9: defaultPrice * 0.91,
+    div8: defaultPrice / 8, div65: defaultPrice / 6.5,
+    isEstimate: true
+  };
+}
+
+// Fetches the real option chain for this symbol when the contract isn't already
+// loaded in memory, instead of immediately falling back to a fabricated price —
+// so clicking any strike (not just ones already on screen) opens the real thing.
+async function fetchLiveContract(symbol, expiry, strike, type) {
+  try {
+    let url = `${API_BASE}/api/chain?symbol=${encodeURIComponent(symbol)}`;
+    if (expiry) url += `&expiry=${encodeURIComponent(expiry)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error || !data.strikes) return null;
+
+    if (strike > 0 && type) {
+      const row = data.strikes.find(s => s.strike === strike);
+      if (row && row[type]) return { ...row[type], symbol: data.symbol, expiry: data.expiry, strike, type, spot: data.spot };
+      return null;
+    }
+    // Spot-only request (ticker card click, no specific strike): use the
+    // real live spot rather than a hardcoded number from whenever this
+    // fallback price table was last updated.
+    if (data.spot > 0) {
+      return {
+        symbol: data.symbol, expiry: data.expiry || '', strike: 0, type: '',
+        open: data.spot, high: data.spot, low: data.spot, close: data.spot, prevClose: data.spot,
+        spot: data.spot, vol: 0, oi: 0
+      };
+    }
+    return null;
+  } catch (e) {
+    return null;
   }
+}
 
+function renderOptionModalContract(contract) {
   currentSelectedContract = contract;
 
   const modal = document.getElementById('optionChartModal');
@@ -6593,7 +6638,11 @@ function openOptionChartModal(symbol, expiry, strike, type) {
 
   const spot = contract.spot || (currentChainData ? currentChainData.spot : 0);
   const moneynessBadge = document.getElementById('optBadgeMoneyness');
-  if (spot > 0) {
+  if (contract.isEstimate) {
+    moneynessBadge.textContent = '⚠️ Estimated (no live data source for this symbol)';
+  } else if (!isOption) {
+    moneynessBadge.textContent = spot > 0 ? ('Live Spot ₹' + fmtNum(spot)) : 'Underlying Chart';
+  } else if (spot > 0) {
     const isCE = contract.type === 'CE';
     const isATM = Math.abs(contract.strike - spot) <= (spot * 0.005);
     const isITM = isCE ? (contract.strike < spot) : (contract.strike > spot);
@@ -6628,10 +6677,35 @@ function openOptionChartModal(symbol, expiry, strike, type) {
   document.getElementById('optStatDiv').textContent = `÷8: ₹${fmtNum(div8)} · ÷6.5: ₹${fmtNum(div65)}`;
   document.getElementById('optStatVolOi').textContent = `Vol: ${fmtOI(contract.vol)} · OI: ${fmtOI(contract.oi)}`;
 
-  selectHubStrat(currentHubStratKey || 'ut');
+  // Show the modal BEFORE fitting the strategy, so the canvas container already
+  // has real layout dimensions by the time applyHubStrat draws it — one correct
+  // draw instead of drawing once while hidden (wrong size) and once after a
+  // guessed setTimeout to fix it up.
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  setTimeout(() => drawOptionChart(contract), 40);
+  applyHubStrat(currentHubStratKey || 'ut');
+}
+
+// Symbols with no NSE F&O chain at all — /api/chain would just 404/error for
+// these every time, so skip the round-trip entirely and go straight to the
+// synthetic snapshot instead of waiting on a request that can only fail.
+const NON_NSE_CHAIN_SYMBOLS = new Set(['INDIA VIX', 'GOLD', 'CRUDEOIL', 'BTC', 'BITCOIN', 'DOW', 'SP500', 'NASDAQ']);
+
+async function openOptionChartModal(symbol, expiry, strike, type) {
+  const local = findLocalContract(symbol, expiry, strike, type);
+  if (local) {
+    renderOptionModalContract(local);
+    return;
+  }
+  if (NON_NSE_CHAIN_SYMBOLS.has((symbol || '').toUpperCase())) {
+    renderOptionModalContract(syntheticFallbackContract(symbol, expiry, strike, type));
+    return;
+  }
+  // Not already loaded — fetch the real chain instead of showing a fabricated
+  // price. This only adds a network round-trip for strikes/symbols the app
+  // hasn't already scanned; anything already on screen still opens instantly.
+  const live = await fetchLiveContract(symbol, expiry, strike, type);
+  renderOptionModalContract(live || syntheticFallbackContract(symbol, expiry, strike, type));
 }
 
 /* ============================================================
