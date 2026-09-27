@@ -2124,6 +2124,193 @@
       display: flex !important;
     }
   }
+
+  /* User-Friendly Clear Filter & Reset Buttons */
+  .clear-all-filters-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.25));
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #fca5a5;
+    padding: 9px 14px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .clear-all-filters-btn:hover {
+    background: rgba(239, 68, 68, 0.35);
+    color: #fff;
+    border-color: #ef4444;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+  }
+  .quick-clear-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 7px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+  }
+  .quick-clear-btn:hover {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  .search-input-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .search-clear-btn {
+    position: absolute;
+    right: 8px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+  .search-clear-btn:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+  }
+  .q-pill.reset-pill {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+  }
+  .q-pill.reset-pill:hover {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  /* Market Bar Tabs & Global Commodities / Crypto / Futures Bars */
+  .market-bar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .market-tab-btn {
+    background: #101624;
+    border: 1px solid #1f2c42;
+    color: #94a3b8;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+  }
+  .market-tab-btn:hover {
+    border-color: #3b82f6;
+    color: #fff;
+  }
+  .market-tab-btn.active {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+    color: #93c5fd;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  }
+  .market-refresh-btn {
+    margin-left: auto;
+    background: #131d2e;
+    border: 1px solid #23334d;
+    color: #38bdf8;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .market-refresh-btn:hover {
+    background: #0284c7;
+    color: #fff;
+  }
+  .global-markets-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-bottom: 8px;
+    scrollbar-width: thin;
+    align-items: center;
+    scroll-snap-type: x mandatory;
+  }
+  .global-ticker-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: #111726;
+    border: 1px solid #1e2a3f;
+    border-radius: 6px;
+    padding: 6px 12px;
+    white-space: nowrap;
+    min-width: 175px;
+    flex: 1;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    scroll-snap-align: start;
+  }
+  .global-ticker-card:hover {
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+  }
+  .global-ticker-card.crypto {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: linear-gradient(135deg, #111726 0%, rgba(245, 158, 11, 0.06) 100%);
+  }
+  .global-ticker-card.gold {
+    border-color: rgba(234, 179, 8, 0.4);
+    background: linear-gradient(135deg, #111726 0%, rgba(234, 179, 8, 0.06) 100%);
+  }
+  .global-ticker-card.crude {
+    border-color: rgba(14, 165, 233, 0.4);
+    background: linear-gradient(135deg, #111726 0%, rgba(14, 165, 233, 0.06) 100%);
+  }
+  .global-sub-label {
+    font-size: 9.5px;
+    color: #94a3b8;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .global-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: #182234;
+    color: #38bdf8;
+    border: 1px solid #28374d;
+    font-family: 'IBM Plex Mono', monospace;
+  }
   </style>
 </head>
 <body>
@@ -2156,7 +2343,26 @@
     </div>
   </header>
 
-  <!-- 📊 Chartink Live Market Indices Ticker Bar -->
+  <!-- 🌐 Indian & Global Markets Selector Tabs -->
+  <div class="market-bar-tabs">
+    <button class="market-tab-btn active" id="mktTabAll" onclick="switchMarketBar('all')">
+      <span>🌐</span> <b>All Markets</b>
+    </button>
+    <button class="market-tab-btn" id="mktTabSpot" onclick="switchMarketBar('spot')">
+      <span>🇮🇳</span> <b>Indian Spot Indices</b>
+    </button>
+    <button class="market-tab-btn" id="mktTabCommodities" onclick="switchMarketBar('commodities')">
+      <span>🪙</span> <b>Gold, Crude &amp; Bitcoin (MCX/INR)</b>
+    </button>
+    <button class="market-tab-btn" id="mktTabFutures" onclick="switchMarketBar('futures')">
+      <span>📈</span> <b>US &amp; Indian Monthly Futures</b>
+    </button>
+    <button class="market-refresh-btn" onclick="fetchGlobalMarkets(); fetchIndexPulse();" title="Refresh live market prices">
+      🔄 Live Quotes
+    </button>
+  </div>
+
+  <!-- 📊 1. Indian Spot Indices Ticker Rail -->
   <div class="chartink-indices-bar" id="chartinkIndicesBar">
     <div class="index-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view NIFTY chart with fitted indicators">
       <div class="index-ticker-left">
@@ -2206,6 +2412,124 @@
       <div class="index-ticker-right">
         <span class="index-ticker-val" id="idxMidcapVal">13,105.20</span>
         <span class="index-ticker-chg pos" id="idxMidcapChg">▲ +48.90 (+0.37%)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🪙 2. Indian Commodities (Gold & Crude Oil) & Crypto (Bitcoin) Ticker Rail -->
+  <div class="global-markets-bar" id="globalCommoditiesBar">
+    <div class="global-ticker-card gold" onclick="openOptionChartModal('GOLD', '', 0, '')" style="cursor:pointer;" title="Click to view MCX Gold chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#facc15;">GOLD 24K (MCX) 🪙</span>
+        <span class="global-sub-label" id="goldUsdSub">$2,680.0/oz</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="goldMcxVal">₹75,840</span>
+        <span class="index-ticker-chg pos" id="goldMcxChg">▲ +0.54%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card crude" onclick="openOptionChartModal('CRUDEOIL', '', 0, '')" style="cursor:pointer;" title="Click to view MCX Crude Oil chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#38bdf8;">CRUDE OIL (MCX) 🛢️</span>
+        <span class="global-sub-label" id="crudeUsdSub">$72.50/bbl</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="crudeMcxVal">₹6,120</span>
+        <span class="index-ticker-chg neg" id="crudeMcxChg">▼ -2.33%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card crypto" onclick="openOptionChartModal('BTC', '', 0, '')" style="cursor:pointer;" title="Click to view Bitcoin chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#fbbf24;">BITCOIN (BTC/INR) ₿</span>
+        <span class="global-sub-label" id="btcUsdSub">$67,500</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="btcInrVal">₹72,40,000</span>
+        <span class="index-ticker-chg pos" id="btcInrChg">▲ +1.15%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" style="cursor:default;" title="Live USD to INR Exchange Rate">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">USD / INR 💵</span>
+        <span class="global-sub-label">FOREX BENCHMARK</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="usdInrVal">₹85.20</span>
+        <span class="index-ticker-chg neg" id="usdInrChg">▼ -0.05%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📈 3. US & Indian Market Monthly Futures Ticker Rail -->
+  <div class="global-markets-bar" id="globalFuturesBar">
+    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view GIFT NIFTY Futures chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#38bdf8;">GIFT NIFTY FUT 🇮🇳</span>
+        <span class="global-sub-label" id="giftNiftyBasis">Basis: +68.0</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="giftNiftyVal">24,920.15</span>
+        <span class="index-ticker-chg pos" id="giftNiftyChg">▲ +0.48%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view NIFTY Monthly Futures chart">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">NIFTY NEAR FUT 📅</span>
+        <span class="global-sub-label" id="niftyNearBasis">Prem: +45.0</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="niftyNearVal">24,897.15</span>
+        <span class="index-ticker-chg pos" id="niftyNearChg">▲ +0.42%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view NIFTY Next Month Futures chart">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">NIFTY NEXT FUT 📅</span>
+        <span class="global-sub-label" id="niftyNextBasis">Roll Spread: +83.0</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="niftyNextVal">24,980.15</span>
+        <span class="index-ticker-chg pos" id="niftyNextChg">▲ +0.44%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('BANKNIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view BANKNIFTY Monthly Futures chart">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">BANK NIFTY FUT 📅</span>
+        <span class="global-sub-label" id="bankNearBasis">Prem: +165.0</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="bankNearVal">51,950.40</span>
+        <span class="index-ticker-chg pos" id="bankNearChg">▲ +0.46%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('DOW', '', 0, '')" style="cursor:pointer;" title="Click to view Dow Jones Futures chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">DOW FUT (US 30) 🇺🇸</span>
+        <span class="global-sub-label">CBOT MINI (YM)</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="dowFutVal">42,850</span>
+        <span class="index-ticker-chg pos" id="dowFutChg">▲ +0.35%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('SP500', '', 0, '')" style="cursor:pointer;" title="Click to view S&P 500 Futures chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">S&amp;P 500 FUT (ES) 🇺🇸</span>
+        <span class="global-sub-label">CME MINI (ES)</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="spFutVal">5,860.00</span>
+        <span class="index-ticker-chg pos" id="spFutChg">▲ +0.28%</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('NASDAQ', '', 0, '')" style="cursor:pointer;" title="Click to view Nasdaq 100 Futures chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">NASDAQ FUT (NQ) 🇺🇸</span>
+        <span class="global-sub-label">CME MINI (NQ)</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="nasdaqFutVal">20,450.00</span>
+        <span class="index-ticker-chg pos" id="nasdaqFutChg">▲ +0.42%</span>
       </div>
     </div>
   </div>
@@ -2321,6 +2645,11 @@
 
     <!-- Sidebar Filters -->
     <div class="panel filters" id="sidebarFiltersPanel">
+      <!-- Prominent User-Friendly Clear All Filters Action -->
+      <button type="button" class="clear-all-filters-btn" id="clearAllFiltersBtn" onclick="clearAllScreenerFilters()" title="Reset all strategy ranges, symbols, tolerance, and filters to defaults">
+        <span>🧹</span> <b>Clear All Filters &amp; Reset</b>
+      </button>
+
       <div class="group" style="background:#151b27; border:1px solid #232d40; border-radius:8px; padding:12px; margin-bottom:16px;">
         <label style="color:#93c5fd; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
           <span>📈</span> Algorithmic Strategies
@@ -2351,8 +2680,14 @@
       </div>
 
       <div class="group" id="symbolFilterGroup">
-        <label>Underlying</label>
-        <input type="text" id="symSearch" placeholder="Type to filter symbols…" style="margin-bottom:6px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <label style="margin:0;">Underlying</label>
+          <button type="button" class="quick-clear-btn" onclick="clearSymSearch()" title="Clear symbol filter">✕ Clear</button>
+        </div>
+        <div class="search-input-wrapper" style="width:100%; margin-bottom:6px;">
+          <input type="text" id="symSearch" placeholder="Type to filter symbols…" style="width:100%; padding-right:26px;">
+          <button type="button" class="search-clear-btn" id="symSearchClearBtn" onclick="clearSymSearch()" style="right:6px;" title="Clear symbol search">✕</button>
+        </div>
         <select id="symSelect"><option value="__ALL__">All symbols</option></select>
       </div>
 
@@ -2380,7 +2715,13 @@
       </div>
 
       <div class="group">
-        <div class="checkline"><input type="checkbox" id="lowOn" checked><label style="margin:0;">Day low in range (₹)</label></div>
+        <div class="checkline" style="justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="lowOn" checked>
+            <label style="margin:0;">Day low in range (₹)</label>
+          </div>
+          <button type="button" class="quick-clear-btn" onclick="resetLowRangeDefault()" title="Reset to ₹5.80–₹8.45">↺ Reset</button>
+        </div>
         <div class="row2">
           <input type="number" id="lowFrom" step="0.05" value="5.80">
           <input type="number" id="lowTo" step="0.05" value="8.45">
@@ -2388,7 +2729,13 @@
       </div>
 
       <div class="group">
-        <div class="checkline"><input type="checkbox" id="prevOn" checked><label style="margin:0;">Previous close in range (₹)</label></div>
+        <div class="checkline" style="justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="prevOn" checked>
+            <label style="margin:0;">Previous close in range (₹)</label>
+          </div>
+          <button type="button" class="quick-clear-btn" onclick="resetPrevCloseDefault()" title="Reset to ₹38–₹48">↺ Reset</button>
+        </div>
         <div class="row2">
           <input type="number" id="prevFrom" step="0.5" value="38.00">
           <input type="number" id="prevTo" step="0.5" value="48.00">
@@ -2396,12 +2743,18 @@
       </div>
 
       <div class="group">
-        <label>Open = Low / High tolerance (₹)</label>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <label style="margin:0;">Open = Low / High tolerance (₹)</label>
+          <button type="button" class="quick-clear-btn" onclick="resetToleranceDefault()">↺ 0.00</button>
+        </div>
         <input type="number" id="tol" step="0.05" value="0.00">
       </div>
 
       <div class="group">
-        <label>Minimum open interest (OI)</label>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <label style="margin:0;">Minimum open interest (OI)</label>
+          <button type="button" class="quick-clear-btn" onclick="resetOiDefault()">↺ 0</button>
+        </div>
         <input type="number" id="minOi" step="5000" value="0">
       </div>
 
@@ -2546,6 +2899,9 @@
             <button class="query-reset-btn" onclick="resetChartinkQueryDefaults()">
               <span>🔄</span> Reset to Default
             </button>
+            <button class="query-reset-btn" onclick="clearAllChartinkQueryRules()" style="border-color:rgba(239,68,68,0.4); color:#fca5a5;" title="Clear and uncheck all rules">
+              <span>🧹</span> Clear All Rules
+            </button>
           </div>
           <div class="query-stat-pill" id="queryStatPill">
             <span>⚡ Matches:</span> <b id="queryMatchCount">0</b> contracts found
@@ -2564,9 +2920,13 @@
           <button class="q-pill ol" data-q="OL" onclick="setQuickTableFilter('OL')">🟢 Open=Low (<span id="cntOL">0</span>)</button>
           <button class="q-pill oh" data-q="OH" onclick="setQuickTableFilter('OH')">🔴 Open=High (<span id="cntOH">0</span>)</button>
           <button class="q-pill ut" data-q="BUY" onclick="setQuickTableFilter('BUY')">⚡ UT BUY (<span id="cntBUY">0</span>)</button>
+          <button class="q-pill reset-pill" onclick="clearTableFiltersAndSearch()" title="Clear all table filters &amp; search">🧹 Reset Filters</button>
         </div>
         <div style="display:flex; align-items:center; gap:8px; position:relative;">
-          <input type="text" id="resultsSearchInput" class="results-search-box" placeholder="🔍 Search stock, strike, contract (Press Enter to open chart)..." oninput="handleTableSearch(this.value)" onkeydown="handleTableSearchKeydown(event)" autocomplete="off">
+          <div class="search-input-wrapper">
+            <input type="text" id="resultsSearchInput" class="results-search-box" placeholder="🔍 Search stock, strike, contract..." oninput="handleTableSearch(this.value)" onkeydown="handleTableSearchKeydown(event)" autocomplete="off">
+            <button type="button" class="search-clear-btn" id="searchClearBtn" onclick="clearResultsSearch()" title="Clear search text">✕</button>
+          </div>
           <div id="searchSuggestionsDropdown" class="search-autocomplete-dropdown" style="display:none;"></div>
           <button class="dl-btn" id="dlBtn" style="padding:6px 12px; font-size:12px;">📥 CSV</button>
         </div>
@@ -2876,6 +3236,7 @@
             </select>
           </div>
           <button class="action-btn" onclick="loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey)" style="padding:5px 12px; font-size:12px;">🔄 Refresh Chain</button>
+          <button class="action-btn" onclick="clearIndChainFilters()" style="padding:5px 12px; font-size:12px; border-color:#64748b; color:#cbd5e1;" title="Reset chain strike and symbol filters">🧹 Clear Filters</button>
         </div>
       </div>
 
@@ -3032,16 +3393,24 @@
             <input type="number" id="altPrice" step="0.05" placeholder="e.g. 125.50" style="width:100%; padding:6px 8px; font-size:12px; background:#182234; border:1px solid #2b3b52; border-radius:6px; color:#fff;">
           </div>
         </div>
-        <button class="query-run-btn" onclick="saveNewAlertFromForm()" style="width:100%; justify-content:center; padding:8px 16px; font-size:12px;">
-          <span>🔔</span> <b>Create Live Alert Trigger</b>
-        </button>
+        <div style="display:flex; gap:8px;">
+          <button class="query-run-btn" onclick="saveNewAlertFromForm()" style="flex:1; justify-content:center; padding:8px 16px; font-size:12px;">
+            <span>🔔</span> <b>Create Live Alert Trigger</b>
+          </button>
+          <button type="button" class="pulse-action-btn" onclick="clearAlertFormFields()" style="padding:8px 14px; font-size:12px; border-color:#64748b; color:#cbd5e1;" title="Reset all input fields in alert form">
+            <span>🧹</span> Clear Form
+          </button>
+        </div>
       </div>
 
       <!-- Active Alerts List -->
       <div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
           <h4 style="margin:0; font-size:13px; color:#e2e8f0;">Active Price Alerts (<span id="alertModalCount">0</span>)</h4>
-          <button class="pulse-action-btn" onclick="clearAllTriggeredAlerts()" style="font-size:10.5px; padding:3px 8px;">Clear Triggered</button>
+          <div style="display:flex; gap:6px;">
+            <button class="pulse-action-btn" onclick="clearAllTriggeredAlerts()" style="font-size:10.5px; padding:3px 8px;">Clear Triggered</button>
+            <button class="pulse-action-btn" onclick="clearAllAlertsPrompt()" style="font-size:10.5px; padding:3px 8px; border-color:#ef4444; color:#f87171;" title="Delete all active and triggered alerts">🗑️ Clear All</button>
+          </div>
         </div>
         <div id="alertsListWrap" style="display:flex; flex-direction:column; gap:8px;">
           <!-- Dynamically populated alert cards -->
@@ -4218,6 +4587,8 @@ function setQuickTableFilter(filterKey) {
 
 function handleTableSearch(val) {
   currentTableSearchQuery = (val || '').trim().toUpperCase();
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.style.display = val && val.length > 0 ? 'inline-flex' : 'none';
   filterAndRender();
   renderSearchSuggestions(val);
 }
@@ -5529,6 +5900,13 @@ function openOptionChartModal(symbol, expiry, strike, type) {
     else if (symUpper.includes('SENSEX')) defaultPrice = 81424.0;
     else if (symUpper.includes('MIDCAP')) defaultPrice = 13105.0;
     else if (symUpper.includes('VIX')) defaultPrice = 12.82;
+    else if (symUpper.includes('GOLD')) defaultPrice = 75840.0;
+    else if (symUpper.includes('CRUDE')) defaultPrice = 6120.0;
+    else if (symUpper.includes('BTC') || symUpper.includes('BITCOIN')) defaultPrice = 8081600.0;
+    else if (symUpper.includes('DOW')) defaultPrice = 42850.0;
+    else if (symUpper.includes('SP500')) defaultPrice = 5860.0;
+    else if (symUpper.includes('NASDAQ')) defaultPrice = 20450.0;
+    else if (symUpper.includes('GIFT')) defaultPrice = 24920.0;
     else if (symUpper.includes('NIFTY')) defaultPrice = 24852.0;
     else if (symUpper.includes('RELIANCE')) defaultPrice = 2980.0;
     else if (symUpper.includes('TCS')) defaultPrice = 4250.0;
@@ -6076,6 +6454,8 @@ const symSearchEl = document.getElementById('symSearch');
 if (symSearchEl) {
   symSearchEl.addEventListener('input', function() {
     const q = (this.value || '').trim().toUpperCase();
+    const clearBtn = document.getElementById('symSearchClearBtn');
+    if (clearBtn) clearBtn.style.display = q && q.length > 0 ? 'inline-flex' : 'none';
     const sel = document.getElementById('symSelect');
     if (!sel) return;
     for (let i = 0; i < sel.options.length; i++) {
@@ -6204,12 +6584,383 @@ function initLiveClock() {
   setInterval(update, 1000);
 }
 
+/* ============================================================
+   INDIAN & GLOBAL COMMODITIES, CRYPTO & FUTURES ENGINE
+   Gold (MCX), Crude Oil (MCX), Bitcoin (BTC/INR), & US/Indian Futures
+============================================================ */
+async function fetchGlobalMarkets() {
+  try {
+    const res = await fetch(`${API_BASE}/api/market/global`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.success) return;
+
+    // 1. Commodities (Gold, Crude, BTC)
+    if (data.commodities && data.commodities.length) {
+      data.commodities.forEach(c => {
+        if (c.id === 'gold') {
+          const elVal = document.getElementById('goldMcxVal');
+          const elChg = document.getElementById('goldMcxChg');
+          const elSub = document.getElementById('goldUsdSub');
+          if (elVal) elVal.textContent = c.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${c.isPos ? '▲ +' : '▼ '}${fmtPct(c.chgPct)}`;
+            elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
+          }
+          if (elSub && c.subLabel) elSub.textContent = c.subLabel;
+        } else if (c.id === 'crude') {
+          const elVal = document.getElementById('crudeMcxVal');
+          const elChg = document.getElementById('crudeMcxChg');
+          const elSub = document.getElementById('crudeUsdSub');
+          if (elVal) elVal.textContent = c.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${c.isPos ? '▲ +' : '▼ '}${fmtPct(c.chgPct)}`;
+            elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
+          }
+          if (elSub && c.subLabel) elSub.textContent = c.subLabel;
+        } else if (c.id === 'btc') {
+          const elVal = document.getElementById('btcInrVal');
+          const elChg = document.getElementById('btcInrChg');
+          const elSub = document.getElementById('btcUsdSub');
+          if (elVal) elVal.textContent = c.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${c.isPos ? '▲ +' : '▼ '}${fmtPct(c.chgPct)}`;
+            elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
+          }
+          if (elSub && c.subLabel) elSub.textContent = c.subLabel;
+        }
+      });
+    }
+
+    // Forex
+    if (data.inrUsd) {
+      const elVal = document.getElementById('usdInrVal');
+      const elChg = document.getElementById('usdInrChg');
+      if (elVal) elVal.textContent = `₹${data.inrUsd.toFixed(2)}`;
+      if (elChg) {
+        const isPos = data.inrChgPct >= 0;
+        elChg.textContent = `${isPos ? '▲ +' : '▼ '}${fmtPct(data.inrChgPct)}`;
+        elChg.className = `index-ticker-chg ${isPos ? 'pos' : 'neg'}`;
+      }
+    }
+
+    // 2. Futures (GIFT Nifty, Nifty Near/Next, BankNifty, Dow, S&P 500, Nasdaq)
+    if (data.futures && data.futures.length) {
+      data.futures.forEach(f => {
+        if (f.id === 'gift_nifty') {
+          const elVal = document.getElementById('giftNiftyVal');
+          const elChg = document.getElementById('giftNiftyChg');
+          const elSub = document.getElementById('giftNiftyBasis');
+          if (elVal) elVal.textContent = f.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
+          }
+          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
+        } else if (f.id === 'nifty_fut_near') {
+          const elVal = document.getElementById('niftyNearVal');
+          const elChg = document.getElementById('niftyNearChg');
+          const elSub = document.getElementById('niftyNearBasis');
+          if (elVal) elVal.textContent = f.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
+          }
+          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
+        } else if (f.id === 'nifty_fut_next') {
+          const elVal = document.getElementById('niftyNextVal');
+          const elChg = document.getElementById('niftyNextChg');
+          const elSub = document.getElementById('niftyNextBasis');
+          if (elVal) elVal.textContent = f.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
+          }
+          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
+        } else if (f.id === 'bank_fut_near') {
+          const elVal = document.getElementById('bankNearVal');
+          const elChg = document.getElementById('bankNearChg');
+          const elSub = document.getElementById('bankNearBasis');
+          if (elVal) elVal.textContent = f.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
+          }
+          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
+        } else if (f.id === 'dow_fut') {
+          const elVal = document.getElementById('dowFutVal');
+          const elChg = document.getElementById('dowFutChg');
+          if (elVal) elVal.textContent = f.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
+          }
+        } else if (f.id === 'sp_fut') {
+          const elVal = document.getElementById('spFutVal');
+          const elChg = document.getElementById('spFutChg');
+          if (elVal) elVal.textContent = f.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
+          }
+        } else if (f.id === 'nasdaq_fut') {
+          const elVal = document.getElementById('nasdaqFutVal');
+          const elChg = document.getElementById('nasdaqFutChg');
+          if (elVal) elVal.textContent = f.priceFormatted;
+          if (elChg) {
+            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to fetch global markets:', err);
+  }
+}
+
+function switchMarketBar(mode) {
+  const tabAll = document.getElementById('mktTabAll');
+  const tabSpot = document.getElementById('mktTabSpot');
+  const tabComm = document.getElementById('mktTabCommodities');
+  const tabFut = document.getElementById('mktTabFutures');
+
+  const barSpot = document.getElementById('chartinkIndicesBar');
+  const barComm = document.getElementById('globalCommoditiesBar');
+  const barFut = document.getElementById('globalFuturesBar');
+
+  [tabAll, tabSpot, tabComm, tabFut].forEach(b => { if (b) b.classList.remove('active'); });
+
+  if (mode === 'all') {
+    if (tabAll) tabAll.classList.add('active');
+    if (barSpot) barSpot.style.display = 'flex';
+    if (barComm) barComm.style.display = 'flex';
+    if (barFut) barFut.style.display = 'flex';
+  } else if (mode === 'spot') {
+    if (tabSpot) tabSpot.classList.add('active');
+    if (barSpot) barSpot.style.display = 'flex';
+    if (barComm) barComm.style.display = 'none';
+    if (barFut) barFut.style.display = 'none';
+  } else if (mode === 'commodities') {
+    if (tabComm) tabComm.classList.add('active');
+    if (barSpot) barSpot.style.display = 'none';
+    if (barComm) barComm.style.display = 'flex';
+    if (barFut) barFut.style.display = 'none';
+  } else if (mode === 'futures') {
+    if (tabFut) tabFut.classList.add('active');
+    if (barSpot) barSpot.style.display = 'none';
+    if (barComm) barComm.style.display = 'none';
+    if (barFut) barFut.style.display = 'flex';
+  }
+}
+
+/* ============================================================
+   USER-FRIENDLY CLEAR & RESET FILTER HANDLERS
+   Instant feedback across all screener and analysis fields
+============================================================ */
+function clearAllScreenerFilters() {
+  // 1. Underlying
+  const symSearch = document.getElementById('symSearch');
+  if (symSearch) symSearch.value = '';
+  const symClearBtn = document.getElementById('symSearchClearBtn');
+  if (symClearBtn) symClearBtn.style.display = 'none';
+  const symSelect = document.getElementById('symSelect');
+  if (symSelect) {
+    for (let i = 0; i < symSelect.options.length; i++) symSelect.options[i].hidden = false;
+    symSelect.value = '__ALL__';
+  }
+
+  // 2. Instrument types
+  const instIdx = document.getElementById('instIdx');
+  if (instIdx) instIdx.checked = true;
+  const instStk = document.getElementById('instStk');
+  if (instStk) instStk.checked = true;
+
+  // 3. Option type
+  document.querySelectorAll('#optTypeSeg button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === 'BOTH');
+  });
+
+  // 4. Expiry
+  const expSelect = document.getElementById('expSelect');
+  if (expSelect) expSelect.value = 'nearest';
+
+  // 5. Day low range
+  const lowOn = document.getElementById('lowOn');
+  if (lowOn) lowOn.checked = true;
+  const lowFrom = document.getElementById('lowFrom');
+  if (lowFrom) lowFrom.value = '5.80';
+  const lowTo = document.getElementById('lowTo');
+  if (lowTo) lowTo.value = '8.45';
+
+  // 6. Prev close range
+  const prevOn = document.getElementById('prevOn');
+  if (prevOn) prevOn.checked = true;
+  const prevFrom = document.getElementById('prevFrom');
+  if (prevFrom) prevFrom.value = '38.00';
+  const prevTo = document.getElementById('prevTo');
+  if (prevTo) prevTo.value = '48.00';
+
+  // 7. Tolerance & Min OI
+  const tol = document.getElementById('tol');
+  if (tol) tol.value = '0.00';
+  const minOi = document.getElementById('minOi');
+  if (minOi) minOi.value = '0';
+
+  // 8. Include untraded & show mode
+  const includeUntraded = document.getElementById('includeUntraded');
+  if (includeUntraded) includeUntraded.checked = false;
+  const showMode = document.getElementById('showMode');
+  if (showMode) showMode.value = 'matches';
+
+  // 9. Results search & quick pills
+  const resSearch = document.getElementById('resultsSearchInput');
+  if (resSearch) resSearch.value = '';
+  const resClearBtn = document.getElementById('searchClearBtn');
+  if (resClearBtn) resClearBtn.style.display = 'none';
+  currentTableSearchQuery = '';
+  currentQuickFilter = 'ALL';
+  document.querySelectorAll('.q-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.q === 'ALL');
+  });
+
+  // 10. Strategy presets
+  document.querySelectorAll('.strat-btn').forEach(b => {
+    b.classList.toggle('active', b.id === 'strat1Btn');
+  });
+  document.querySelectorAll('.preset-pill').forEach(b => {
+    b.classList.toggle('active', b.dataset.preset === 'strat1');
+  });
+
+  showToast('🧹 All screener filters cleared and reset to Strategy 1 defaults!', 'info');
+  runServerScan();
+}
+
+function clearSymSearch() {
+  const input = document.getElementById('symSearch');
+  if (input) input.value = '';
+  const clearBtn = document.getElementById('symSearchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const sel = document.getElementById('symSelect');
+  if (sel) {
+    for (let i = 0; i < sel.options.length; i++) sel.options[i].hidden = false;
+    sel.value = '__ALL__';
+  }
+  showToast('🧹 Underlying symbol search cleared!', 'info');
+  runServerScan();
+}
+
+function resetLowRangeDefault() {
+  const lowOn = document.getElementById('lowOn');
+  if (lowOn) lowOn.checked = true;
+  const lowFrom = document.getElementById('lowFrom');
+  if (lowFrom) lowFrom.value = '5.80';
+  const lowTo = document.getElementById('lowTo');
+  if (lowTo) lowTo.value = '8.45';
+  showToast('↺ Day Low range reset to default ₹5.80 – ₹8.45', 'info');
+  runServerScan();
+}
+
+function resetPrevCloseDefault() {
+  const prevOn = document.getElementById('prevOn');
+  if (prevOn) prevOn.checked = true;
+  const prevFrom = document.getElementById('prevFrom');
+  if (prevFrom) prevFrom.value = '38.00';
+  const prevTo = document.getElementById('prevTo');
+  if (prevTo) prevTo.value = '48.00';
+  showToast('↺ Previous Close range reset to default ₹38.00 – ₹48.00', 'info');
+  runServerScan();
+}
+
+function resetToleranceDefault() {
+  const tol = document.getElementById('tol');
+  if (tol) tol.value = '0.00';
+  showToast('↺ Tolerance reset to ₹0.00', 'info');
+  runServerScan();
+}
+
+function resetOiDefault() {
+  const minOi = document.getElementById('minOi');
+  if (minOi) minOi.value = '0';
+  showToast('↺ Min OI reset to 0', 'info');
+  runServerScan();
+}
+
+function clearAllChartinkQueryRules() {
+  const rLow = document.getElementById('ruleLowOn');
+  if (rLow) rLow.checked = false;
+  const rPrev = document.getElementById('rulePrevOn');
+  if (rPrev) rPrev.checked = false;
+  const rCandle = document.getElementById('ruleCandleMode');
+  if (rCandle) rCandle.value = 'ALL';
+  const rUt = document.getElementById('ruleUtAction');
+  if (rUt) rUt.value = 'ALL';
+  const rExp = document.getElementById('ruleExpiry');
+  if (rExp) rExp.value = 'all';
+  const rType = document.getElementById('ruleOptType');
+  if (rType) rType.value = 'BOTH';
+  const rOi = document.getElementById('ruleMinOi');
+  if (rOi) rOi.value = '0';
+  const rUn = document.getElementById('ruleExcludeUntraded');
+  if (rUn) rUn.checked = false;
+
+  showToast('🧹 All Query Builder rules cleared!', 'info');
+  runChartinkQueryScan();
+}
+
+function clearResultsSearch() {
+  const input = document.getElementById('resultsSearchInput');
+  if (input) input.value = '';
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const dd = document.getElementById('searchSuggestionsDropdown');
+  if (dd) dd.style.display = 'none';
+  currentTableSearchQuery = '';
+  filterAndRender();
+}
+
+function clearTableFiltersAndSearch() {
+  clearResultsSearch();
+  setQuickTableFilter('ALL');
+  showToast('🧹 Table filters & search cleared!', 'info');
+}
+
+function clearIndChainFilters() {
+  const f = document.getElementById('indStrikeFilter');
+  if (f) f.value = 'ALL';
+  showToast('🧹 Option Chain filter reset to All Strikes (±12)', 'info');
+  loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey);
+}
+
+function clearAlertFormFields() {
+  const s = document.getElementById('altSymbol');
+  if (s) s.value = '';
+  const e = document.getElementById('altExpiry');
+  if (e) e.value = '';
+  const k = document.getElementById('altStrike');
+  if (k) k.value = '';
+  const p = document.getElementById('altPrice');
+  if (p) p.value = '';
+  const c = document.getElementById('altCond');
+  if (c) c.value = 'above';
+  showToast('🧹 Alert form cleared', 'info');
+}
+
+function clearAllAlertsPrompt() {
+  saveStoredAlerts([]);
+  renderAlertsList();
+  updateAlertsBadge();
+  showToast('🗑️ Cleared all price alerts', 'info');
+}
+
 // Initial Boot
 initAmbientBackground();
 initLiveClock();
 updateAlertsBadge();
 fetchIndexPulse();
 setInterval(fetchIndexPulse, 30000); // Live index options pulse auto-refreshed every 30s
+fetchGlobalMarkets();
+setInterval(fetchGlobalMarkets, 20000); // Live commodities & futures refreshed every 20s
 initStatus().then(() => {
   runServerScan();
 });

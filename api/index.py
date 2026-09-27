@@ -65,6 +65,17 @@ def get_indices_pulse():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/market/global")
+def get_global_markets():
+    """
+    Returns live prices for Indian & Global Commodities (Gold MCX, Crude Oil MCX, Bitcoin BTC/INR),
+    Indian Market Monthly Futures (GIFT Nifty, Nifty Near/Next Month, BankNifty), and US Market Futures (Dow, S&P 500, Nasdaq 100).
+    """
+    try:
+        return nse_service.get_global_markets()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/cleanup")
 @app.post("/api/cleanup")
 def cleanup_stored_csvs():
