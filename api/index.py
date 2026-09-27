@@ -97,7 +97,10 @@ def scheduled_cron(action: Optional[str] = None):
     """
     Automated Cron Job:
     - If action=='cleanup' or executed on Sunday, executes weekly CSV cleanup.
-    - Otherwise (Mon-Fri 9:16 AM), refreshes Bhavcopy data and primes cache right after market opening.
+    - Otherwise (Mon-Fri 9:16 AM AND again 5 minutes later at 9:21 AM IST — two
+      separate Vercel cron triggers, as a redundant retry in case the 9:16 AM
+      run hits a transient NSE fetch failure), refreshes Bhavcopy data and
+      primes cache right after market opening.
     """
     now = datetime.now()
     if action == "cleanup" or now.weekday() == 6:  # 6 is Sunday
