@@ -2020,198 +2020,35 @@
     .results-view-toggle { display: flex; }
   }
 
-  /* Top Update Notification Banner & Update Button */
-  .top-update-banner {
-    background: linear-gradient(90deg, #1e3a8a, #0284c7);
-    color: #fff;
-    padding: 7px 12px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    font-size: 11.5px;
-    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
-    animation: pulseSell 3s infinite alternate;
-  }
-  .app-update-pill {
-    background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    color: #93c5fd;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.15s ease;
-  }
-  .app-update-pill:hover, .app-update-pill.has-update {
-    background: #2563eb;
-    color: #fff;
-    border-color: #60a5fa;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-  }
-  .update-pulse-dot, .update-glow-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #60a5fa;
-    box-shadow: 0 0 6px #60a5fa;
-    animation: pulseSell 1.5s infinite;
-  }
-  .update-reload-btn {
-    background: #fff;
-    color: #0369a1;
-    border: none;
-    font-weight: 800;
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .update-reload-btn:hover {
-    background: #f0f9ff;
-  }
-  .update-dismiss-btn {
-    background: transparent;
-    border: none;
-    color: #bae6fd;
-    font-size: 12px;
-    cursor: pointer;
-    padding: 2px 4px;
-  }
-
-  /* Day High & Day Low Visual Bar in Option Cards */
-  .opt-card-hl-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    background: #090e17;
-    border: 1px solid #162030;
-    border-radius: 6px;
-    padding: 4px 8px;
-    margin-bottom: 6px;
-    font-size: 11px;
-  }
-  .hl-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-  }
-  .hl-label {
-    font-size: 9px;
-    font-weight: 700;
-    color: #94a3b8;
-  }
-  .hl-item.low .hl-val {
-    color: #f87171;
-    font-family: 'IBM Plex Mono', monospace;
-    font-weight: 700;
-  }
-  .hl-item.high .hl-val {
-    color: #34d399;
-    font-family: 'IBM Plex Mono', monospace;
-    font-weight: 700;
-  }
-  .hl-range-track {
-    flex: 1;
-    height: 4px;
-    background: #1e293b;
-    border-radius: 2px;
-    position: relative;
-    min-width: 35px;
-  }
-  .hl-range-marker {
-    position: absolute;
-    top: -3px;
-    width: 3px;
-    height: 10px;
-    background: #38bdf8;
-    border-radius: 1px;
-    box-shadow: 0 0 4px #38bdf8;
-    transform: translateX(-50%);
-  }
-
-  /* CE and PE Open Interest Row in Option Cards */
-  .opt-card-oi-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-wrap: wrap;
-    margin-bottom: 6px;
-    font-size: 10.5px;
-  }
-  .oi-pill {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-weight: 600;
-    border: 1px solid transparent;
-  }
-  .oi-pill.ce-oi {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.3);
-    color: #6ee7b7;
-  }
-  .oi-pill.pe-oi {
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.3);
-    color: #fca5a5;
-  }
-  .oi-pill.strike-oi {
-    background: #151d2e;
-    border-color: #27354f;
-    color: #cbd5e1;
-    margin-left: auto;
-  }
-
-  /* Ultra-Compact & High-Density UI for Android Chrome 4.5" to 6.5" Displays (320px - 430px) */
+  /* Specific Adjustments for CMF Phone 2 / Nothing Phone 2 & Mobile Chrome (~360px - 430px Viewports) */
   @media (max-width: 600px) {
     .app-container {
-      padding: max(4px, env(safe-area-inset-top)) 6px max(24px, env(safe-area-inset-bottom)) 6px !important;
+      padding: max(6px, env(safe-area-inset-top)) 8px max(36px, env(safe-area-inset-bottom)) 8px !important;
       width: 100% !important;
       max-width: 100vw !important;
       box-sizing: border-box !important;
     }
     header {
-      padding: 6px 10px !important;
-      border-radius: 6px !important;
-      gap: 4px !important;
-    }
-    header p {
-      display: -webkit-box !important;
-      -webkit-line-clamp: 1 !important;
-      -webkit-box-orient: vertical !important;
-      overflow: hidden !important;
-      font-size: 10px !important;
-      line-height: 1.2 !important;
-      margin: 2px 0 0 0 !important;
-    }
-    .glow-title {
-      font-size: 14.5px !important;
-      line-height: 1.2 !important;
+      padding: 10px 12px !important;
+      border-radius: 8px !important;
     }
     .brand-badge-row {
-      gap: 3px !important;
-      margin-bottom: 2px !important;
+      gap: 4px !important;
     }
     .brand-pill, .live-pill {
-      font-size: 8.5px !important;
-      padding: 1px 5px !important;
+      font-size: 9.5px !important;
+      padding: 2px 7px !important;
     }
-    .cron-badge, .ist-clock-badge, .status-badge {
-      font-size: 9px !important;
-      padding: 2px 5px !important;
+    .glow-title {
+      font-size: 16px !important;
+      line-height: 1.25 !important;
     }
-    .app-update-pill {
-      font-size: 9px !important;
+    header p {
+      font-size: 11px !important;
+      line-height: 1.35 !important;
+    }
+    .cron-badge, .ist-clock-badge {
+      font-size: 9.5px !important;
       padding: 2px 6px !important;
     }
     .market-bar-tabs {
@@ -2219,22 +2056,21 @@
       flex-wrap: nowrap !important;
       -webkit-overflow-scrolling: touch !important;
       scrollbar-width: none !important;
-      padding: 3px 4px !important;
-      gap: 4px !important;
-      margin-bottom: 6px !important;
+      padding: 4px 6px !important;
+      gap: 5px !important;
+      margin-bottom: 8px !important;
     }
     .market-bar-tabs::-webkit-scrollbar { display: none; }
     .market-tab-btn, .market-refresh-btn {
       white-space: nowrap !important;
-      font-size: 10.5px !important;
-      padding: 4px 8px !important;
-      border-radius: 5px !important;
+      font-size: 11px !important;
+      padding: 6px 10px !important;
       flex-shrink: 0 !important;
     }
     .chartink-indices-bar, .global-markets-bar {
-      padding: 4px 4px !important;
-      gap: 5px !important;
-      margin-bottom: 6px !important;
+      padding: 6px 6px !important;
+      gap: 6px !important;
+      margin-bottom: 8px !important;
       scroll-snap-type: x mandatory !important;
       overflow-x: auto !important;
       -webkit-overflow-scrolling: touch !important;
@@ -2242,42 +2078,79 @@
     }
     .chartink-indices-bar::-webkit-scrollbar, .global-markets-bar::-webkit-scrollbar { display: none; }
     .index-ticker-card, .global-ticker-card {
-      min-width: 130px !important;
-      padding: 4px 6px !important;
-      border-radius: 6px !important;
+      min-width: 145px !important;
+      padding: 5px 8px !important;
       scroll-snap-align: start !important;
       flex-shrink: 0 !important;
     }
     .index-ticker-name {
-      font-size: 9.5px !important;
+      font-size: 10.5px !important;
     }
     .index-ticker-val {
-      font-size: 11.5px !important;
+      font-size: 12px !important;
     }
     .indicator-bar {
-      padding: 4px 6px !important;
-      margin-bottom: 6px !important;
+      padding: 6px 8px !important;
+      margin-bottom: 10px !important;
+      border-radius: 8px !important;
     }
     .indicator-bar-label {
-      font-size: 10.5px !important;
+      font-size: 11px !important;
       width: 100% !important;
+      margin-bottom: 4px !important;
     }
-    .small-strat-btn {
-      font-size: 9.5px !important;
-      padding: 3px 6px !important;
+    .indicator-btn-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      touch-action: pan-x !important;
+      width: 100% !important;
+      padding: 3px 2px 6px 2px !important;
+    }
+    .indicator-btn-row::-webkit-scrollbar { display: none; }
+    .indicator-btn-row .small-strat-btn {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      font-size: 10.5px !important;
+      padding: 4px 9px !important;
+    }
+    /* Prevent fields sticking together on mobile */
+    .group {
+      margin-bottom: 12px !important;
+    }
+    .group label {
+      margin-bottom: 5px !important;
+      font-size: 11.5px !important;
+    }
+    .row2 {
+      gap: 8px !important;
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
+    }
+    .panel.filters input[type="text"],
+    .panel.filters input[type="number"],
+    .panel.filters select {
+      min-height: 36px !important;
+      padding: 6px 10px !important;
+      font-size: 12px !important;
+      box-sizing: border-box !important;
     }
     .banner {
-      padding: 6px 8px !important;
+      padding: 8px 10px !important;
       flex-direction: column !important;
       align-items: stretch !important;
-      gap: 6px !important;
+      gap: 8px !important;
     }
     .banner-text {
-      font-size: 11px !important;
+      font-size: 11.5px !important;
     }
     .action-btn {
-      font-size: 11px !important;
-      padding: 5px 8px !important;
+      font-size: 11.5px !important;
+      padding: 6px 10px !important;
       justify-content: center !important;
     }
     .index-pulse-grid {
@@ -2285,11 +2158,11 @@
       flex-wrap: nowrap !important;
       overflow-x: auto !important;
       scroll-snap-type: x mandatory !important;
-      gap: 6px !important;
-      padding-bottom: 4px !important;
+      gap: 8px !important;
+      padding-bottom: 6px !important;
     }
     .pulse-card {
-      min-width: 220px !important;
+      min-width: 235px !important;
       flex-shrink: 0 !important;
     }
     .chartink-preset-ribbon {
@@ -2297,21 +2170,21 @@
       flex-wrap: nowrap !important;
       -webkit-overflow-scrolling: touch !important;
       scrollbar-width: none !important;
-      padding-bottom: 3px !important;
-      margin-bottom: 6px !important;
+      padding-bottom: 4px !important;
+      margin-bottom: 8px !important;
     }
     .chartink-preset-ribbon::-webkit-scrollbar { display: none; }
     .preset-pill {
       white-space: nowrap !important;
-      font-size: 10px !important;
-      padding: 3px 8px !important;
+      font-size: 11px !important;
+      padding: 5px 10px !important;
       flex-shrink: 0 !important;
     }
     .clause-row {
       flex-wrap: wrap !important;
-      gap: 4px !important;
-      font-size: 10.5px !important;
-      padding: 5px 6px !important;
+      gap: 6px !important;
+      font-size: 11px !important;
+      padding: 6px 8px !important;
     }
     .mobile-filter-toggle {
       display: flex !important;
@@ -2321,13 +2194,13 @@
       background: #141c2c;
       border: 1px solid #2b394f;
       color: #93c5fd;
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 8px;
       font-weight: 700;
-      font-size: 11.5px;
-      margin-bottom: 6px;
+      font-size: 12.5px;
+      margin-bottom: 8px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     .panel.filters.collapsed {
       display: none !important;
@@ -2335,64 +2208,43 @@
     .results-view-toggle {
       display: flex !important;
     }
-    .opt-mobile-card {
-      padding: 7px 9px !important;
-      border-radius: 7px !important;
-      margin-bottom: 5px !important;
-      background: #0f1523 !important;
-      border: 1px solid #1e293b !important;
-    }
-    .opt-card-header {
-      margin-bottom: 4px !important;
-    }
-    .opt-card-sym span {
-      font-size: 12px !important;
-    }
-    .opt-card-ltp {
-      font-size: 13.5px !important;
-    }
     .opt-card-actions {
-      gap: 4px !important;
+      flex-wrap: wrap;
     }
     .opt-card-btn {
-      min-height: 28px !important;
-      padding: 3px 6px !important;
-      font-size: 9.5px !important;
-      border-radius: 4px !important;
+      min-height: 36px;
+      font-size: 11px;
     }
     .active-filters-bar {
-      padding: 4px 6px !important;
-      font-size: 10.5px !important;
-      margin-bottom: 6px !important;
-    }
-    #resultsTable th, #resultsTable td {
-      padding: 3px 5px !important;
-      font-size: 10px !important;
-    }
-    #optCanvasContainer {
-      height: 240px !important;
+      padding: 6px 8px !important;
+      font-size: 11px !important;
     }
   }
 
-  /* Extra compact styling for 4.5" to 5.0" screens (width <= 360px) */
-  @media (max-width: 360px) {
-    .opt-card-sym {
-      gap: 3px !important;
-    }
-    .prem-chip {
-      font-size: 9.5px !important;
-      padding: 1px 4px !important;
-    }
-    .opt-card-ltp {
-      font-size: 13px !important;
-    }
-    .opt-card-btn {
-      font-size: 9px !important;
-      padding: 2px 4px !important;
-    }
-    .index-ticker-card, .global-ticker-card {
-      min-width: 115px !important;
-    }
+  /* Rajan Indicators Direct TradingView Launch Button */
+  .rajan-tv-btn {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid #2563eb;
+    color: #60a5fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 2px;
+    transition: all 0.15s ease;
+  }
+  .rajan-tv-btn:hover {
+    background: #1e3a8a;
+    color: #fff;
+    border-color: #60a5fa;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
   }
 
   /* User-Friendly Clear Filter & Reset Buttons */
@@ -2660,19 +2512,6 @@
 <!-- Ambient Animated Background Canvas -->
 <canvas id="ambientCanvas"></canvas>
 
-<!-- Top Update Notification Banner (Anti-Snap Protection) -->
-<div id="topUpdateBanner" class="top-update-banner" style="display:none;">
-  <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:0;">
-    <span class="update-pulse-dot"></span>
-    <b style="color:#fef08a; white-space:nowrap;">⚡ Update Available:</b>
-    <span id="topUpdateBannerText" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">A new algo screener version is available. Update now to avoid browser snap.</span>
-  </div>
-  <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-    <button class="update-reload-btn" onclick="applyAppUpdate(true)">🚀 Update Now</button>
-    <button class="update-dismiss-btn" onclick="dismissUpdateBanner()" title="Dismiss">✕</button>
-  </div>
-</div>
-
 <div class="app-container">
   <!-- Header -->
   <header>
@@ -2686,10 +2525,6 @@
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-        <button class="app-update-pill" id="appUpdateBtn" onclick="checkForAppUpdate(true)" title="Check for updates or refresh without browser snap">
-          <span class="update-glow-dot"></span>
-          <span id="appUpdateBtnText">⚡ Check Update</span>
-        </button>
         <span class="cron-badge" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
         <span class="ist-clock-badge" id="liveClockIst">--:--:-- IST</span>
         <div class="status-badge" id="marketBadge">
@@ -2946,6 +2781,7 @@
       <span id="autoBannerMsg">Daily NSE F&amp;O Settlement &amp; Contract Archive automatically synced.</span>
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="action-btn" onclick="openSelectedStockTradingView()" style="border-color:#2563eb; color:#60a5fa;" title="Open currently searched or selected stock in TradingView with Rajan Indicators">📈 TradingView Stock Chart</button>
       <button class="action-btn" id="openAlertsBtn" onclick="openAlertsModal()" style="border-color:#f59e0b; color:#fbbf24;">🔔 Price Alerts <span class="alert-count-pill" id="alertsActiveBadge" style="display:none;">0</span></button>
       <button class="action-btn" id="openChainHeaderBtn">📊 View Option Chain</button>
       <button class="action-btn" id="refreshBhavBtn">🔄 Sync Latest NSE Contract Archive</button>
@@ -3013,7 +2849,7 @@
           <span>📈</span> Algorithmic Strategies
         </label>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          <button class="strat-btn active" id="strat1Btn">
+          <button class="strat-btn" id="strat1Btn">
             <span class="strat-icon">🎯</span>
             <div>
               <div class="strat-title">Strategy 1: Low Range (₹5.80–8.45)</div>
@@ -3046,13 +2882,16 @@
           </div>
         </div>
         <div class="search-input-wrapper" style="width:100%; margin-bottom:6px;">
-          <input type="text" id="symSearch" placeholder="Type to filter symbols…" style="width:100%; padding-right:26px;">
+          <input type="text" id="symSearch" placeholder="Search stock or index (e.g. NIFTY, RELIANCE, TCS)…" style="width:100%; padding-right:26px;">
           <button type="button" class="search-clear-btn" id="symSearchClearBtn" onclick="clearSymSearch()" style="right:6px;" title="Clear symbol search">✕</button>
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
           <select id="symSelect" style="flex:1;"><option value="__ALL__">All symbols</option></select>
           <button type="button" class="quick-clear-btn" onclick="clearSymSelect()" title="Reset dropdown to All symbols">↺ All</button>
         </div>
+        <button type="button" class="rajan-tv-btn" onclick="openSelectedStockTradingView()" title="Open searched or selected stock in TradingView with Rajan Indicators">
+          <span>📈</span> <b>Open in TradingView (Stock Chart ↗)</b>
+        </button>
       </div>
 
       <div class="group" id="instrGroup">
@@ -3060,18 +2899,18 @@
           <label style="margin:0;">Instrument type</label>
           <button type="button" class="quick-clear-btn" onclick="resetInstrGroup()" title="Select both indices and stocks">↺ Both</button>
         </div>
-        <div class="checkline"><input type="checkbox" id="instIdx" checked><span>Index options</span></div>
-        <div class="checkline"><input type="checkbox" id="instStk" checked><span>Stock options</span></div>
+        <div class="checkline"><input type="checkbox" id="instIdx"><span>Index options</span></div>
+        <div class="checkline"><input type="checkbox" id="instStk"><span>Stock options</span></div>
       </div>
 
       <div class="group">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
           <label style="margin:0;">Expiry</label>
-          <button type="button" class="quick-clear-btn" onclick="resetExpSelect()" title="Reset to Nearest expiry">↺ Nearest</button>
+          <button type="button" class="quick-clear-btn" onclick="resetExpSelect()" title="Reset to All expiries">↺ All</button>
         </div>
         <select id="expSelect">
+          <option value="all" selected>All expiries</option>
           <option value="nearest">Nearest expiry (per symbol)</option>
-          <option value="all">All expiries</option>
         </select>
       </div>
 
@@ -3090,7 +2929,7 @@
       <div class="group">
         <div class="checkline" style="justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:6px;">
-            <input type="checkbox" id="lowOn" checked>
+            <input type="checkbox" id="lowOn">
             <label style="margin:0;">Day low in range (₹)</label>
           </div>
           <div style="display:flex; gap:4px;">
@@ -3099,15 +2938,15 @@
           </div>
         </div>
         <div class="row2">
-          <input type="number" id="lowFrom" step="0.05" value="5.80">
-          <input type="number" id="lowTo" step="0.05" value="8.45">
+          <input type="number" id="lowFrom" step="0.05" value="" placeholder="Min Day Low (e.g. 5.80)">
+          <input type="number" id="lowTo" step="0.05" value="" placeholder="Max Day Low (e.g. 8.45)">
         </div>
       </div>
 
       <div class="group">
         <div class="checkline" style="justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:6px;">
-            <input type="checkbox" id="prevOn" checked>
+            <input type="checkbox" id="prevOn">
             <label style="margin:0;">Previous close in range (₹)</label>
           </div>
           <div style="display:flex; gap:4px;">
@@ -3116,8 +2955,8 @@
           </div>
         </div>
         <div class="row2">
-          <input type="number" id="prevFrom" step="0.5" value="38.00">
-          <input type="number" id="prevTo" step="0.5" value="48.00">
+          <input type="number" id="prevFrom" step="0.5" value="" placeholder="Min Prev Close (e.g. 38.00)">
+          <input type="number" id="prevTo" step="0.5" value="" placeholder="Max Prev Close (e.g. 48.00)">
         </div>
       </div>
 
@@ -3126,7 +2965,7 @@
           <label style="margin:0;">Open = Low / High tolerance (₹)</label>
           <button type="button" class="quick-clear-btn" onclick="resetToleranceDefault()">↺ 0.00</button>
         </div>
-        <input type="number" id="tol" step="0.05" value="0.00">
+        <input type="number" id="tol" step="0.05" value="" placeholder="Tolerance ₹ (e.g. 0.00)">
       </div>
 
       <div class="group">
@@ -3134,7 +2973,7 @@
           <label style="margin:0;">Minimum open interest (OI)</label>
           <button type="button" class="quick-clear-btn" onclick="resetOiDefault()">↺ 0</button>
         </div>
-        <input type="number" id="minOi" step="5000" value="0">
+        <input type="number" id="minOi" step="5000" value="" placeholder="Min OI (e.g. 50000)">
       </div>
 
       <div class="group">
@@ -3144,12 +2983,12 @@
       <div class="group">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
           <label style="margin:0;">Show</label>
-          <button type="button" class="quick-clear-btn" onclick="resetShowMode()" title="Reset to matching contracts">↺ Matches</button>
+          <button type="button" class="quick-clear-btn" onclick="resetShowMode()" title="Reset to all contracts">↺ All</button>
         </div>
         <select id="showMode">
-          <option value="matches" selected>Only matching contracts</option>
+          <option value="any" selected>All strikes &amp; contracts</option>
+          <option value="matches">Only matching contracts</option>
           <option value="ol_oh">Only Open=Low or Open=High</option>
-          <option value="any">All strikes</option>
         </select>
       </div>
 
@@ -3163,7 +3002,7 @@
       <!-- 🌟 Chartink Strategy Presets Ribbon (Quick Scan Tabs) -->
       <div class="chartink-preset-ribbon">
         <div class="preset-label"><b>Chartink Scans:</b></div>
-        <button class="preset-pill active" data-preset="strat1" onclick="applyPreset('strat1')">🎯 Strategy 1: Low Range (₹5.80–₹8.45)</button>
+        <button class="preset-pill" data-preset="strat1" onclick="applyPreset('strat1')">🎯 Strategy 1: Low Range (₹5.80–₹8.45)</button>
         <button class="preset-pill" data-preset="strat2" onclick="applyPreset('strat2')">⚡ Strategy 2: OH/OL + VIX Targets</button>
         <button class="preset-pill" data-preset="strat3" onclick="applyPreset('strat3')">💎 Strategy 3: Premium ÷8 &amp; ÷6.5</button>
         <button class="preset-pill" data-preset="strat_ol" onclick="applyPreset('strat_ol')">🟢 Bullish Open = Low Scan</button>
@@ -3198,11 +3037,11 @@
           <!-- Clause 1: Day Low -->
           <div class="clause-row">
             <span class="clause-idx">Rule 1</span>
-            <label class="clause-toggle"><input type="checkbox" id="ruleLowOn" checked> <span>[ 0 ] Day Low</span></label>
+            <label class="clause-toggle"><input type="checkbox" id="ruleLowOn"> <span>[ 0 ] Day Low</span></label>
             <span class="clause-op">Between</span>
-            <span>₹</span> <input type="number" id="ruleLowFrom" class="clause-input" value="5.80" step="0.05" style="width:75px;">
+            <span>₹</span> <input type="number" id="ruleLowFrom" class="clause-input" value="" placeholder="5.80" step="0.05" style="width:75px;">
             <span class="clause-op">and</span>
-            <span>₹</span> <input type="number" id="ruleLowTo" class="clause-input" value="8.45" step="0.05" style="width:75px;">
+            <span>₹</span> <input type="number" id="ruleLowTo" class="clause-input" value="" placeholder="8.45" step="0.05" style="width:75px;">
             <span style="color:var(--muted); font-size:11px;">(Low Price Range)</span>
             <button type="button" class="quick-clear-btn" onclick="resetRuleLow()" style="margin-left:auto;" title="Reset Rule 1 to ₹5.80-₹8.45">↺ Reset</button>
           </div>
@@ -3210,11 +3049,11 @@
           <!-- Clause 2: Prev Close -->
           <div class="clause-row">
             <span class="clause-idx">Rule 2</span>
-            <label class="clause-toggle"><input type="checkbox" id="rulePrevOn" checked> <span>[ 0 ] Previous Close</span></label>
+            <label class="clause-toggle"><input type="checkbox" id="rulePrevOn"> <span>[ 0 ] Previous Close</span></label>
             <span class="clause-op">Between</span>
-            <span>₹</span> <input type="number" id="rulePrevFrom" class="clause-input" value="38.00" step="0.5" style="width:75px;">
+            <span>₹</span> <input type="number" id="rulePrevFrom" class="clause-input" value="" placeholder="38.00" step="0.5" style="width:75px;">
             <span class="clause-op">and</span>
-            <span>₹</span> <input type="number" id="rulePrevTo" class="clause-input" value="48.00" step="0.5" style="width:75px;">
+            <span>₹</span> <input type="number" id="rulePrevTo" class="clause-input" value="" placeholder="48.00" step="0.5" style="width:75px;">
             <span style="color:var(--muted); font-size:11px;">(Base Premium Range)</span>
             <button type="button" class="quick-clear-btn" onclick="resetRulePrev()" style="margin-left:auto;" title="Reset Rule 2 to ₹38-₹48">↺ Reset</button>
           </div>
@@ -3358,8 +3197,6 @@
               <th data-k="utBot">UT Bot Action</th>
               <th data-k="oi">OI</th>
               <th data-k="oiPct">OI%</th>
-              <th data-k="ceOi" title="Call Open Interest for this Strike">CE OI</th>
-              <th data-k="peOi" title="Put Open Interest for this Strike">PE OI</th>
               <th data-k="prevCloseUsed">Prev Cl</th>
               <th data-k="open">Open</th>
               <th data-k="high">High</th>
@@ -3492,7 +3329,10 @@
         <span id="activeIndNameTag" style="background:#2563eb; color:#fff; padding:3px 10px; border-radius:12px; font-weight:700; font-size:12px;">⚡ UT Bot Alerts</span>
         <span style="font-size:11px; color:#94a3b8;">(Select indicator below to change)</span>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <a id="optTvExternalBtn" href="#" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="background:#131722; border-color:#2962ff; color:#60a5fa; text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; font-size:12px;" title="Open this stock / contract directly in TradingView">
+          📈 Open in TradingView ↗
+        </a>
         <button class="query-run-btn" style="padding:6px 14px; font-size:12px;" onclick="runIndicatorScan(currentHubStratKey); closeAllModals();">
           ⚡ Scan Market for This Indicator
         </button>
@@ -3667,9 +3507,9 @@
         <table class="chain-table">
           <thead>
             <tr>
-              <th colspan="6" style="background:#132d20; color:#35d07f; text-align:center;">CALLS (CE) — Click LTP for In-App Chart</th>
+              <th colspan="6" style="background:#132d20; color:#35d07f; text-align:center;">CALLS (CE) — Click LTP for Rajan Indicators</th>
               <th rowspan="2" style="background:#1c2333; text-align:center; min-width:85px; color:#fff;">STRIKE</th>
-              <th colspan="6" style="background:#3d1a22; color:#ff6b81; text-align:center;">PUTS (PE) — Click LTP for In-App Chart</th>
+              <th colspan="6" style="background:#3d1a22; color:#ff6b81; text-align:center;">PUTS (PE) — Click LTP for Rajan Indicators</th>
             </tr>
             <tr>
               <th>OI</th><th>Vol</th><th>Low</th><th>High</th><th>LTP</th><th style="text-align:right;">Indicator Signal / Level</th>
@@ -3696,7 +3536,7 @@
         </div>
         <div class="ind-action-row">
           <button id="indTvLaunchBtn" class="query-run-btn" onclick="openIndicatorInAppChart()" style="cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px;">
-            📈 Open Fitted Chart
+            📈 Rajan Indicators Chart
           </button>
           <button class="query-run-btn" onclick="runIndicatorScan(currentIndKey); closeAllModals();" style="padding:6px 14px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">⚡ Scan All Stocks &amp; Indices</button>
           <button class="copy-script-btn" id="indCopyBtn" onclick="copyIndScript()">
@@ -3925,12 +3765,27 @@ function getTradingViewOptionSymbol(rawSymbol, expiry, strike, type) {
 
 function getTradingViewUrl(rawSymbol, expiry, strike, type) {
   const optSymbol = getTradingViewOptionSymbol(rawSymbol, expiry, strike, type);
-  return '#';
+  return `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(optSymbol)}`;
 }
 
 function redirectToTradingView(symbol, expiry, strike, type) {
   const url = getTradingViewUrl(symbol, expiry, strike, type);
-  openOptionChartModal(symbol, expiry, strike, type);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function openSelectedStockTradingView() {
+  let sym = document.getElementById('symSearch')?.value?.trim();
+  if (!sym) {
+    sym = document.getElementById('symSelect')?.value;
+  }
+  if (!sym || sym === '__ALL__') {
+    sym = currentSelectedContract?.symbol || currentChainSymbol || 'NIFTY';
+  }
+  sym = sym.toUpperCase().replace(/[^A-Z0-9_&-]/g, '');
+  const isBSE = (sym === 'SENSEX' || sym === 'BANKEX');
+  const tvSymbol = isBSE ? `BSE:${sym}` : `NSE:${sym}`;
+  const tvUrl = `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}`;
+  window.open(tvUrl, '_blank', 'noopener,noreferrer');
 }
 
 function switchOrOpenIndicatorChart() {
@@ -3944,7 +3799,7 @@ function switchOrOpenIndicatorChart() {
 }
 
 function redirectToTradingViewWithIndicator() {
-  switchOrOpenIndicatorChart();
+  openSelectedStockTradingView();
 }
 
 /* ============================================================
@@ -4700,12 +4555,17 @@ function fmtNum(v) {
 }
 
 function closeAllModals() {
-  const chainModal = document.getElementById('chainModal');
-  const optChartModal = document.getElementById('optionChartModal');
-  const indModal = document.getElementById('indicatorModal');
-  if (chainModal) chainModal.style.display = 'none';
-  if (optChartModal) optChartModal.style.display = 'none';
-  if (indModal) indModal.style.display = 'none';
+  ['chainModal', 'optionChartModal', 'indicatorModal', 'alertsModal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.body.style.overflow = '';
+}
+
+function closeAlertsModal() {
+  const modal = document.getElementById('alertsModal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 /* ============================================================
@@ -5234,53 +5094,26 @@ function renderMobileCards(shown) {
     const chgPctVal = r.prevCloseUsed > 0 ? (chgVal / r.prevCloseUsed) * 100 : 0;
     const isUp = chgVal >= 0;
 
-    const low = r.low != null ? r.low : 0;
-    const high = r.high != null ? r.high : (r.close > low ? r.close : low);
-    const ltp = r.close != null ? r.close : low;
-    const hlSpan = high > low ? (high - low) : 1;
-    const ltpPosPct = Math.max(0, Math.min(100, Math.round(((ltp - low) / hlSpan) * 100)));
-
     return `
       <div class="opt-mobile-card">
         <div class="opt-card-header">
           <div class="opt-card-sym">
-            <span style="font-size:13.5px; font-weight:800; color:#fff;">${r.symbol}</span>
+            <span style="font-size:14px; font-weight:800; color:#fff;">${r.symbol}</span>
             <span class="prem-chip ${r.type === 'CE' ? 'ce' : 'pe'}" style="font-size:11px; padding:2px 7px;">${r.strike} ${r.type}</span>
             <span style="font-size:10px; color:#94a3b8; font-family:'IBM Plex Mono', monospace;">${r.expiry}</span>
           </div>
           <div class="opt-card-ltp-box">
-            <div class="opt-card-ltp" style="cursor:pointer;" onclick="openOptionChartModal('${r.symbol}', '${r.expiry}', ${r.strike}, '${r.type}')" title="Click for Fitted Indicator Chart">₹${fmtNum(r.close)}</div>
+            <div class="opt-card-ltp" style="cursor:pointer;" onclick="openOptionChartModal('${r.symbol}', '${r.expiry}', ${r.strike}, '${r.type}')" title="Click for Rajan Indicators Chart">₹${fmtNum(r.close)}</div>
             <div style="font-size:10.5px; font-weight:700; color:${isUp ? '#34d399' : '#f87171'};">
               ${isUp ? '▲ +' : '▼ '}${fmtNum(Math.abs(chgVal))} (${fmtPct(chgPctVal)})
             </div>
           </div>
         </div>
 
-        <!-- Day Low & Day High Visual Bar with LTP Position -->
-        <div class="opt-card-hl-bar" title="Day Low: ₹${fmtNum(low)} | Day High: ₹${fmtNum(high)}">
-          <div class="hl-item low">
-            <span class="hl-label">LOW:</span>
-            <span class="hl-val">₹${fmtNum(low)}</span>
-          </div>
-          <div class="hl-range-track">
-            <div class="hl-range-marker" style="left: ${ltpPosPct}%;" title="LTP: ₹${fmtNum(ltp)} (${ltpPosPct}% of day range)"></div>
-          </div>
-          <div class="hl-item high">
-            <span class="hl-label">HIGH:</span>
-            <span class="hl-val">₹${fmtNum(high)}</span>
-          </div>
-        </div>
-
-        <!-- CE OI and PE OI Breakdown -->
-        <div class="opt-card-oi-row">
-          <span class="oi-pill ce-oi" title="Call OI for Strike ${r.strike}">CE OI: ${fmtOI(r.ceOi || 0)}</span>
-          <span class="oi-pill pe-oi" title="Put OI for Strike ${r.strike}">PE OI: ${fmtOI(r.peOi || 0)}</span>
-          <span class="oi-pill strike-oi" title="Contract OI">OI: ${fmtOI(r.oi)} <span style="color:${r.oiPct > 0 ? '#34d399' : '#f87171'};">(${fmtPct(r.oiPct)})</span></span>
-        </div>
-
         <div class="opt-card-signals-row">
           ${utBadgeHtml}
           ${sigHtml}
+          <span style="font-size:10.5px; color:#cbd5e1; margin-left:auto;">OI: <b>${fmtOI(r.oi)}</b> <span style="color:${r.oiPct > 0 ? '#34d399' : '#f87171'};">(${fmtPct(r.oiPct)})</span></span>
         </div>
 
         <div class="opt-card-levels-grid">
@@ -5297,12 +5130,12 @@ function renderMobileCards(shown) {
             <b style="color:#ef4444;">₹${fmtNum(r.sl5)}</b>
           </div>
           <div>
-            <span style="color:#94a3b8;">Day Low:</span><br>
-            <b style="color:${r.isMatch ? '#fbbf24' : '#f87171'};">₹${fmtNum(r.low)}</b>
+            <span style="color:#94a3b8;">Open:</span><br>
+            <span>₹${fmtNum(r.open)}</span>
           </div>
           <div>
-            <span style="color:#94a3b8;">Day High:</span><br>
-            <b style="color:#34d399;">₹${fmtNum(r.high)}</b>
+            <span style="color:#94a3b8;">Day Low:</span><br>
+            <b style="color:${r.isMatch ? '#fbbf24' : '#cbd5e1'};">₹${fmtNum(r.low)}</b>
           </div>
           <div>
             <span style="color:#94a3b8;">Prev Close:</span><br>
@@ -5311,8 +5144,8 @@ function renderMobileCards(shown) {
         </div>
 
         <div class="opt-card-actions">
-          <button class="opt-card-btn chart" onclick="openOptionChartModal('${r.symbol}', '${r.expiry}', ${r.strike}, '${r.type}')" title="View fitted chart">
-            ⚡ Chart
+          <button class="opt-card-btn chart" onclick="openOptionChartModal('${r.symbol}', '${r.expiry}', ${r.strike}, '${r.type}')" title="Open Rajan Indicators chart">
+            📈 Rajan Indicators
           </button>
           <button class="opt-card-btn chain" onclick="openChainModal('${r.symbol}', '${r.expiry}')" title="View option chain">
             📊 Chain
@@ -5394,19 +5227,17 @@ function renderTable(rows) {
       '<td class="ut-cell">' + utBadgeHtml + '</td>' +
       '<td>' + fmtOI(r.oi) + '</td>' +
       '<td class="' + (r.oiPct > 0 ? 'ce-cell' : r.oiPct < 0 ? 'pe-cell' : '') + '">' + fmtPct(r.oiPct) + '</td>' +
-      '<td style="color:#60a5fa; font-weight:600; font-family:\'IBM Plex Mono\', monospace;">' + fmtOI(r.ceOi || 0) + '</td>' +
-      '<td style="color:#f87171; font-weight:600; font-family:\'IBM Plex Mono\', monospace;">' + fmtOI(r.peOi || 0) + '</td>' +
       '<td class="' + (r.isMatch ? 'yellow' : '') + '">' + fmtNum(r.prevCloseUsed) + '</td>' +
       '<td>' + fmtNum(r.open) + '</td>' +
       '<td>' + fmtNum(r.high) + '</td>' +
-      '<td class="' + (r.isMatch ? 'yellow' : '') + '" style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Fitted Indicator Chart">' + fmtNum(r.low) + '</td>' +
-      '<td style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Fitted Indicator Chart"><button class="prem-chip ' + (r.type === 'CE' ? 'ce' : 'pe') + '">📈 ' + fmtNum(r.close) + '</button></td>' +
+      '<td class="' + (r.isMatch ? 'yellow' : '') + '" style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Rajan Indicators Chart">' + fmtNum(r.low) + '</td>' +
+      '<td style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Rajan Indicators Chart"><button class="prem-chip ' + (r.type === 'CE' ? 'ce' : 'pe') + '">📈 ' + fmtNum(r.close) + '</button></td>' +
       '<td class="tgt-cell">' + fmtNum(r.tgt9) + '</td>' +
       '<td class="tgt-cell">' + fmtNum(r.tgt18) + '</td>' +
       '<td class="sl-cell">' + fmtNum(r.sl5) + '</td>' +
       '<td style="text-align:center; display:flex; gap:4px; justify-content:center;">' +
         '<button class="chain-btn" onclick="openChainModal(\'' + r.symbol + '\', \'' + r.expiry + '\')">📊 Chain</button>' +
-        '<button class="chart-btn-sm" style="color:#38bdf8; border-color:rgba(56,189,248,0.4);" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Open chart with fitted indicators in this app">⚡ Fitted Chart</button>' +
+        '<button class="chart-btn-sm" style="color:#38bdf8; border-color:rgba(56,189,248,0.4);" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Open Rajan Indicators chart in this app">📈 Rajan Indicators</button>' +
         '<button class="chart-btn-sm" style="color:#fbbf24; border-color:rgba(251,191,36,0.4);" onclick="openAlertsModal({symbol:\'' + r.symbol + '\', expiry:\'' + r.expiry + '\', strike:' + r.strike + ', type:\'' + r.type + '\', price:' + r.close + '})" title="Set Price or UT Bot Alert">🔔 Alert</button>' +
       '</td>' +
     '</tr>';
@@ -5788,20 +5619,28 @@ function clearAllTriggeredAlerts() {
    SERVER & LIVE SCAN ENGINE
 ============================================================ */
 function getFilters() {
+  const lowFromVal = document.getElementById('lowFrom').value.trim();
+  const lowToVal = document.getElementById('lowTo').value.trim();
+  const prevFromVal = document.getElementById('prevFrom').value.trim();
+  const prevToVal = document.getElementById('prevTo').value.trim();
+  const tolVal = document.getElementById('tol').value.trim();
+  const minOiVal = document.getElementById('minOi').value.trim();
+  const activeOptSeg = document.querySelector('#optTypeSeg button.active');
+
   return {
     symSelect: document.getElementById('symSelect').value,
     instIdx: document.getElementById('instIdx').checked,
     instStk: document.getElementById('instStk').checked,
-    optType: document.querySelector('#optTypeSeg button.active').dataset.v,
+    optType: activeOptSeg ? activeOptSeg.dataset.v : 'BOTH',
     expSelect: document.getElementById('expSelect').value,
     lowOn: document.getElementById('lowOn').checked,
-    lowFrom: parseFloat(document.getElementById('lowFrom').value) || 0,
-    lowTo: parseFloat(document.getElementById('lowTo').value) || 0,
+    lowFrom: lowFromVal !== '' ? parseFloat(lowFromVal) : 5.80,
+    lowTo: lowToVal !== '' ? parseFloat(lowToVal) : 8.45,
     prevOn: document.getElementById('prevOn').checked,
-    prevFrom: parseFloat(document.getElementById('prevFrom').value) || 0,
-    prevTo: parseFloat(document.getElementById('prevTo').value) || 0,
-    tol: parseFloat(document.getElementById('tol').value) || 0,
-    minOi: parseFloat(document.getElementById('minOi').value) || 0,
+    prevFrom: prevFromVal !== '' ? parseFloat(prevFromVal) : 38.00,
+    prevTo: prevToVal !== '' ? parseFloat(prevToVal) : 48.00,
+    tol: tolVal !== '' ? parseFloat(tolVal) : 0.00,
+    minOi: minOiVal !== '' ? parseFloat(minOiVal) : 0.00,
     includeUntraded: document.getElementById('includeUntraded').checked,
     showMode: document.getElementById('showMode').value
   };
@@ -5879,110 +5718,15 @@ async function runLiveScan() {
 }
 
 /* ============================================================
-   APP UPDATE & ANTI-SNAP PROTECTION ENGINE
-   Prevents browser snaps when new builds are deployed,
-   and enables instant 1-click safe reloads with fresh caches.
-============================================================ */
-const APP_BUILD_VERSION = '2.2.0';
-
-function showTopUpdateBanner(msg) {
-  const banner = document.getElementById('topUpdateBanner');
-  const txt = document.getElementById('topUpdateBannerText');
-  if (banner) {
-    if (txt && msg) txt.textContent = msg;
-    banner.style.display = 'flex';
-  }
-}
-
-function dismissUpdateBanner() {
-  const banner = document.getElementById('topUpdateBanner');
-  if (banner) banner.style.display = 'none';
-}
-
-function applyAppUpdate(forceReload = true) {
-  try {
-    if (window.caches) {
-      caches.keys().then(keys => {
-        keys.forEach(k => caches.delete(k));
-      });
-    }
-    sessionStorage.clear();
-  } catch (e) {}
-
-  const sep = window.location.pathname.includes('?') ? '&' : '?';
-  const cleanUrl = window.location.origin + window.location.pathname + sep + 'build=' + Date.now();
-  window.location.replace(cleanUrl);
-}
-
-async function checkForAppUpdate(isManual = false) {
-  const btn = document.getElementById('appUpdateBtn');
-  const btnText = document.getElementById('appUpdateBtnText');
-  if (isManual && btnText) {
-    btnText.textContent = 'Checking…';
-  }
-  try {
-    const res = await fetch(`${API_BASE}/api/status?_t=${Date.now()}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Status ping failed');
-    const data = await res.json();
-    const serverVer = data.version || null;
-
-    if (serverVer && serverVer !== APP_BUILD_VERSION) {
-      showTopUpdateBanner(`⚡ New algo screener version v${serverVer} is available! Update now to prevent browser snap.`);
-      if (btn) btn.classList.add('has-update');
-      if (btnText) btnText.textContent = '🚀 Update Ready!';
-      if (isManual) {
-        showToast(`Update available: v${serverVer}. Click "Update Now" to reload cleanly without snap.`, 'warning');
-      }
-      return true;
-    } else {
-      if (btn) btn.classList.remove('has-update');
-      if (btnText) btnText.textContent = '⚡ Up to Date';
-      if (isManual) {
-        showToast(`Screener is running latest build v${APP_BUILD_VERSION}. Anti-snap shield active.`, 'success');
-      }
-      setTimeout(() => {
-        if (btnText) btnText.textContent = '⚡ Check Update';
-      }, 3000);
-      return false;
-    }
-  } catch (err) {
-    if (isManual) {
-      showToast('Could not reach backend update service. Local cache verified.', 'warning');
-      if (btnText) btnText.textContent = '⚡ Check Update';
-    }
-    return false;
-  }
-}
-
-// Anti-Snap Error Boundary: If a stale chunk or unhandled asset error occurs, notify user cleanly
-window.addEventListener('error', (event) => {
-  const msg = (event && event.message) ? event.message : '';
-  if (msg.includes('Loading chunk') || msg.includes('Script error') || msg.includes('Failed to fetch dynamically imported module')) {
-    showTopUpdateBanner('A fresh screener build was detected. Click Update to prevent browser snap.');
-  }
-});
-
-// Periodic background check every 5 minutes
-setInterval(() => {
-  checkForAppUpdate(false);
-}, 5 * 60 * 1000);
-
-/* ============================================================
    STATUS & SYMBOL INITIALIZATION
 ============================================================ */
 async function initStatus() {
   try {
-    const res = await fetch(`${API_BASE}/api/status?_t=${Date.now()}`);
+    const res = await fetch(`${API_BASE}/api/status`);
     const data = await res.json();
     const dot = document.getElementById('statusDot');
     const txt = document.getElementById('marketStatusText');
     const info = document.getElementById('loadedInfo');
-
-    if (data.version && data.version !== APP_BUILD_VERSION) {
-      showTopUpdateBanner(`⚡ New algo screener version v${data.version} is available! Update now.`);
-      const btn = document.getElementById('appUpdateBtn');
-      if (btn) btn.classList.add('has-update');
-    }
 
     if (data.isMarketOpen) {
       dot.className = 'status-dot live';
@@ -6461,6 +6205,11 @@ function openOptionChartModal(symbol, expiry, strike, type) {
   const optTicker = isOption ? getTradingViewOptionSymbol(contract.symbol, contract.expiry, contract.strike, contract.type) : getTradingViewOptionSymbol(contract.symbol);
   const optTvUrl = isOption ? getTradingViewUrl(contract.symbol, contract.expiry, contract.strike, contract.type) : getTradingViewUrl(contract.symbol);
   document.getElementById('optTickerBadge').textContent = optTicker;
+  const tvExternalBtn = document.getElementById('optTvExternalBtn');
+  if (tvExternalBtn) {
+    tvExternalBtn.href = optTvUrl;
+    tvExternalBtn.title = `Open ${optTicker} in TradingView`;
+  }
 
   const spot = contract.spot || (currentChainData ? currentChainData.spot : 0);
   const moneynessBadge = document.getElementById('optBadgeMoneyness');
@@ -7292,11 +7041,11 @@ function clearAllScreenerFilters() {
     symSelect.value = '__ALL__';
   }
 
-  // 2. Instrument types
+  // 2. Instrument types (No filter selected by default)
   const instIdx = document.getElementById('instIdx');
-  if (instIdx) instIdx.checked = true;
+  if (instIdx) instIdx.checked = false;
   const instStk = document.getElementById('instStk');
-  if (instStk) instStk.checked = true;
+  if (instStk) instStk.checked = false;
 
   // 3. Option type
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
@@ -7305,35 +7054,35 @@ function clearAllScreenerFilters() {
 
   // 4. Expiry
   const expSelect = document.getElementById('expSelect');
-  if (expSelect) expSelect.value = 'nearest';
+  if (expSelect) expSelect.value = 'all';
 
-  // 5. Day low range
+  // 5. Day low range (Unchecked & cleared)
   const lowOn = document.getElementById('lowOn');
-  if (lowOn) lowOn.checked = true;
+  if (lowOn) lowOn.checked = false;
   const lowFrom = document.getElementById('lowFrom');
-  if (lowFrom) lowFrom.value = '5.80';
+  if (lowFrom) lowFrom.value = '';
   const lowTo = document.getElementById('lowTo');
-  if (lowTo) lowTo.value = '8.45';
+  if (lowTo) lowTo.value = '';
 
-  // 6. Prev close range
+  // 6. Prev close range (Unchecked & cleared)
   const prevOn = document.getElementById('prevOn');
-  if (prevOn) prevOn.checked = true;
+  if (prevOn) prevOn.checked = false;
   const prevFrom = document.getElementById('prevFrom');
-  if (prevFrom) prevFrom.value = '38.00';
+  if (prevFrom) prevFrom.value = '';
   const prevTo = document.getElementById('prevTo');
-  if (prevTo) prevTo.value = '48.00';
+  if (prevTo) prevTo.value = '';
 
   // 7. Tolerance & Min OI
   const tol = document.getElementById('tol');
-  if (tol) tol.value = '0.00';
+  if (tol) tol.value = '';
   const minOi = document.getElementById('minOi');
-  if (minOi) minOi.value = '0';
+  if (minOi) minOi.value = '';
 
   // 8. Include untraded & show mode
   const includeUntraded = document.getElementById('includeUntraded');
   if (includeUntraded) includeUntraded.checked = false;
   const showMode = document.getElementById('showMode');
-  if (showMode) showMode.value = 'matches';
+  if (showMode) showMode.value = 'any';
 
   // 9. Results search & quick pills
   const resSearch = document.getElementById('resultsSearchInput');
@@ -7346,15 +7095,18 @@ function clearAllScreenerFilters() {
     p.classList.toggle('active', p.dataset.q === 'ALL');
   });
 
-  // 10. Strategy presets
-  document.querySelectorAll('.strat-btn').forEach(b => {
-    b.classList.toggle('active', b.id === 'strat1Btn');
-  });
-  document.querySelectorAll('.preset-pill').forEach(b => {
-    b.classList.toggle('active', b.dataset.preset === 'strat1');
-  });
+  // 10. Deactivate strategy presets & ribbon pills
+  document.querySelectorAll('.strat-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.preset-pill').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.small-strat-btn').forEach(b => b.classList.remove('active'));
+  currentActiveIndicatorScan = null;
+  const activeIndTag = document.getElementById('activeIndTag');
+  if (activeIndTag) activeIndTag.textContent = 'None';
 
-  showToast('🧹 All screener filters cleared and reset to Strategy 1 defaults!', 'info');
+  // 11. Clear active filter chips
+  updateActiveFilterChips();
+
+  showToast('🧹 All filters cleared! Zero filters or checkboxes selected.', 'info');
   runServerScan();
 }
 

@@ -100,6 +100,8 @@ class NSEService:
                     "todayDateLoaded": self.today_date,
                     "prevDateLoaded": self.prev_date,
                     "totalLoaded": len(self.today_rows),
+                    "version": "2.2.0",
+                    "buildTime": "2026-09-27T07:30:00Z"
                 }
         except Exception as e:
             print(f"[NSE] marketStatus error: {e}")
@@ -109,6 +111,8 @@ class NSEService:
             "todayDateLoaded": self.today_date,
             "prevDateLoaded": self.prev_date,
             "totalLoaded": len(self.today_rows),
+            "version": "2.2.0",
+            "buildTime": "2026-09-27T07:30:00Z"
         }
 
     def fetch_latest_bhavcopy(self, force_refresh=False):
@@ -468,23 +472,16 @@ class NSEService:
                 if s not in nearest_map or r["expiry"] < nearest_map[s]:
                     nearest_map[s] = r["expiry"]
 
-        # Map (symbol, expiry, strike) -> {CE: oi, PE: oi}
-        strike_oi_map = {}
-        for r in options_list:
-            s_key = (r["symbol"], r["expiry"], r["strike"])
-            if s_key not in strike_oi_map:
-                strike_oi_map[s_key] = {"CE": 0.0, "PE": 0.0}
-            if r["type"] in ("CE", "PE"):
-                strike_oi_map[s_key][r["type"]] = r["oi"]
-
         processed = []
+        has_instr_filter = (inst_idx and not inst_stk) or (inst_stk and not inst_idx)
         for r in options_list:
             if sym != "__ALL__" and r["symbol"] != sym:
                 continue
-            if r["instr"] == "Index" and not inst_idx:
-                continue
-            if r["instr"] == "Stock" and not inst_stk:
-                continue
+            if has_instr_filter:
+                if r["instr"] == "Index" and not inst_idx:
+                    continue
+                if r["instr"] == "Stock" and not inst_stk:
+                    continue
             if opt_type != "BOTH" and r["type"] != opt_type:
                 continue
             if exp_select == "nearest" and r["expiry"] != nearest_map.get(r["symbol"]):
@@ -597,17 +594,10 @@ class NSEService:
                 is_ind_match = is_match
                 ind_tag = sig or "Active"
 
-            s_key = (r["symbol"], r["expiry"], r["strike"])
-            ois = strike_oi_map.get(s_key, {})
-            ce_oi = ois.get("CE", 0.0)
-            pe_oi = ois.get("PE", 0.0)
-
             item = dict(r)
             item.update({
                 "prevCloseUsed": round(prev_close_used, 2),
                 "oiPct": round(oi_pct, 2) if oi_pct is not None else None,
-                "ceOi": ce_oi,
-                "peOi": pe_oi,
                 "isOL": is_ol,
                 "isOH": is_oh,
                 "isMatch": is_match,

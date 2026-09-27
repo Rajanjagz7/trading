@@ -49,15 +49,12 @@ class ScanRequest(BaseModel):
     showMode: Optional[str] = "matches"
     indicator: Optional[str] = None
 
-APP_VERSION = "2.2.0"
-APP_BUILD_TIME = "2026-09-27T07:30:00Z"
-
 @app.get("/api/status")
 def get_status():
     status = nse_service.get_market_status()
     if isinstance(status, dict):
-        status["version"] = APP_VERSION
-        status["buildTime"] = APP_BUILD_TIME
+        status["version"] = "2.2.0"
+        status["buildTime"] = "2026-09-27T07:30:00Z"
     return status
 
 @app.get("/api/indices/pulse")
