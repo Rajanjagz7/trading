@@ -21,10 +21,6 @@
   ],
   "crons": [
     {
-      "path": "/api/cron",
-      "schedule": "46 3 * * 1-5"
-    },
-    {
       "path": "/api/cleanup",
       "schedule": "30 18 * * 6"
     }

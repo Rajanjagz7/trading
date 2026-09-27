@@ -3680,9 +3680,31 @@ let currentQuickFilter = 'ALL';
 let currentTableSearchQuery = '';
 
 /* ============================================================
-   NON-INTRUSIVE FLOATING TOAST SYSTEM (ZERO ERROR POPUPS)
+   NON-INTRUSIVE DEDUPLICATED FLOATING TOAST SYSTEM
+   - Zero duplicate popups even when clicking repeatedly
+   - Refreshes & gently pulses existing message on repeat clicks
+   - Auto-debounces identical messages within cooldown window
+   - Caps visible toasts at 3 to prevent mobile & desktop screen clutter
 ============================================================ */
+const _activeToastMap = new Map();
+const _recentToastTimes = new Map();
+
+function normalizeToastKey(msg, type) {
+  if (!msg) return '';
+  const text = String(msg).replace(/<[^>]*>/g, '');
+  const clean = text
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '')
+    .replace(/[^\w\s₹%.-]/gi, '')
+    .trim()
+    .toLowerCase();
+  return `${type || 'info'}:${clean}`;
+}
+
 function showToast(msg, type = 'info') {
+  if (!msg) return;
+  const msgKey = normalizeToastKey(msg, type);
+  const now = Date.now();
+
   let toastContainer = document.getElementById('toastContainer');
   if (!toastContainer) {
     toastContainer = document.createElement('div');
@@ -3690,20 +3712,104 @@ function showToast(msg, type = 'info') {
     toastContainer.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none;';
     document.body.appendChild(toastContainer);
   }
+
+  // 1. Check if an active toast with this exact key is already present in DOM
+  const existingRecord = _activeToastMap.get(msgKey);
+  const existingToast = (existingRecord && existingRecord.el && existingRecord.el.parentNode)
+    ? existingRecord.el
+    : Array.from(toastContainer.children).find(el => el.getAttribute('data-toast-key') === msgKey);
+
+  if (existingToast) {
+    // DO NOT show duplicate message!
+    // Clear previous removal timers
+    if (existingRecord) {
+      clearTimeout(existingRecord.hideTimer);
+      clearTimeout(existingRecord.removeTimer);
+    }
+
+    // Gentle micro-pulse animation to confirm repeated click without cluttering UI
+    existingToast.style.transition = 'transform 0.15s ease, opacity 0.2s ease';
+    existingToast.style.transform = 'scale(1.04)';
+    setTimeout(() => {
+      if (existingToast && existingToast.parentNode) {
+        existingToast.style.transform = 'scale(1)';
+      }
+    }, 150);
+
+    // Reset visibility timeout
+    const hideTimer = setTimeout(() => {
+      existingToast.style.opacity = '0';
+      existingToast.style.transform = 'translateY(10px)';
+    }, 2800);
+
+    const removeTimer = setTimeout(() => {
+      if (existingToast.parentNode) existingToast.remove();
+      _activeToastMap.delete(msgKey);
+    }, 3100);
+
+    _activeToastMap.set(msgKey, { el: existingToast, hideTimer, removeTimer });
+    _recentToastTimes.set(msgKey, now);
+    return;
+  }
+
+  // 2. Cooldown check: if identical message was dismissed less than 1200ms ago, prevent spam
+  const lastTime = _recentToastTimes.get(msgKey);
+  if (lastTime && (now - lastTime) < 1200) {
+    return;
+  }
+
+  // 3. Limit total concurrent visible toasts to 3 (clean mobile & desktop display)
+  while (toastContainer.children.length >= 3) {
+    const oldest = toastContainer.firstElementChild;
+    const oldKey = oldest.getAttribute('data-toast-key');
+    if (oldKey && _activeToastMap.has(oldKey)) {
+      const rec = _activeToastMap.get(oldKey);
+      clearTimeout(rec.hideTimer);
+      clearTimeout(rec.removeTimer);
+      _activeToastMap.delete(oldKey);
+    }
+    oldest.remove();
+  }
+
+  // 4. Create new toast
   const toast = document.createElement('div');
+  toast.setAttribute('data-toast-key', msgKey);
   const bg = type === 'error' ? '#ef4444' : (type === 'success' ? '#10b981' : '#2563eb');
-  toast.style.cssText = `background:${bg}; color:#fff; padding:10px 18px; border-radius:8px; font-size:12.5px; font-weight:600; box-shadow:0 4px 18px rgba(0,0,0,0.5); pointer-events:auto; transition:all 0.3s ease; transform:translateY(10px); opacity:0; display:flex; align-items:center; gap:8px;`;
+  toast.style.cssText = `background:${bg}; color:#fff; padding:10px 18px; border-radius:8px; font-size:12.5px; font-weight:600; box-shadow:0 4px 18px rgba(0,0,0,0.5); pointer-events:auto; cursor:pointer; transition:all 0.3s ease; transform:translateY(10px); opacity:0; display:flex; align-items:center; gap:8px; user-select:none; max-width:min(90vw, 420px); word-break:break-word;`;
+  toast.title = 'Click to dismiss';
   toast.innerHTML = `<span>${type==='error'?'⚠️':type==='success'?'✔':'ℹ️'}</span> <span>${msg}</span>`;
+
+  // Allow clicking toast to dismiss immediately
+  toast.onclick = () => {
+    const rec = _activeToastMap.get(msgKey);
+    if (rec) {
+      clearTimeout(rec.hideTimer);
+      clearTimeout(rec.removeTimer);
+      _activeToastMap.delete(msgKey);
+    }
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 200);
+  };
+
   toastContainer.appendChild(toast);
   requestAnimationFrame(() => {
     toast.style.transform = 'translateY(0)';
     toast.style.opacity = '1';
   });
-  setTimeout(() => {
+
+  const hideTimer = setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(10px)';
-    setTimeout(() => toast.remove(), 300);
   }, 3200);
+
+  const removeTimer = setTimeout(() => {
+    if (toast.parentNode) toast.remove();
+    _activeToastMap.delete(msgKey);
+  }, 3500);
+
+  _activeToastMap.set(msgKey, { el: toast, hideTimer, removeTimer });
+  _recentToastTimes.set(msgKey, now);
 }
 
 /* ============================================================
@@ -5472,8 +5578,11 @@ function checkPriceAlerts(dataList) {
         showToast(msg, isSell ? 'error' : 'success');
 
         if ('Notification' in window && Notification.permission === 'granted') {
+          const alertTag = `chartink_alt_${alt.symbol}_${alt.strike || '0'}_${alt.type || ''}_${alt.cond}`;
           new Notification('⚡ Chartink Price Alert Triggered', {
             body: msg,
+            tag: alertTag,
+            renotify: false,
             icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ef4444" d="M12 2a2 2 0 0 0-2 2a8 8 0 0 0-8 8v3l-2 2v1h20v-1l-2-2v-3a8 8 0 0 0-8-8a2 2 0 0 0-2-2z"/></svg>'
           });
         }
@@ -7029,7 +7138,21 @@ function switchMarketBar(mode) {
    USER-FRIENDLY CLEAR & RESET FILTER HANDLERS
    Instant feedback across all screener and analysis fields
 ============================================================ */
+let _serverScanDebounceTimer = null;
+function debouncedRunServerScan(delay = 150) {
+  if (_serverScanDebounceTimer) clearTimeout(_serverScanDebounceTimer);
+  _serverScanDebounceTimer = setTimeout(() => {
+    runServerScan();
+  }, delay);
+}
+
+let _lastClearFilterTime = 0;
+
 function clearAllScreenerFilters() {
+  const now = Date.now();
+  const isRapidRepeat = (now - _lastClearFilterTime < 800);
+  _lastClearFilterTime = now;
+
   // 1. Underlying
   const symSearch = document.getElementById('symSearch');
   if (symSearch) symSearch.value = '';
@@ -7107,7 +7230,7 @@ function clearAllScreenerFilters() {
   updateActiveFilterChips();
 
   showToast('🧹 All filters cleared! Zero filters or checkboxes selected.', 'info');
-  runServerScan();
+  debouncedRunServerScan(isRapidRepeat ? 350 : 60);
 }
 
 function clearSymSearch() {
@@ -7121,7 +7244,7 @@ function clearSymSearch() {
     sel.value = '__ALL__';
   }
   showToast('🧹 Underlying symbol search cleared!', 'info');
-  runServerScan();
+  debouncedRunServerScan(120);
 }
 
 function resetLowRangeDefault() {
@@ -7132,7 +7255,7 @@ function resetLowRangeDefault() {
   const lowTo = document.getElementById('lowTo');
   if (lowTo) lowTo.value = '8.45';
   showToast('↺ Day Low range reset to default ₹5.80 – ₹8.45', 'info');
-  runServerScan();
+  debouncedRunServerScan(120);
 }
 
 function resetPrevCloseDefault() {
@@ -7143,21 +7266,21 @@ function resetPrevCloseDefault() {
   const prevTo = document.getElementById('prevTo');
   if (prevTo) prevTo.value = '48.00';
   showToast('↺ Previous Close range reset to default ₹38.00 – ₹48.00', 'info');
-  runServerScan();
+  debouncedRunServerScan(120);
 }
 
 function resetToleranceDefault() {
   const tol = document.getElementById('tol');
   if (tol) tol.value = '0.00';
   showToast('↺ Tolerance reset to ₹0.00', 'info');
-  runServerScan();
+  debouncedRunServerScan(120);
 }
 
 function resetOiDefault() {
   const minOi = document.getElementById('minOi');
   if (minOi) minOi.value = '0';
   showToast('↺ Min OI reset to 0', 'info');
-  runServerScan();
+  debouncedRunServerScan(120);
 }
 
 function clearAllChartinkQueryRules() {
