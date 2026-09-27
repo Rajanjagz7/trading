@@ -2570,6 +2570,78 @@
     border: 1px solid #28374d;
     font-family: 'IBM Plex Mono', monospace;
   }
+
+  /* 📖 Tutorial button attention pulse (stops after first open) */
+  @keyframes tutBtnPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+    70%  { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+  }
+  #openTutorialBtn.tut-pulse {
+    animation: tutBtnPulse 1.6s infinite;
+  }
+
+  /* 🎬 Interactive Guided Walkthrough overlay */
+  #tourHighlightBox {
+    position: fixed;
+    z-index: 2000;
+    border: 2px solid #a78bfa;
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(2, 6, 15, 0.78);
+    pointer-events: none;
+    transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+  }
+  #tourCaptionCard {
+    position: fixed;
+    z-index: 2001;
+    max-width: 340px;
+    background: #0e1420;
+    border: 1px solid #3b2f6b;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: top 0.25s ease, left 0.25s ease;
+  }
+  #tourCaptionCard h4 {
+    margin: 0 0 6px 0;
+    font-size: 13.5px;
+    color: #c4b5fd;
+  }
+  #tourCaptionCard p {
+    margin: 0 0 12px 0;
+    font-size: 12.5px;
+    color: #cbd5e1;
+    line-height: 1.5;
+  }
+  #tourCaptionCard .tour-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  #tourCaptionCard .tour-step-count {
+    font-size: 11px;
+    color: #64748b;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  #tourCaptionCard .tour-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #tourCaptionCard .tour-btn.primary {
+    background: #7c3aed;
+    border-color: #8b5cf6;
+    color: #fff;
+  }
+  #tourCaptionCard .tour-btn:hover {
+    filter: brightness(1.15);
+  }
   </style>
 </head>
 <body>
@@ -2851,6 +2923,7 @@
       <button class="action-btn" onclick="openSelectedStockTradingView()" style="border-color:#2563eb; color:#60a5fa;" title="Open currently searched or selected stock in TradingView with Rajan Indicators">📈 TradingView Stock Chart</button>
       <button class="action-btn" id="openAlertsBtn" onclick="openAlertsModal()" style="border-color:#f59e0b; color:#fbbf24;">🔔 Price Alerts <span class="alert-count-pill" id="alertsActiveBadge" style="display:none;">0</span></button>
       <button class="action-btn" id="openTutorialBtn" onclick="openTutorialModal()" style="border-color:#8b5cf6; color:#a78bfa;" title="Full walkthrough: how to use the scanner, every indicator, and how to open charts">📖 Tutorial &amp; How-To Guide</button>
+      <button class="action-btn" id="startTourBtn" onclick="startGuidedTour()" style="border-color:#7c3aed; color:#c4b5fd;" title="Interactive step-by-step walkthrough highlighting the real buttons on this page">🎬 Watch Walkthrough</button>
       <button class="action-btn" id="openChainHeaderBtn">📊 View Option Chain</button>
       <button class="action-btn" id="refreshBhavBtn">🔄 Sync Latest NSE Contract Archive</button>
       <button class="action-btn" id="clearCacheBtn" onclick="clearServerCache()" title="Clear stored CSV files & reset memory">🧹 Clear Stored CSVs</button>
@@ -3772,6 +3845,9 @@
           Day Low / Previous Close / Open=Low / Open=High price setups, and overlays 13 algorithmic indicators
           (UT Bot, Trade Predictor, Quantum Matrix, Supertrend, ORB, VWAP+RSI and more) on live option and index charts.
         </p>
+        <button class="query-run-btn" onclick="closeAllModals(); startGuidedTour();" style="margin:4px 0 16px 0; padding:10px 16px; font-size:13px; background:#7c3aed; border-color:#8b5cf6;">
+          <span>🎬</span> <b>Start Interactive Walkthrough (highlights the real buttons for you)</b>
+        </button>
         <h3 style="margin:18px 0 10px 0; font-size:15px; color:#a78bfa;">Quick Start (3 steps)</h3>
         <div style="display:flex; flex-direction:column; gap:10px;">
           <div style="background:#0e1420; border:1px solid #1d283c; border-radius:8px; padding:12px 14px;">
@@ -5029,6 +5105,115 @@ function openTutorialModal() {
   document.getElementById('tutorialModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
   switchTutorialTab('start');
+  markTutorialSeen();
+}
+
+function markTutorialSeen() {
+  try { localStorage.setItem('tutorialSeen', '1'); } catch (e) {}
+  const btn = document.getElementById('openTutorialBtn');
+  if (btn) btn.classList.remove('tut-pulse');
+}
+
+(function initTutorialPulse() {
+  let seen = false;
+  try { seen = localStorage.getItem('tutorialSeen') === '1'; } catch (e) {}
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('openTutorialBtn');
+    if (btn && !seen) btn.classList.add('tut-pulse');
+  });
+})();
+
+/* ============================================================
+   🎬 INTERACTIVE GUIDED WALKTHROUGH (highlights real UI elements)
+============================================================ */
+const TOUR_STEPS = [
+  { selector: '#chartinkIndicesBar', title: '1. Live Index Tickers', text: 'These cards show real-time NIFTY, BANKNIFTY, INDIA VIX, SENSEX & NIFTY MIDCAP prices. Click any card to instantly open its live chart with your indicator fitted on it.' },
+  { selector: '.indicator-bar', title: '2. One-Click Indicator Scans', text: 'These 13 buttons each scan every stock & index using that strategy\'s own built-in logic — no filters to set up yourself. Try ⚡ UT Bot or 🌌 Quantum Matrix.' },
+  { selector: '.mode-tabs', title: '3. Choose Your Data Mode', text: '⚡ Daily Settlement Data works even after market close. 🔴 Live Market Scanner pulls one symbol\'s real-time chain. 📁 Manual CSV Upload scans your own file.' },
+  { selector: '#symbolFilterGroup', title: '4. Or Build Your Own Scan', text: 'Search any stock or index here, then set Day Low, Prev Close, and Min OI ranges below it to build a fully custom filter.' },
+  { selector: '#scanBtn', title: '5. Run The Scan', text: 'Click Scan Market to see every contract matching your filters, sorted by open interest.' },
+  { selector: '.chartink-preset-ribbon', title: '6. Read & Open Results', text: 'Matching contracts appear just below here. Click any row to open its live chart, or its 🔔 icon to set a price alert.' },
+  { selector: '#openAlertsBtn', title: '7. Set Alerts', text: 'Get an audio chime, device vibration, and a browser notification the instant your target, stop-loss, or a UT Bot signal fires.' },
+  { selector: '#openTutorialBtn', title: 'You\'re all set! 🎉', text: 'Come back to this Tutorial button any time — it also explains every one of the 13 indicators with a "How to use" tip for each.' }
+];
+let tourStepIndex = 0;
+
+function ensureTourElements() {
+  if (!document.getElementById('tourHighlightBox')) {
+    const box = document.createElement('div');
+    box.id = 'tourHighlightBox';
+    box.style.display = 'none';
+    document.body.appendChild(box);
+  }
+  if (!document.getElementById('tourCaptionCard')) {
+    const card = document.createElement('div');
+    card.id = 'tourCaptionCard';
+    card.style.display = 'none';
+    document.body.appendChild(card);
+  }
+}
+
+function startGuidedTour() {
+  closeAllModals();
+  markTutorialSeen();
+  ensureTourElements();
+  tourStepIndex = 0;
+  renderTourStep();
+}
+
+function renderTourStep() {
+  const step = TOUR_STEPS[tourStepIndex];
+  const target = step && document.querySelector(step.selector);
+  if (!step || !target) { endTour(); return; }
+
+  target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+
+  const position = () => {
+    const r = target.getBoundingClientRect();
+    const box = document.getElementById('tourHighlightBox');
+    box.style.display = 'block';
+    box.style.top = `${r.top - 6}px`;
+    box.style.left = `${r.left - 6}px`;
+    box.style.width = `${r.width + 12}px`;
+    box.style.height = `${r.height + 12}px`;
+
+    const card = document.getElementById('tourCaptionCard');
+    const isLast = tourStepIndex === TOUR_STEPS.length - 1;
+    card.innerHTML = `
+      <h4>${step.title}</h4>
+      <p>${step.text}</p>
+      <div class="tour-controls">
+        <span class="tour-step-count">${tourStepIndex + 1} / ${TOUR_STEPS.length}</span>
+        <div style="display:flex; gap:6px;">
+          <button class="tour-btn" onclick="endTour()">Skip</button>
+          ${tourStepIndex > 0 ? '<button class="tour-btn" onclick="prevTourStep()">← Back</button>' : ''}
+          <button class="tour-btn primary" onclick="${isLast ? 'endTour()' : 'nextTourStep()'}">${isLast ? 'Finish ✓' : 'Next →'}</button>
+        </div>
+      </div>
+    `;
+    card.style.display = 'block';
+    let top = r.bottom + 14;
+    let left = Math.min(Math.max(r.left, 12), window.innerWidth - 356);
+    if (top + 140 > window.innerHeight) top = Math.max(r.top - 154, 12);
+    card.style.top = `${top}px`;
+    card.style.left = `${left}px`;
+  };
+
+  setTimeout(position, 260);
+}
+
+function nextTourStep() {
+  if (tourStepIndex < TOUR_STEPS.length - 1) { tourStepIndex++; renderTourStep(); }
+  else endTour();
+}
+function prevTourStep() {
+  if (tourStepIndex > 0) { tourStepIndex--; renderTourStep(); }
+}
+function endTour() {
+  const box = document.getElementById('tourHighlightBox');
+  const card = document.getElementById('tourCaptionCard');
+  if (box) box.style.display = 'none';
+  if (card) card.style.display = 'none';
 }
 
 /* ============================================================
