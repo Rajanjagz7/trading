@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#090d14">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Chartink F&amp;O Algo Screener &amp; Option Indicator Hub (Web &amp; Mobile)</title>
   <meta name="description" content="Chartink-style institutional options screener for NSE/BSE F&amp;O contracts with live indicators, UT Bot Buy/Sell signals, and automated settlement sync.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230f172a'/><line x1='10' y1='5' x2='10' y2='27' stroke='%2310b981' stroke-width='2' stroke-linecap='round'/><rect x='6' y='9' width='8' height='12' rx='2' fill='%2310b981'/><line x1='22' y1='7' x2='22' y2='25' stroke='%23ef4444' stroke-width='2' stroke-linecap='round'/><rect x='18' y='12' width='8' height='9' rx='2' fill='%23ef4444'/></svg>">
@@ -2017,12 +2020,13 @@
     .results-view-toggle { display: flex; }
   }
 
-  /* Specific Adjustments for Nothing Phone 2 Pro & Mobile Chrome (~360px - 430px Viewports) */
+  /* Specific Adjustments for CMF Phone 2 / Nothing Phone 2 & Mobile Chrome (~360px - 430px Viewports) */
   @media (max-width: 600px) {
     .app-container {
-      padding: 6px 8px 36px 8px !important;
+      padding: max(6px, env(safe-area-inset-top)) 8px max(36px, env(safe-area-inset-bottom)) 8px !important;
       width: 100% !important;
       max-width: 100vw !important;
+      box-sizing: border-box !important;
     }
     header {
       padding: 10px 12px !important;
@@ -2047,16 +2051,37 @@
       font-size: 9.5px !important;
       padding: 2px 6px !important;
     }
-    .chartink-indices-bar {
+    .market-bar-tabs {
+      overflow-x: auto !important;
+      flex-wrap: nowrap !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      padding: 4px 6px !important;
+      gap: 5px !important;
+      margin-bottom: 8px !important;
+    }
+    .market-bar-tabs::-webkit-scrollbar { display: none; }
+    .market-tab-btn, .market-refresh-btn {
+      white-space: nowrap !important;
+      font-size: 11px !important;
+      padding: 6px 10px !important;
+      flex-shrink: 0 !important;
+    }
+    .chartink-indices-bar, .global-markets-bar {
       padding: 6px 6px !important;
       gap: 6px !important;
       margin-bottom: 8px !important;
-      scroll-snap-type: x mandatory;
+      scroll-snap-type: x mandatory !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
     }
-    .index-ticker-card {
+    .chartink-indices-bar::-webkit-scrollbar, .global-markets-bar::-webkit-scrollbar { display: none; }
+    .index-ticker-card, .global-ticker-card {
       min-width: 145px !important;
       padding: 5px 8px !important;
-      scroll-snap-align: start;
+      scroll-snap-align: start !important;
+      flex-shrink: 0 !important;
     }
     .index-ticker-name {
       font-size: 10.5px !important;
@@ -2102,6 +2127,27 @@
       min-width: 235px !important;
       flex-shrink: 0 !important;
     }
+    .chartink-preset-ribbon {
+      overflow-x: auto !important;
+      flex-wrap: nowrap !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      padding-bottom: 4px !important;
+      margin-bottom: 8px !important;
+    }
+    .chartink-preset-ribbon::-webkit-scrollbar { display: none; }
+    .preset-pill {
+      white-space: nowrap !important;
+      font-size: 11px !important;
+      padding: 5px 10px !important;
+      flex-shrink: 0 !important;
+    }
+    .clause-row {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      font-size: 11px !important;
+      padding: 6px 8px !important;
+    }
     .mobile-filter-toggle {
       display: flex !important;
       align-items: center;
@@ -2110,18 +2156,30 @@
       background: #141c2c;
       border: 1px solid #2b394f;
       color: #93c5fd;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-radius: 8px;
       font-weight: 700;
       font-size: 12.5px;
       margin-bottom: 8px;
       cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     .panel.filters.collapsed {
       display: none !important;
     }
     .results-view-toggle {
       display: flex !important;
+    }
+    .opt-card-actions {
+      flex-wrap: wrap;
+    }
+    .opt-card-btn {
+      min-height: 36px;
+      font-size: 11px;
+    }
+    .active-filters-bar {
+      padding: 6px 8px !important;
+      font-size: 11px !important;
     }
   }
 
@@ -2200,6 +2258,77 @@
     color: #fca5a5;
   }
   .q-pill.reset-pill:hover {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  /* Active Filter Chips Rail */
+  .active-filters-bar {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px dashed rgba(59, 130, 246, 0.35);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    font-size: 11.5px;
+  }
+  .active-filters-label {
+    color: #93c5fd;
+    font-weight: 700;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .active-filter-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .active-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .active-filter-chip .chip-remove {
+    cursor: pointer;
+    color: #94a3b8;
+    font-weight: 800;
+    font-size: 12px;
+    margin-left: 2px;
+    padding: 0 2px;
+    border-radius: 3px;
+  }
+  .active-filter-chip .chip-remove:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.25);
+  }
+  .clear-all-chips-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 3px 9px;
+    border-radius: 5px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .clear-all-chips-btn:hover {
     background: #ef4444;
     color: #fff;
   }
@@ -2682,23 +2811,35 @@
       <div class="group" id="symbolFilterGroup">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
           <label style="margin:0;">Underlying</label>
-          <button type="button" class="quick-clear-btn" onclick="clearSymSearch()" title="Clear symbol filter">✕ Clear</button>
+          <div style="display:flex; gap:4px;">
+            <button type="button" class="quick-clear-btn" onclick="clearSymSearch()" title="Clear text search">✕ Text</button>
+            <button type="button" class="quick-clear-btn" onclick="clearSymSelect()" title="Reset to All Underlyings">↺ All</button>
+          </div>
         </div>
         <div class="search-input-wrapper" style="width:100%; margin-bottom:6px;">
           <input type="text" id="symSearch" placeholder="Type to filter symbols…" style="width:100%; padding-right:26px;">
           <button type="button" class="search-clear-btn" id="symSearchClearBtn" onclick="clearSymSearch()" style="right:6px;" title="Clear symbol search">✕</button>
         </div>
-        <select id="symSelect"><option value="__ALL__">All symbols</option></select>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <select id="symSelect" style="flex:1;"><option value="__ALL__">All symbols</option></select>
+          <button type="button" class="quick-clear-btn" onclick="clearSymSelect()" title="Reset dropdown to All symbols">↺ All</button>
+        </div>
       </div>
 
       <div class="group" id="instrGroup">
-        <label>Instrument type</label>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <label style="margin:0;">Instrument type</label>
+          <button type="button" class="quick-clear-btn" onclick="resetInstrGroup()" title="Select both indices and stocks">↺ Both</button>
+        </div>
         <div class="checkline"><input type="checkbox" id="instIdx" checked><span>Index options</span></div>
         <div class="checkline"><input type="checkbox" id="instStk" checked><span>Stock options</span></div>
       </div>
 
       <div class="group">
-        <label>Expiry</label>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <label style="margin:0;">Expiry</label>
+          <button type="button" class="quick-clear-btn" onclick="resetExpSelect()" title="Reset to Nearest expiry">↺ Nearest</button>
+        </div>
         <select id="expSelect">
           <option value="nearest">Nearest expiry (per symbol)</option>
           <option value="all">All expiries</option>
@@ -2706,7 +2847,10 @@
       </div>
 
       <div class="group">
-        <label>Option type</label>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <label style="margin:0;">Option type</label>
+          <button type="button" class="quick-clear-btn" onclick="resetOptType()" title="Reset to both CE & PE">↺ Both</button>
+        </div>
         <div class="segbtns" id="optTypeSeg">
           <button data-v="BOTH" class="active">Both</button>
           <button data-v="CE">CE</button>
@@ -2720,7 +2864,10 @@
             <input type="checkbox" id="lowOn" checked>
             <label style="margin:0;">Day low in range (₹)</label>
           </div>
-          <button type="button" class="quick-clear-btn" onclick="resetLowRangeDefault()" title="Reset to ₹5.80–₹8.45">↺ Reset</button>
+          <div style="display:flex; gap:4px;">
+            <button type="button" class="quick-clear-btn" onclick="toggleLowFilter(false)" title="Disable Day Low filter">✕ Off</button>
+            <button type="button" class="quick-clear-btn" onclick="resetLowRangeDefault()" title="Reset to ₹5.80–₹8.45">↺ Reset</button>
+          </div>
         </div>
         <div class="row2">
           <input type="number" id="lowFrom" step="0.05" value="5.80">
@@ -2734,7 +2881,10 @@
             <input type="checkbox" id="prevOn" checked>
             <label style="margin:0;">Previous close in range (₹)</label>
           </div>
-          <button type="button" class="quick-clear-btn" onclick="resetPrevCloseDefault()" title="Reset to ₹38–₹48">↺ Reset</button>
+          <div style="display:flex; gap:4px;">
+            <button type="button" class="quick-clear-btn" onclick="togglePrevFilter(false)" title="Disable Prev Close filter">✕ Off</button>
+            <button type="button" class="quick-clear-btn" onclick="resetPrevCloseDefault()" title="Reset to ₹38–₹48">↺ Reset</button>
+          </div>
         </div>
         <div class="row2">
           <input type="number" id="prevFrom" step="0.5" value="38.00">
@@ -2763,7 +2913,10 @@
       </div>
 
       <div class="group">
-        <label>Show</label>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <label style="margin:0;">Show</label>
+          <button type="button" class="quick-clear-btn" onclick="resetShowMode()" title="Reset to matching contracts">↺ Matches</button>
+        </div>
         <select id="showMode">
           <option value="matches" selected>Only matching contracts</option>
           <option value="ol_oh">Only Open=Low or Open=High</option>
@@ -2822,6 +2975,7 @@
             <span class="clause-op">and</span>
             <span>₹</span> <input type="number" id="ruleLowTo" class="clause-input" value="8.45" step="0.05" style="width:75px;">
             <span style="color:var(--muted); font-size:11px;">(Low Price Range)</span>
+            <button type="button" class="quick-clear-btn" onclick="resetRuleLow()" style="margin-left:auto;" title="Reset Rule 1 to ₹5.80-₹8.45">↺ Reset</button>
           </div>
 
           <!-- Clause 2: Prev Close -->
@@ -2833,6 +2987,7 @@
             <span class="clause-op">and</span>
             <span>₹</span> <input type="number" id="rulePrevTo" class="clause-input" value="48.00" step="0.5" style="width:75px;">
             <span style="color:var(--muted); font-size:11px;">(Base Premium Range)</span>
+            <button type="button" class="quick-clear-btn" onclick="resetRulePrev()" style="margin-left:auto;" title="Reset Rule 2 to ₹38-₹48">↺ Reset</button>
           </div>
 
           <!-- Clause 3: Candlestick Action -->
@@ -2847,6 +3002,7 @@
             </select>
             <span class="clause-op">Tolerance ±</span>
             <span>₹</span> <input type="number" id="ruleTol" class="clause-input" value="0.00" step="0.05" style="width:65px;">
+            <button type="button" class="quick-clear-btn" onclick="resetRuleCandle()" style="margin-left:auto;" title="Reset Candlestick Rule">↺ Reset</button>
           </div>
 
           <!-- Clause 4: UT Bot Action -->
@@ -2861,6 +3017,7 @@
             </select>
             <span class="clause-op">Sensitivity ATR</span>
             <input type="number" id="ruleUtSens" class="clause-input" value="1" min="1" max="10" style="width:55px;">
+            <button type="button" class="quick-clear-btn" onclick="resetRuleUt()" style="margin-left:auto;" title="Reset UT Bot Rule">↺ Reset</button>
           </div>
 
           <!-- Clause 5: Contract Parameters -->
@@ -2880,13 +3037,15 @@
             </select>
             <span class="clause-field">Min OI</span>
             <input type="number" id="ruleMinOi" class="clause-input" value="0" step="5000" style="width:85px;">
+            <button type="button" class="quick-clear-btn" onclick="resetRuleParams()" style="margin-left:auto;" title="Reset Rule Parameters">↺ Reset</button>
           </div>
 
           <!-- Clause 6: Volume / Untraded -->
           <div class="clause-row">
             <span class="clause-idx">Rule 6</span>
             <label class="clause-toggle"><input type="checkbox" id="ruleExcludeUntraded" checked> <span>[ 0 ] Exclude Untraded Contracts (Volume &gt; 0)</span></label>
-            <span style="color:var(--muted); font-size:11px; margin-left:auto;">Filters out illiquid zero-traded strikes</span>
+            <span style="color:var(--muted); font-size:11px;">Filters out illiquid zero-traded strikes</span>
+            <button type="button" class="quick-clear-btn" onclick="resetRuleUntraded()" style="margin-left:auto;" title="Reset Untraded Rule">↺ Reset</button>
           </div>
         </div>
 
@@ -2907,6 +3066,13 @@
             <span>⚡ Matches:</span> <b id="queryMatchCount">0</b> contracts found
           </div>
         </div>
+      </div>
+
+      <!-- 🏷️ Dynamic Active Filter Chips Bar -->
+      <div class="active-filters-bar" id="activeFiltersBar">
+        <span class="active-filters-label"><span>🔍</span> Active Filters:</span>
+        <div class="active-filter-chips" id="activeFilterChips"></div>
+        <button type="button" class="clear-all-chips-btn" onclick="clearAllScreenerFilters()" title="Clear all active filters and reset to defaults">🧹 Clear All Filters</button>
       </div>
 
       <!-- 📋 Results Filter Toolbar -->
@@ -4764,6 +4930,7 @@ function filterAndRender() {
   });
 
   renderTable(rows);
+  updateActiveFilterChips();
 }
 
 /* ============================================================
@@ -6953,6 +7120,233 @@ function clearAllAlertsPrompt() {
   showToast('🗑️ Cleared all price alerts', 'info');
 }
 
+function clearSymSelect() {
+  const sel = document.getElementById('symSelect');
+  if (sel) sel.value = '__ALL__';
+  const inp = document.getElementById('symSearch');
+  if (inp) inp.value = '';
+  const clr = document.getElementById('symSearchClearBtn');
+  if (clr) clr.style.display = 'none';
+  showToast('↺ Symbol reset to All Underlyings', 'info');
+  runServerScan();
+}
+
+function resetInstrGroup() {
+  const i1 = document.getElementById('instIdx');
+  const i2 = document.getElementById('instStk');
+  if (i1) i1.checked = true;
+  if (i2) i2.checked = true;
+  showToast('↺ Instrument type reset to Both (Indices + Stocks)', 'info');
+  runServerScan();
+}
+
+function resetExpSelect() {
+  const sel = document.getElementById('expSelect');
+  if (sel) sel.value = 'nearest';
+  showToast('↺ Expiry reset to Nearest', 'info');
+  runServerScan();
+}
+
+function resetOptType() {
+  document.querySelectorAll('#optTypeSeg button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === 'BOTH');
+  });
+  showToast('↺ Option type reset to Both (CE + PE)', 'info');
+  runServerScan();
+}
+
+function resetShowMode() {
+  const sel = document.getElementById('showMode');
+  if (sel) sel.value = 'matches';
+  showToast('↺ Show filter reset to Only matching contracts', 'info');
+  runServerScan();
+}
+
+function toggleLowFilter(enable) {
+  const chk = document.getElementById('lowOn');
+  if (chk) chk.checked = enable;
+  showToast(enable ? '✓ Day Low filter enabled' : '✕ Day Low filter disabled', 'info');
+  runServerScan();
+}
+
+function togglePrevFilter(enable) {
+  const chk = document.getElementById('prevOn');
+  if (chk) chk.checked = enable;
+  showToast(enable ? '✓ Prev Close filter enabled' : '✕ Prev Close filter disabled', 'info');
+  runServerScan();
+}
+
+function resetRuleLow() {
+  const chk = document.getElementById('ruleLowOn');
+  if (chk) chk.checked = true;
+  const f = document.getElementById('ruleLowFrom');
+  if (f) f.value = '5.80';
+  const t = document.getElementById('ruleLowTo');
+  if (t) t.value = '8.45';
+  showToast('↺ Rule 1 Day Low reset to ₹5.80–₹8.45', 'info');
+  runChartinkQueryScan();
+}
+
+function resetRulePrev() {
+  const chk = document.getElementById('rulePrevOn');
+  if (chk) chk.checked = true;
+  const f = document.getElementById('rulePrevFrom');
+  if (f) f.value = '38.00';
+  const t = document.getElementById('rulePrevTo');
+  if (t) t.value = '48.00';
+  showToast('↺ Rule 2 Prev Close reset to ₹38–₹48', 'info');
+  runChartinkQueryScan();
+}
+
+function resetRuleCandle() {
+  const c = document.getElementById('ruleCandleMode');
+  if (c) c.value = 'ALL';
+  const tol = document.getElementById('ruleTol');
+  if (tol) tol.value = '0.00';
+  showToast('↺ Candlestick Action rule reset', 'info');
+  runChartinkQueryScan();
+}
+
+function resetRuleUt() {
+  const u = document.getElementById('ruleUtAction');
+  if (u) u.value = 'ALL';
+  const s = document.getElementById('ruleUtSens');
+  if (s) s.value = '1';
+  showToast('↺ UT Bot rule reset', 'info');
+  runChartinkQueryScan();
+}
+
+function resetRuleParams() {
+  const e = document.getElementById('ruleExpiry');
+  if (e) e.value = 'nearest';
+  const t = document.getElementById('ruleOptType');
+  if (t) t.value = 'BOTH';
+  const o = document.getElementById('ruleMinOi');
+  if (o) o.value = '0';
+  showToast('↺ Contract Parameter rules reset', 'info');
+  runChartinkQueryScan();
+}
+
+function resetRuleUntraded() {
+  const u = document.getElementById('ruleExcludeUntraded');
+  if (u) u.checked = true;
+  showToast('↺ Untraded rule reset to Exclude (Vol > 0)', 'info');
+  runChartinkQueryScan();
+}
+
+function updateActiveFilterChips() {
+  const container = document.getElementById('activeFiltersBar');
+  const chipsWrap = document.getElementById('activeFilterChips');
+  if (!container || !chipsWrap) return;
+
+  const chips = [];
+
+  // 1. Table Search Query
+  if (currentTableSearchQuery && currentTableSearchQuery.trim()) {
+    chips.push({
+      label: `🔍 Search: "${currentTableSearchQuery.trim()}"`,
+      remove: 'clearResultsSearch()'
+    });
+  }
+
+  // 2. Underlying Symbol Search
+  const symSearch = document.getElementById('symSearch');
+  if (symSearch && symSearch.value.trim()) {
+    chips.push({
+      label: `🔤 Symbol: "${symSearch.value.trim()}"`,
+      remove: 'clearSymSearch()'
+    });
+  }
+
+  // 3. Underlying Symbol Dropdown
+  const symSelect = document.getElementById('symSelect');
+  if (symSelect && symSelect.value && symSelect.value !== '__ALL__') {
+    chips.push({
+      label: `🏢 Underlying: ${symSelect.value}`,
+      remove: 'clearSymSelect()'
+    });
+  }
+
+  // 4. Expiry
+  const expSelect = document.getElementById('expSelect');
+  if (expSelect && expSelect.value && expSelect.value !== 'nearest') {
+    chips.push({
+      label: `📅 Expiry: ${expSelect.value}`,
+      remove: 'resetExpSelect()'
+    });
+  }
+
+  // 5. Option Type
+  const activeOptBtn = document.querySelector('#optTypeSeg button.active');
+  if (activeOptBtn && activeOptBtn.dataset.v !== 'BOTH') {
+    chips.push({
+      label: `🎯 Type: ${activeOptBtn.dataset.v}`,
+      remove: 'resetOptType()'
+    });
+  }
+
+  // 6. Day Low
+  const lowOn = document.getElementById('lowOn');
+  const lowFrom = document.getElementById('lowFrom');
+  const lowTo = document.getElementById('lowTo');
+  if (lowOn && lowOn.checked && lowFrom && lowTo) {
+    chips.push({
+      label: `📉 Day Low: ₹${lowFrom.value}–₹${lowTo.value}`,
+      remove: 'toggleLowFilter(false)'
+    });
+  }
+
+  // 7. Previous Close
+  const prevOn = document.getElementById('prevOn');
+  const prevFrom = document.getElementById('prevFrom');
+  const prevTo = document.getElementById('prevTo');
+  if (prevOn && prevOn.checked && prevFrom && prevTo) {
+    chips.push({
+      label: `📈 Prev Cl: ₹${prevFrom.value}–₹${prevTo.value}`,
+      remove: 'togglePrevFilter(false)'
+    });
+  }
+
+  // 8. Tolerance
+  const tol = document.getElementById('tol');
+  if (tol && parseFloat(tol.value) > 0) {
+    chips.push({
+      label: `🎯 Tol: ±₹${tol.value}`,
+      remove: 'resetToleranceDefault()'
+    });
+  }
+
+  // 9. Min OI
+  const minOi = document.getElementById('minOi');
+  if (minOi && parseInt(minOi.value) > 0) {
+    chips.push({
+      label: `📊 Min OI: ${Number(minOi.value).toLocaleString()}`,
+      remove: 'resetOiDefault()'
+    });
+  }
+
+  // 10. Quick Table Pill Filter
+  if (currentQuickFilter && currentQuickFilter !== 'ALL') {
+    chips.push({
+      label: `⚡ Filter: ${currentQuickFilter}`,
+      remove: "setQuickTableFilter('ALL')"
+    });
+  }
+
+  if (chips.length > 0) {
+    container.style.display = 'flex';
+    chipsWrap.innerHTML = chips.map(c => `
+      <span class="active-filter-chip">
+        ${c.label}
+        <span class="chip-remove" onclick="${c.remove}" title="Remove this filter">✕</span>
+      </span>
+    `).join('');
+  } else {
+    container.style.display = 'none';
+    chipsWrap.innerHTML = '';
+  }
+}
+
 // Initial Boot
 initAmbientBackground();
 initLiveClock();
@@ -6961,6 +7355,15 @@ fetchIndexPulse();
 setInterval(fetchIndexPulse, 30000); // Live index options pulse auto-refreshed every 30s
 fetchGlobalMarkets();
 setInterval(fetchGlobalMarkets, 20000); // Live commodities & futures refreshed every 20s
+
+// On mobile / CMF Phone 2 viewports (width <= 768px), collapse sidebar filters by default so live data is immediately visible
+if (window.innerWidth <= 768) {
+  const sidebar = document.getElementById('sidebarFiltersPanel');
+  const arrow = document.getElementById('filterToggleArrow');
+  if (sidebar) sidebar.classList.add('collapsed');
+  if (arrow) arrow.textContent = '▼ Show Filters (Tap to Expand)';
+}
+
 initStatus().then(() => {
   runServerScan();
 });
