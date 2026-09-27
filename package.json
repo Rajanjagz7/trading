@@ -1,0 +1,24 @@
+{
+  "name": "rajan",
+  "version": "1.0.0",
+  "description": "A high-performance automated API and web scanner for the National Stock Exchange of India (NSE) F&O options market.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rajanjagz7/trading.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Rajanjagz7/trading/issues"
+  },
+  "homepage": "https://github.com/Rajanjagz7/trading#readme",
+  "dependencies": {
+    "@mathieuc/tradingview": "github:Mathieu2301/TradingView-API"
+  }
+}

@@ -1,6 +1,10 @@
 {
   "builds": [
     {
+      "src": "api/tv.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "api/index.py",
       "use": "@vercel/python"
     },
@@ -10,6 +14,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/api/tv(.*)",
+      "dest": "api/tv.js"
+    },
     {
       "src": "/api/(.*)",
       "dest": "api/index.py"

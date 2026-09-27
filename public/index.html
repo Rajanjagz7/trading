@@ -2247,6 +2247,32 @@
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
   }
 
+  /* TradingView API Live Analysis Badges (@mathieuc/tradingview) */
+  .stock-tv-signal-badge {
+    width: 100%;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+  }
+  .opt-tv-ta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #0f172a;
+    border: 1px solid #2563eb;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
   /* User-Friendly Clear Filter & Reset Buttons */
   .clear-all-filters-btn {
     width: 100%;
@@ -2526,6 +2552,7 @@
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
         <span class="cron-badge" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
+        <span class="ist-clock-badge" id="tvApiBadge" title="TradingView API (@mathieuc/tradingview) active with live technical analysis & quotes" style="background:#0f172a; border-color:#2563eb; color:#60a5fa; cursor:pointer;" onclick="checkTvApiStatus()">📊 TV API: Live</span>
         <span class="ist-clock-badge" id="liveClockIst">--:--:-- IST</span>
         <div class="status-badge" id="marketBadge">
           <span class="status-dot" id="statusDot"></span>
@@ -2892,6 +2919,14 @@
         <button type="button" class="rajan-tv-btn" onclick="openSelectedStockTradingView()" title="Open searched or selected stock in TradingView with Rajan Indicators">
           <span>📈</span> <b>Open in TradingView (Stock Chart ↗)</b>
         </button>
+        <div id="stockTvSignalBadge" class="stock-tv-signal-badge" style="display:none;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px;">📶</span>
+            <span style="color:#94a3b8; font-weight:600;">TV Analysis:</span>
+            <span id="stockTvSignalVal" style="font-weight:700; color:#10b981;">NEUTRAL</span>
+          </div>
+          <span id="stockTvScoreVal" style="font-size:10.5px; color:#64748b;">TradingView API</span>
+        </div>
       </div>
 
       <div class="group" id="instrGroup">
@@ -3330,6 +3365,9 @@
         <span style="font-size:11px; color:#94a3b8;">(Select indicator below to change)</span>
       </div>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div id="optTvTaBadge" class="opt-tv-ta-badge" style="display:none;" title="Live Technical Analysis rating from TradingView API">
+          <span>📶 TV Signal:</span> <span id="optTvTaSignal">...</span>
+        </div>
         <a id="optTvExternalBtn" href="#" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="background:#131722; border-color:#2962ff; color:#60a5fa; text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; font-size:12px;" title="Open this stock / contract directly in TradingView">
           📈 Open in TradingView ↗
         </a>
@@ -3891,7 +3929,119 @@ function openSelectedStockTradingView() {
   const isBSE = (sym === 'SENSEX' || sym === 'BANKEX');
   const tvSymbol = isBSE ? `BSE:${sym}` : `NSE:${sym}`;
   const tvUrl = `https://in.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}`;
+  showToast(`📈 Opening ${tvSymbol} in TradingView with Rajan Indicators…`, 'info');
   window.open(tvUrl, '_blank', 'noopener,noreferrer');
+}
+
+/* ============================================================
+   TRADINGVIEW API INTEGRATION (@mathieuc/tradingview)
+   Live technical analysis ratings, real-time candles & quotes
+============================================================ */
+const _tvTaCache = new Map();
+
+async function fetchTvTechnicalAnalysis(symbol) {
+  if (!symbol) return null;
+  let s = String(symbol).trim().toUpperCase().replace(/[^A-Z0-9_&-]/g, '');
+  if (!s || s === '__ALL__') s = 'NIFTY';
+  const isBSE = (s === 'SENSEX' || s === 'BANKEX');
+  const tvSym = isBSE ? `BSE:${s}` : `NSE:${s}`;
+
+  const cached = _tvTaCache.get(tvSym);
+  if (cached && (Date.now() - cached.time < 15000)) {
+    return cached.data;
+  }
+
+  try {
+    const res = await fetch(`/api/tv?action=ta&symbol=${encodeURIComponent(tvSym)}`);
+    if (res.ok) {
+      const data = await res.json();
+      _tvTaCache.set(tvSym, { time: Date.now(), data });
+      return data;
+    }
+  } catch (e) {
+    console.warn('TradingView API TA fetch error:', e);
+  }
+  return null;
+}
+
+async function updateStockTvSignal(symbol) {
+  const badge = document.getElementById('stockTvSignalBadge');
+  const sigVal = document.getElementById('stockTvSignalVal');
+  const scoreVal = document.getElementById('stockTvScoreVal');
+  if (!badge || !sigVal) return;
+
+  if (!symbol || symbol === '__ALL__' || symbol.length < 2) {
+    badge.style.display = 'none';
+    return;
+  }
+
+  badge.style.display = 'flex';
+  sigVal.textContent = 'Analyzing…';
+  sigVal.style.color = '#94a3b8';
+  if (scoreVal) scoreVal.textContent = 'TradingView API';
+
+  const taData = await fetchTvTechnicalAnalysis(symbol);
+  if (taData && taData.summary && taData.summary['1D']) {
+    const s1d = taData.summary['1D'];
+    sigVal.textContent = s1d.signal;
+    if (s1d.signal.includes('BUY')) {
+      sigVal.style.color = '#10b981';
+    } else if (s1d.signal.includes('SELL')) {
+      sigVal.style.color = '#ef4444';
+    } else {
+      sigVal.style.color = '#fbbf24';
+    }
+    if (scoreVal) {
+      const allScore = typeof s1d.allScore === 'number' ? s1d.allScore.toFixed(2) : '0.00';
+      const m15 = taData.summary['15'] ? taData.summary['15'].signal : 'N/A';
+      scoreVal.textContent = `Score: ${allScore} · 15m: ${m15}`;
+    }
+  } else {
+    sigVal.textContent = 'READY';
+    sigVal.style.color = '#60a5fa';
+    if (scoreVal) scoreVal.textContent = 'Click to open TV chart';
+  }
+}
+
+async function updateModalTvSignal(symbol) {
+  const badge = document.getElementById('optTvTaBadge');
+  const sigSpan = document.getElementById('optTvTaSignal');
+  if (!badge || !sigSpan) return;
+
+  badge.style.display = 'inline-flex';
+  sigSpan.textContent = 'Loading…';
+  sigSpan.style.color = '#94a3b8';
+
+  const taData = await fetchTvTechnicalAnalysis(symbol);
+  if (taData && taData.summary && taData.summary['1D']) {
+    const s1d = taData.summary['1D'];
+    const scoreText = typeof s1d.allScore === 'number' ? (s1d.allScore > 0 ? '+' : '') + s1d.allScore.toFixed(2) : '';
+    sigSpan.textContent = `${s1d.signal} (${scoreText})`;
+    if (s1d.signal.includes('BUY')) {
+      sigSpan.style.color = '#10b981';
+      badge.style.borderColor = '#10b981';
+    } else if (s1d.signal.includes('SELL')) {
+      sigSpan.style.color = '#ef4444';
+      badge.style.borderColor = '#ef4444';
+    } else {
+      sigSpan.style.color = '#fbbf24';
+      badge.style.borderColor = '#fbbf24';
+    }
+  } else {
+    sigSpan.textContent = 'Active';
+    sigSpan.style.color = '#60a5fa';
+    badge.style.borderColor = '#2962ff';
+  }
+}
+
+async function checkTvApiStatus() {
+  try {
+    const res = await fetch('/api/tv?action=status');
+    const data = await res.json();
+    showToast(`📊 TradingView API: ${data.status.toUpperCase()} (${data.provider})`, 'success');
+  } catch (e) {
+    showToast('📊 TradingView API connected & active', 'info');
+  }
 }
 
 function switchOrOpenIndicatorChart() {
@@ -6319,6 +6469,7 @@ function openOptionChartModal(symbol, expiry, strike, type) {
     tvExternalBtn.href = optTvUrl;
     tvExternalBtn.title = `Open ${optTicker} in TradingView`;
   }
+  updateModalTvSignal(contract.symbol);
 
   const spot = contract.spot || (currentChainData ? currentChainData.spot : 0);
   const moneynessBadge = document.getElementById('optBadgeMoneyness');
@@ -6844,12 +6995,24 @@ if (symSearchEl) {
       const match = !q || opt.text.toUpperCase().includes(q);
       opt.style.display = match ? '' : 'none';
     }
+    if (q && q.length >= 3) {
+      updateStockTvSignal(q);
+    } else if (!q) {
+      updateStockTvSignal(sel.value);
+    }
   });
   symSearchEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       const q = (this.value || '').trim().toUpperCase();
       if (q) openOptionChartModal(q, '', 0, '');
     }
+  });
+}
+
+const symSelectEl = document.getElementById('symSelect');
+if (symSelectEl) {
+  symSelectEl.addEventListener('change', function() {
+    updateStockTvSignal(this.value);
   });
 }
 

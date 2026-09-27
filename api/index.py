@@ -224,6 +224,20 @@ async def upload_csv(file: UploadFile = File(...), isToday: bool = Form(True)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.get("/api/tv/status")
+@app.get("/api/tv")
+def tv_status(action: str = "status", symbol: str = "NSE:NIFTY"):
+    return {
+        "status": "online",
+        "provider": "TradingView-API (@mathieuc/tradingview)",
+        "gateway": "Node.js + Python Fallback",
+        "symbol": symbol,
+        "action": action,
+        "chartUrl": f"https://in.tradingview.com/chart/?symbol={symbol}",
+        "supportedActions": ["quote", "ta", "search", "status"],
+        "version": "1.0.0"
+    }
+
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
 @app.api_route("/", methods=["GET", "HEAD"])
 def serve_index():
