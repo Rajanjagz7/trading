@@ -4,8 +4,17 @@ import csv
 import json
 import time
 import zipfile
+import concurrent.futures
 from datetime import datetime
 from curl_cffi import requests
+
+# SENSEX and India VIX have no NSE bhavcopy/F&O source at all (SENSEX is a BSE
+# index, and BSE's own API hard-blocks this app's requests) — Yahoo Finance's
+# public chart API gives a plain index quote for both with no auth needed.
+YAHOO_INDEX_SYMBOL = {
+    "SENSEX": "^BSESN",
+    "VIX": "^INDIAVIX",
+}
 
 # Bundled data cache (read-only on Vercel)
 STATIC_CACHE_DIR = os.path.join(os.path.dirname(__file__), "data_cache")
@@ -81,7 +90,7 @@ class NSEService:
         except Exception as e:
             print(f"[NSE] Session init error: {e}")
 
-    def get_market_status(self):
+    def _fetch_nse_market_status(self):
         s = self._get_session()
         try:
             r = s.get("https://www.nseindia.com/api/marketStatus", headers={
@@ -97,23 +106,66 @@ class NSEService:
                     "niftyLast": cm.get("last", 0),
                     "niftyChange": cm.get("variation", 0),
                     "niftyPct": cm.get("percentChange", 0),
-                    "todayDateLoaded": self.today_date,
-                    "prevDateLoaded": self.prev_date,
-                    "totalLoaded": len(self.today_rows),
-                    "version": "2.2.0",
-                    "buildTime": "2026-09-27T07:30:00Z"
                 }
         except Exception as e:
             print(f"[NSE] marketStatus error: {e}")
-        return {
-            "marketStatus": "Close",
-            "tradeDate": self.today_date or "",
+        return {"marketStatus": "Close", "tradeDate": self.today_date or ""}
+
+    def _fetch_yahoo_index_quote(self, key):
+        """Last close + change for SENSEX/VIX via Yahoo's public chart API —
+        neither has any NSE bhavcopy source, and BSE's own API blocks this app."""
+        yahoo_symbol = YAHOO_INDEX_SYMBOL[key]
+        try:
+            s = self._get_session()
+            r = s.get(
+                f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}",
+                params={"range": "5d", "interval": "1d"},
+                timeout=5,
+            )
+            if r.status_code != 200:
+                return None
+            result = r.json()["chart"]["result"][0]
+            meta = result.get("meta", {})
+            last = meta.get("regularMarketPrice")
+            prev = meta.get("previousClose") or meta.get("chartPreviousClose")
+            if not last:
+                return None
+            change = round(last - prev, 2) if prev else 0.0
+            pct = round((change / prev) * 100.0, 2) if prev else 0.0
+            return {"last": round(last, 2), "change": change, "pct": pct}
+        except Exception as e:
+            print(f"[Yahoo] {key} quote error: {e}")
+            return None
+
+    def get_market_status(self):
+        # Run NSE's status call and the two Yahoo quotes concurrently — none of
+        # this should make page-load status noticeably slower than fetching
+        # NIFTY's status alone did before.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+            f_nse = ex.submit(self._fetch_nse_market_status)
+            f_sensex = ex.submit(self._fetch_yahoo_index_quote, "SENSEX")
+            f_vix = ex.submit(self._fetch_yahoo_index_quote, "VIX")
+            nse_status = f_nse.result()
+            sensex = f_sensex.result()
+            vix = f_vix.result()
+
+        status = {
+            **nse_status,
             "todayDateLoaded": self.today_date,
             "prevDateLoaded": self.prev_date,
             "totalLoaded": len(self.today_rows),
             "version": "2.2.0",
             "buildTime": "2026-09-27T07:30:00Z"
         }
+        if sensex:
+            status["sensexLast"] = sensex["last"]
+            status["sensexChange"] = sensex["change"]
+            status["sensexPct"] = sensex["pct"]
+        if vix:
+            status["vixLast"] = vix["last"]
+            status["vixChange"] = vix["change"]
+            status["vixPct"] = vix["pct"]
+        return status
 
     def fetch_latest_bhavcopy(self, force_refresh=False):
         s = self._get_session()

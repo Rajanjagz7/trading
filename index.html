@@ -2660,8 +2660,8 @@
         <span class="index-ticker-ex">BSE INDEX</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="idxSensexVal">81,424.80</span>
-        <span class="index-ticker-chg pos" id="idxSensexChg">▲ +482.10 (+0.60%)</span>
+        <span class="index-ticker-val" id="idxSensexVal">–</span>
+        <span class="index-ticker-chg" id="idxSensexChg"></span>
       </div>
     </div>
     <div class="index-ticker-card" onclick="openOptionChartModal('NIFTY MIDCAP', '', 0, '')" style="cursor:pointer;" title="Click to view NIFTY MIDCAP chart with fitted indicators">
@@ -2670,8 +2670,8 @@
         <span class="index-ticker-ex">NSE SELECT</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="idxMidcapVal">13,105.20</span>
-        <span class="index-ticker-chg pos" id="idxMidcapChg">▲ +48.90 (+0.37%)</span>
+        <span class="index-ticker-val" id="idxMidcapVal">–</span>
+        <span class="index-ticker-chg" id="idxMidcapChg"></span>
       </div>
     </div>
   </div>
@@ -3752,6 +3752,10 @@ let currentChainSymbol = 'NIFTY';
 let currentChainExpiry = '';
 let currentChainData = null;
 let currentSelectedContract = null;
+// Populated from /api/status once it resolves — lets the option-chain "no
+// data" messages for indices with a real quote but no F&O chain (SENSEX)
+// still show the real close instead of a bare "no data" message.
+let knownIndexQuotes = {};
 let currentHubStratKey = 'ut';
 let currentIndKey = 'ut';
 let currentQuickFilter = 'ALL';
@@ -5605,13 +5609,18 @@ async function fetchIndexPulse() {
       badge.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kolkata' })} IST`;
     }
 
-    // This endpoint is the only place BankNifty's real spot/change is available
-    // (unlike NIFTY, /api/status has no BankNifty field) — use it to keep the
-    // BankNifty ticker card in the top rail live instead of its static placeholder.
+    // This endpoint is the only place BankNifty/MidCap's real spot+change is
+    // available (unlike NIFTY, /api/status has no field for either) — use it to
+    // keep those ticker cards in the top rail live instead of static placeholders.
     if (data.BANKNIFTY && data.BANKNIFTY.spot > 0) {
       const bankVal = document.getElementById('idxBankVal');
       if (bankVal) bankVal.textContent = fmtNum(data.BANKNIFTY.spot);
       renderTickerChange('idxBankChg', data.BANKNIFTY.change, data.BANKNIFTY.changePct);
+    }
+    if (data.MIDCPNIFTY && data.MIDCPNIFTY.spot > 0) {
+      const midcapVal = document.getElementById('idxMidcapVal');
+      if (midcapVal) midcapVal.textContent = fmtNum(data.MIDCPNIFTY.spot);
+      renderTickerChange('idxMidcapChg', data.MIDCPNIFTY.change, data.MIDCPNIFTY.changePct);
     }
 
     const indices = ['NIFTY', 'BANKNIFTY', 'SENSEX', 'FINNIFTY', 'MIDCPNIFTY'];
@@ -6115,6 +6124,22 @@ async function initStatus() {
       renderTickerChange('idxNiftyChg', data.niftyChange, data.niftyPct);
     }
 
+    // SENSEX and India VIX have no NSE bhavcopy source at all (SENSEX is BSE-only,
+    // and BSE's API blocks this app outright) — the backend now fetches both from
+    // Yahoo Finance instead. If that fetch fails, leave the honest "–" placeholder
+    // rather than showing a fabricated number.
+    if (typeof data.sensexLast === 'number' && data.sensexLast > 0) {
+      const sensexVal = document.getElementById('idxSensexVal');
+      if (sensexVal) sensexVal.textContent = fmtNum(data.sensexLast);
+      renderTickerChange('idxSensexChg', data.sensexChange, data.sensexPct);
+      knownIndexQuotes.SENSEX = { last: data.sensexLast, change: data.sensexChange, pct: data.sensexPct };
+    }
+    if (typeof data.vixLast === 'number' && data.vixLast > 0) {
+      const vixVal = document.getElementById('idxVixVal');
+      if (vixVal) { vixVal.textContent = fmtNum(data.vixLast); vixVal.removeAttribute('title'); }
+      renderTickerChange('idxVixChg', data.vixChange, data.vixPct);
+    }
+
     await loadSymbols();
   } catch (e) {
     console.error('Status check error:', e);
@@ -6241,8 +6266,15 @@ async function loadIndicatorOptionChain(symbol, expiry, indicator) {
     const res = await fetch(url);
     const data = await res.json();
     if (data.error) {
+      // If we have a real quote for this index (SENSEX, via Yahoo — no NSE
+      // bhavcopy has it) show its actual close instead of a bare error, even
+      // though there's still no F&O option chain to scan for it.
+      const known = knownIndexQuotes[currentIndSymbol];
+      const errMsg = known
+        ? `${currentIndSymbol} closed at ₹${fmtNum(known.last)} — no F&O option chain data available for this index (BSE options aren't in this app's data source).`
+        : data.error;
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:30px; color:#f87171;">⚠️ ${data.error}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:30px; color:#f87171;">⚠️ ${errMsg}</td></tr>`;
       }
       // Clear the header/badges instead of leaving the previous symbol's spot,
       // ATM strike and counts on screen — otherwise switching to an unsupported
@@ -6250,9 +6282,11 @@ async function loadIndicatorOptionChain(symbol, expiry, indicator) {
       // last-loaded symbol's stale numbers under the newly-selected symbol's name.
       currentIndChainData = null;
       const spotAtmErr = document.getElementById('indAtmSpotBadge');
-      if (spotAtmErr) spotAtmErr.textContent = `${currentIndSymbol} Spot: – | ATM Strike: –`;
+      if (spotAtmErr) spotAtmErr.textContent = known
+        ? `${currentIndSymbol} Spot: ₹${fmtNum(known.last)} (index only — no options chain) | ATM Strike: –`
+        : `${currentIndSymbol} Spot: – | ATM Strike: –`;
       const spotValErr = document.getElementById('indChainSpotVal');
-      if (spotValErr) spotValErr.textContent = '₹–';
+      if (spotValErr) spotValErr.textContent = known ? `₹${fmtNum(known.last)}` : '₹–';
       const atmValErr = document.getElementById('indChainAtmVal');
       if (atmValErr) atmValErr.textContent = '–';
       const buyCountErr = document.getElementById('indChainBuyCount');
@@ -6689,7 +6723,16 @@ function renderOptionModalContract(contract) {
 // Symbols with no NSE F&O chain at all — /api/chain would just 404/error for
 // these every time, so skip the round-trip entirely and go straight to the
 // synthetic snapshot instead of waiting on a request that can only fail.
-const NON_NSE_CHAIN_SYMBOLS = new Set(['INDIA VIX', 'GOLD', 'CRUDEOIL', 'BTC', 'BITCOIN', 'DOW', 'SP500', 'NASDAQ']);
+const NON_NSE_CHAIN_SYMBOLS = new Set(['INDIA VIX', 'SENSEX', 'GOLD', 'CRUDEOIL', 'BTC', 'BITCOIN', 'DOW', 'SP500', 'NASDAQ']);
+
+function contractFromKnownQuote(symbol, quote) {
+  return {
+    symbol, expiry: '', strike: 0, type: '',
+    open: quote.last, high: quote.last, low: quote.last, close: quote.last,
+    prevClose: quote.change ? quote.last - quote.change : quote.last,
+    spot: quote.last, vol: 0, oi: 0
+  };
+}
 
 async function openOptionChartModal(symbol, expiry, strike, type) {
   const local = findLocalContract(symbol, expiry, strike, type);
@@ -6697,7 +6740,18 @@ async function openOptionChartModal(symbol, expiry, strike, type) {
     renderOptionModalContract(local);
     return;
   }
-  if (NON_NSE_CHAIN_SYMBOLS.has((symbol || '').toUpperCase())) {
+  const symUpper = (symbol || '').toUpperCase();
+  const isSpotOnly = !(strike > 0 && type);
+  // Some symbols have no F&O option chain but DO have a real index quote
+  // (SENSEX via Yahoo, since BSE has no F&O data source here) — use that for
+  // a plain "where did it close" chart instead of a fabricated number, when
+  // the request isn't for a specific (nonexistent) option contract.
+  const known = isSpotOnly ? knownIndexQuotes[symUpper === 'SENSEX' ? 'SENSEX' : ''] : null;
+  if (known) {
+    renderOptionModalContract(contractFromKnownQuote(symbol, known));
+    return;
+  }
+  if (NON_NSE_CHAIN_SYMBOLS.has(symUpper)) {
     renderOptionModalContract(syntheticFallbackContract(symbol, expiry, strike, type));
     return;
   }
@@ -6953,15 +7007,21 @@ async function loadChainData() {
     const res = await fetch(url);
     const data = await res.json();
     if (data.error) {
-      showToast(data.error, 'error');
+      const known = knownIndexQuotes[sym];
+      const errMsg = known
+        ? `${sym} closed at ₹${fmtNum(known.last)} — no F&O option chain data available (BSE options aren't in this app's data source).`
+        : data.error;
+      showToast(errMsg, 'error');
       // Same stale-data problem as the indicator chain panel: without this,
       // the modal keeps showing the previously-loaded symbol's spot/ATM/rows
       // under the newly-selected (unsupported) symbol's title.
       currentChainData = null;
-      document.getElementById('chainTitle').textContent = `Option Chain: ${sym} — Unavailable`;
-      document.getElementById('chainSub').textContent = 'No option-chain data available for this symbol.';
+      document.getElementById('chainTitle').textContent = `Option Chain: ${sym}${known ? '' : ' — Unavailable'}`;
+      document.getElementById('chainSub').textContent = known
+        ? `Spot: ₹${fmtNum(known.last)} (index only — no options chain)`
+        : 'No option-chain data available for this symbol.';
       const tbodyErr = document.getElementById('chainTableBody');
-      if (tbodyErr) tbodyErr.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:30px; color:#f87171;">⚠️ ${data.error}</td></tr>`;
+      if (tbodyErr) tbodyErr.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:30px; color:#f87171;">⚠️ ${errMsg}</td></tr>`;
       return;
     }
 
