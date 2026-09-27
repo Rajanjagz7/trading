@@ -339,9 +339,19 @@ class NSEService:
                 "chgPct": round(((puts_sorted[0]["close"] - puts_sorted[0]["prevClose"]) / puts_sorted[0]["prevClose"]) * 100.0, 1) if puts_sorted[0]["prevClose"] > 0 else 0.0
             } if puts_sorted else None
 
+            prev_spot = 0.0
+            for prow in self.prev_map.values():
+                if prow.get("symbol") == sym and prow.get("spot", 0) > 0:
+                    prev_spot = prow["spot"]
+                    break
+            change = round(spot - prev_spot, 2) if spot > 0 and prev_spot > 0 else 0.0
+            change_pct = round((change / prev_spot) * 100.0, 2) if prev_spot > 0 else 0.0
+
             summary[sym] = {
                 "symbol": sym,
                 "spot": spot,
+                "change": change,
+                "changePct": change_pct,
                 "atmStrike": atm_strike,
                 "expiry": target_exp,
                 "callVol": call_vol,

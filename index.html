@@ -2630,8 +2630,8 @@
         <span class="index-ticker-ex">NSE INDEX</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="idxNiftyVal">24,852.15</span>
-        <span class="index-ticker-chg pos" id="idxNiftyChg">▲ +142.30 (+0.58%)</span>
+        <span class="index-ticker-val" id="idxNiftyVal">–</span>
+        <span class="index-ticker-chg" id="idxNiftyChg"></span>
       </div>
     </div>
     <div class="index-ticker-card" onclick="openOptionChartModal('BANKNIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view BANKNIFTY chart with fitted indicators">
@@ -2640,8 +2640,8 @@
         <span class="index-ticker-ex">NSE INDEX</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="idxBankVal">51,785.40</span>
-        <span class="index-ticker-chg pos" id="idxBankChg">▲ +320.65 (+0.62%)</span>
+        <span class="index-ticker-val" id="idxBankVal">–</span>
+        <span class="index-ticker-chg" id="idxBankChg"></span>
       </div>
     </div>
     <div class="index-ticker-card" onclick="openOptionChartModal('INDIA VIX', '', 0, '')" style="cursor:pointer;" title="Click to view INDIA VIX chart with fitted indicators">
@@ -2650,8 +2650,8 @@
         <span class="index-ticker-ex">VOLATILITY</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="idxVixVal">12.82</span>
-        <span class="index-ticker-chg neg" id="idxVixChg">▼ -0.45 (-3.39%)</span>
+        <span class="index-ticker-val" id="idxVixVal" title="No live India VIX data source is wired up in this app yet">–</span>
+        <span class="index-ticker-chg" id="idxVixChg"></span>
       </div>
     </div>
     <div class="index-ticker-card" onclick="openOptionChartModal('SENSEX', '', 0, '')" style="cursor:pointer;" title="Click to view SENSEX chart with fitted indicators">
@@ -5605,6 +5605,15 @@ async function fetchIndexPulse() {
       badge.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kolkata' })} IST`;
     }
 
+    // This endpoint is the only place BankNifty's real spot/change is available
+    // (unlike NIFTY, /api/status has no BankNifty field) — use it to keep the
+    // BankNifty ticker card in the top rail live instead of its static placeholder.
+    if (data.BANKNIFTY && data.BANKNIFTY.spot > 0) {
+      const bankVal = document.getElementById('idxBankVal');
+      if (bankVal) bankVal.textContent = fmtNum(data.BANKNIFTY.spot);
+      renderTickerChange('idxBankChg', data.BANKNIFTY.change, data.BANKNIFTY.changePct);
+    }
+
     const indices = ['NIFTY', 'BANKNIFTY', 'SENSEX', 'FINNIFTY', 'MIDCPNIFTY'];
     let html = '';
 
@@ -6065,6 +6074,15 @@ async function runLiveScan() {
 /* ============================================================
    STATUS & SYMBOL INITIALIZATION
 ============================================================ */
+function renderTickerChange(elId, change, pct) {
+  const el = document.getElementById(elId);
+  if (!el || typeof change !== 'number' || isNaN(change)) return;
+  const up = change >= 0;
+  el.className = 'index-ticker-chg ' + (up ? 'pos' : 'neg');
+  const pctStr = (typeof pct === 'number' && !isNaN(pct)) ? ` (${up ? '+' : ''}${pct.toFixed(2)}%)` : '';
+  el.textContent = `${up ? '▲' : '▼'} ${up ? '+' : ''}${fmtNum(change)}${pctStr}`;
+}
+
 async function initStatus() {
   try {
     const res = await fetch(`${API_BASE}/api/status`);
@@ -6073,32 +6091,28 @@ async function initStatus() {
     const txt = document.getElementById('marketStatusText');
     const info = document.getElementById('loadedInfo');
 
-    if (data.isMarketOpen) {
-      dot.className = 'status-dot live';
-      txt.textContent = 'Live Market Open';
-    } else {
-      dot.className = 'status-dot';
-      txt.textContent = 'Market Closed';
-    }
+    // /api/status actually returns marketStatus ("Open"/"Close"), todayDateLoaded
+    // and totalLoaded — this used to check isMarketOpen/activeSource/
+    // totalContractsLoaded, none of which the backend ever sends, so this
+    // banner silently showed "Market Closed" / "No settlement data loaded"
+    // regardless of the real state.
+    const isOpen = (data.marketStatus || '').toLowerCase().startsWith('open');
+    dot.className = isOpen ? 'status-dot live' : 'status-dot';
+    txt.textContent = isOpen ? 'Live Market Open' : 'Market Closed';
 
-    if (data.activeSource === 'nse_auto') {
-      info.textContent = `NSE Sync: ${data.todayDate || ''} (${(data.totalContractsLoaded || 0).toLocaleString()} contracts)`;
-    } else if (data.activeSource === 'user_upload') {
-      info.textContent = `Manual upload (${(data.totalContractsLoaded || 0).toLocaleString()} contracts)`;
+    if (data.totalLoaded) {
+      info.textContent = `EOD data: ${data.todayDateLoaded || ''} (${data.totalLoaded.toLocaleString()} contracts)`;
     } else {
       info.textContent = 'No settlement data loaded';
     }
 
-    if (data.indices) {
-      if (data.indices.nifty) {
-        document.getElementById('idxNiftyVal').textContent = fmtNum(data.indices.nifty.close || 24852.15);
-      }
-      if (data.indices.banknifty) {
-        document.getElementById('idxBankVal').textContent = fmtNum(data.indices.banknifty.close || 51785.40);
-      }
-      if (data.indices.vix) {
-        document.getElementById('idxVixVal').textContent = fmtNum(data.indices.vix.close || 12.82);
-      }
+    // Same root cause for the index ticker rail: this read data.indices.nifty.close
+    // (a shape the backend never returns) and always fell back to a hardcoded,
+    // long-stale placeholder price. Use the real fields /api/status sends instead.
+    if (typeof data.niftyLast === 'number' && data.niftyLast > 0) {
+      const niftyVal = document.getElementById('idxNiftyVal');
+      if (niftyVal) niftyVal.textContent = fmtNum(data.niftyLast);
+      renderTickerChange('idxNiftyChg', data.niftyChange, data.niftyPct);
     }
 
     await loadSymbols();
