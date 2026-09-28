@@ -149,3 +149,32 @@ Required headers on every request: `access-token`, `client-id`, `Content-Type: a
 > ⚠️ **Rate limit:** Option Chain API allows **1 request per 3 seconds** per unique underlying/expiry — plan polling intervals accordingly (this is stricter than NSE's own live endpoints used elsewhere in this project).
 
 Docs: [DhanHQ Option Chain API](https://dhanhq.co/docs/v2/option-chain/) · [DhanHQ-py on GitHub](https://github.com/dhan-oss/DhanHQ-py)
+
+
+## 🟠 Upstox Live REST Mode
+
+The live scanner can use Upstox REST market data without changing the existing scanner/filter engine.
+
+Set the following server-side environment variable:
+
+```text
+UPSTOX_ACCESS_TOKEN=your_upstox_access_token
+```
+
+When configured, `/api/live/scan` uses:
+
+- Upstox Option Chain API to obtain the selected expiry/contracts, LTP, OI and volume.
+- Upstox Full Market Quotes V3 to obtain current OHLC and previous-close data.
+- The existing scanner then applies the same Day Low, Previous Close, OI, option type, expiry and indicator rules.
+
+The current frontend already refreshes `/api/live/scan` on its existing polling cycle, so this is **REST snapshot live data**, not a persistent tick WebSocket.
+
+Check:
+
+```text
+GET /api/upstox/status
+```
+
+to verify the server can authenticate to Upstox.
+
+Upstox access tokens have a daily validity window, so token lifecycle/OAuth should be handled separately rather than hard-coding a token in source control.

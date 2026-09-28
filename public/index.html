@@ -3137,6 +3137,8 @@
         <select id="showMode">
           <option value="any" selected>All strikes &amp; contracts</option>
           <option value="matches">Only matching contracts</option>
+          <option value="ol">Only Open = Low (Bullish)</option>
+          <option value="oh">Only Open = High (Bearish)</option>
           <option value="ol_oh">Only Open=Low or Open=High</option>
         </select>
       </div>
@@ -3934,6 +3936,7 @@ let sortKey = 'oi';
 let sortDir = 'desc';
 let currentMode = 'auto';
 let liveTimer = null;
+let scanRequestSeq = 0; // guards against a stale scan response overwriting a newer one
 let currentChainSymbol = 'NIFTY';
 let currentChainExpiry = '';
 let currentChainData = null;
@@ -5325,6 +5328,28 @@ function syncQueryToSidebar() {
   document.getElementById('tol').value = document.getElementById('ruleTol').value;
   document.getElementById('includeUntraded').checked = !document.getElementById('ruleExcludeUntraded').checked;
 
+  // Rule 3 (Candlestick Open=Low / Open=High) is what actually has to drive the
+  // server's "Show" mode -- previously this rule only affected a client-side
+  // re-filter after the fact, while the request itself still went out with
+  // whatever showMode happened to be left over (usually "any"). Under "any"
+  // the server includes a contract if EITHER its Day Low/Prev Close range
+  // matches OR it independently has an Open=Low/High print -- so presets like
+  // "Strategy 2" (which intentionally use a near-passthrough ₹0.05-500 Day Low
+  // range because the real filter is meant to be the candlestick condition)
+  // ended up showing almost every traded contract, including ones with a
+  // ₹0.05 Day Low that have nothing to do with the selected strategy.
+  const candleOnForShow = document.getElementById('ruleCandleOn').checked;
+  const candleModeForShow = document.getElementById('ruleCandleMode').value;
+  let resolvedShowMode;
+  if (candleOnForShow) {
+    resolvedShowMode = candleModeForShow === 'OL' ? 'ol' : candleModeForShow === 'OH' ? 'oh' : 'ol_oh';
+  } else if (document.getElementById('ruleLowOn').checked || document.getElementById('rulePrevOn').checked) {
+    resolvedShowMode = 'matches';
+  } else {
+    resolvedShowMode = 'any';
+  }
+  document.getElementById('showMode').value = resolvedShowMode;
+
   // Rule 5 (Expiry / Option Type / Min OI) only takes effect when its checkbox is on —
   // otherwise fall back to the app's normal defaults (nearest expiry, both option types, no OI floor).
   const paramsOn = document.getElementById('ruleParamsOn').checked;
@@ -5440,6 +5465,7 @@ async function runIndicatorScan(indKey) {
 }
 
 async function runServerScanWithIndicator(indKey) {
+  const mySeq = ++scanRequestSeq;
   const btn = document.getElementById('scanBtn');
   if (btn) {
     btn.textContent = 'Scanning…';
@@ -5460,6 +5486,7 @@ async function runServerScanWithIndicator(indKey) {
       body: JSON.stringify(filters)
     });
     const data = await res.json();
+    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
     if (res.ok) {
       lastResults = data.results || [];
       document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
@@ -5477,7 +5504,7 @@ async function runServerScanWithIndicator(indKey) {
   } catch (e) {
     console.error(e);
   } finally {
-    if (btn) {
+    if (btn && mySeq === scanRequestSeq) {
       btn.textContent = '⚡ Scan Market';
       btn.disabled = false;
     }
@@ -6358,6 +6385,12 @@ function getFilters() {
 }
 
 async function runServerScan() {
+  // Guards against an older in-flight scan (e.g. the initial page-load boot
+  // scan, which can take several seconds to resolve) completing AFTER a
+  // newer one the user just triggered (like clicking a strategy preset) and
+  // silently overwriting its correctly-filtered results with stale/wrong data.
+  const mySeq = ++scanRequestSeq;
+
   const btn = document.getElementById('scanBtn');
   btn.textContent = 'Scanning…';
   btn.disabled = true;
@@ -6373,6 +6406,7 @@ async function runServerScan() {
       body: JSON.stringify(filters)
     });
     const data = await res.json();
+    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
     if (res.ok) {
       lastResults = data.results || [];
       document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
@@ -6387,12 +6421,15 @@ async function runServerScan() {
   } catch (e) {
     console.error(e);
   } finally {
-    btn.textContent = '⚡ Scan Market';
-    btn.disabled = false;
+    if (mySeq === scanRequestSeq) {
+      btn.textContent = '⚡ Scan Market';
+      btn.disabled = false;
+    }
   }
 }
 
 async function runLiveScan() {
+  const mySeq = ++scanRequestSeq;
   const sym = document.getElementById('liveSymbolSelect').value;
   const filters = getFilters();
   const params = new URLSearchParams({
@@ -6413,6 +6450,7 @@ async function runLiveScan() {
   try {
     const res = await fetch(`${API_BASE}/api/live/scan?${params.toString()}`);
     const data = await res.json();
+    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
     if (res.ok) {
       lastResults = data.results || [];
       document.getElementById('liveLastTime').textContent = 'Last updated: ' + (data.liveTimestamp || '');

@@ -10,6 +10,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from .nse_service import nse_service
+from .upstox_service import upstox_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -56,6 +57,11 @@ def get_status():
         status["version"] = "2.2.0"
         status["buildTime"] = "2026-09-27T07:30:00Z"
     return status
+
+@app.get("/api/upstox/status")
+def get_upstox_status():
+    """Authenticated Upstox REST integration status."""
+    return upstox_service.health()
 
 @app.get("/api/indices/pulse")
 def get_indices_pulse():
@@ -209,6 +215,8 @@ def live_scan(
         scan_output["targetExpiry"] = live_res["targetExpiry"]
         scan_output["expiryDates"] = live_res["expiryDates"]
         scan_output["liveTimestamp"] = live_res["timestamp"]
+        scan_output["provider"] = live_res.get("provider", "NSE")
+        scan_output["dataMode"] = live_res.get("mode", "NSE")
         return scan_output
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Live scan error: {str(e)}")

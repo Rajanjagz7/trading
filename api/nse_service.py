@@ -691,6 +691,8 @@ class NSEService:
                 processed.append(item)
             elif show_mode == "oh" and is_oh:
                 processed.append(item)
+            elif show_mode == "ol_oh" and (is_ol or is_oh):
+                processed.append(item)
             elif show_mode == "any" and (is_match or is_ol or is_oh):
                 processed.append(item)
 
