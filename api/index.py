@@ -9,6 +9,32 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
+def _load_env_file():
+    candidates = [
+        os.path.join(os.path.dirname(__file__), "..", ".env"),
+        os.path.join(os.path.dirname(__file__), "..", ".env.local"),
+        os.path.join(os.getcwd(), ".env"),
+        os.path.join(os.getcwd(), ".env.local"),
+        ".env",
+        ".env.local"
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k = k.strip()
+                            v = v.strip().strip("'").strip('"')
+                            if k not in os.environ:
+                                os.environ[k] = v
+            except Exception:
+                pass
+
+_load_env_file()
+
 from .nse_service import nse_service
 from .upstox_service import upstox_service
 
@@ -220,6 +246,72 @@ def live_scan(
         return scan_output
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Live scan error: {str(e)}")
+
+@app.get("/api/upstox/status")
+def upstox_status():
+    return upstox_service.health()
+
+@app.get("/api/live/chain")
+def get_live_chain(symbol: str = "NIFTY", expiry: Optional[str] = None):
+    try:
+        live_res = nse_service.fetch_live_option_chain(symbol=symbol, expiry=expiry)
+        raw_rows = live_res.get("rows", [])
+        if not raw_rows:
+            return live_res
+
+        strikes_map = {}
+        spot = 0.0
+        for r in raw_rows:
+            if r.get("spot"):
+                spot = float(r["spot"])
+            k = float(r["strike"])
+            if k not in strikes_map:
+                strikes_map[k] = {"strike": k, "ce": None, "pe": None}
+            opt_type = r["type"].upper()
+            if opt_type == "CE":
+                strikes_map[k]["ce"] = r
+            elif opt_type == "PE":
+                strikes_map[k]["pe"] = r
+
+        sorted_strikes = sorted(strikes_map.keys())
+        if spot <= 0 and sorted_strikes:
+            spot = sorted_strikes[len(sorted_strikes) // 2]
+
+        atm_strike = min(sorted_strikes, key=lambda x: abs(x - spot)) if sorted_strikes else 0
+        atm_idx = sorted_strikes.index(atm_strike) if atm_strike in sorted_strikes else 0
+        min_i = max(0, atm_idx - 18)
+        max_i = min(len(sorted_strikes), atm_idx + 19)
+        window_strikes = sorted_strikes[min_i:max_i]
+
+        chain_table = [strikes_map[k] for k in window_strikes]
+
+        total_ce_vol = sum((r["ce"]["vol"] if r["ce"] else 0) for r in chain_table)
+        total_pe_vol = sum((r["pe"]["vol"] if r["pe"] else 0) for r in chain_table)
+        tot_vol = total_ce_vol + total_pe_vol
+        call_pct = round((total_ce_vol / tot_vol * 100), 1) if tot_vol > 0 else 50.0
+        put_pct = round(100.0 - call_pct, 1)
+
+        return {
+            "symbol": live_res.get("symbol", symbol.upper()),
+            "spot": spot,
+            "atmStrike": atm_strike,
+            "expiry": live_res.get("targetExpiry"),
+            "allExpiries": live_res.get("expiryDates", []),
+            "rows": chain_table,
+            "totalContracts": len(raw_rows),
+            "provider": live_res.get("provider", "Upstox"),
+            "mode": live_res.get("mode", "REST"),
+            "timestamp": live_res.get("timestamp"),
+            "volumeShare": {
+                "callVol": total_ce_vol,
+                "putVol": total_pe_vol,
+                "callPct": call_pct,
+                "putPct": put_pct,
+                "sentiment": "BULLISH" if call_pct >= 60 else ("BEARISH" if call_pct <= 40 else "NEUTRAL")
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Live chain error: {str(e)}")
 
 @app.post("/api/upload")
 async def upload_csv(file: UploadFile = File(...), isToday: bool = Form(True)):

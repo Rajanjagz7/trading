@@ -7,6 +7,7 @@ import zipfile
 import concurrent.futures
 from datetime import datetime
 from curl_cffi import requests
+from .upstox_service import upstox_service
 
 # SENSEX and India VIX have no NSE bhavcopy/F&O source at all (SENSEX is a BSE
 # index, and BSE's own API hard-blocks this app's requests) — Yahoo Finance's
@@ -421,6 +422,18 @@ class NSEService:
         return summary
 
     def fetch_live_option_chain(self, symbol="NIFTY", expiry=None):
+        symbol = symbol.upper().strip()
+
+        # 1. Try Upstox API directly if configured
+        if upstox_service.is_configured():
+            try:
+                res = upstox_service.fetch_option_chain(symbol=symbol, expiry=expiry)
+                if res and res.get("rows"):
+                    return res
+            except Exception as e:
+                print(f"[Upstox] Live chain error for {symbol}, falling back to NSE: {e}")
+
+        # 2. Existing NSE live-chain implementation kept as fallback
         cache_key = f"{symbol}|{expiry}"
         now = time.time()
         if cache_key in self.live_cache:
@@ -683,18 +696,21 @@ class NSEService:
             if indicator:
                 if show_mode == "all" or is_ind_match:
                     processed.append(item)
-            elif show_mode == "all":
-                processed.append(item)
-            elif show_mode == "matches" and is_match:
-                processed.append(item)
-            elif show_mode == "ol" and is_ol:
-                processed.append(item)
-            elif show_mode == "oh" and is_oh:
-                processed.append(item)
-            elif show_mode == "ol_oh" and (is_ol or is_oh):
-                processed.append(item)
-            elif show_mode == "any" and (is_match or is_ol or is_oh):
-                processed.append(item)
+            elif show_mode == "matches":
+                if is_match:
+                    processed.append(item)
+            elif show_mode == "ol":
+                if is_ol and (not low_on or low_match) and (not prev_on or prev_match):
+                    processed.append(item)
+            elif show_mode == "oh":
+                if is_oh and (not low_on or low_match) and (not prev_on or prev_match):
+                    processed.append(item)
+            elif show_mode == "ol_oh":
+                if (is_ol or is_oh) and (not low_on or low_match) and (not prev_on or prev_match):
+                    processed.append(item)
+            elif show_mode == "all" or show_mode == "any":
+                if (not low_on or low_match) and (not prev_on or prev_match):
+                    processed.append(item)
 
         stat_match = sum(1 for x in processed if x["isMatch"])
         stat_ol = sum(1 for x in processed if x["isOL"])

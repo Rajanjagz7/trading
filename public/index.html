@@ -5220,228 +5220,719 @@ function endTour() {
 }
 
 /* ============================================================
-   CHARTINK PRESET APPLIER
+   CENTRALIZED ACTIVE SCAN CONFIGURATION & STRATEGY ENGINE
+   Single Source of Truth (activeScan) for Screener & Indicator Scans
 ============================================================ */
-function applyPreset(presetKey) {
-  document.querySelectorAll('.preset-pill').forEach(p => {
-    p.classList.toggle('active', p.getAttribute('data-preset') === presetKey);
-  });
 
-  const lowOn = document.getElementById('ruleLowOn');
-  const lowFrom = document.getElementById('ruleLowFrom');
-  const lowTo = document.getElementById('ruleLowTo');
-  const prevOn = document.getElementById('rulePrevOn');
-  const prevFrom = document.getElementById('rulePrevFrom');
-  const prevTo = document.getElementById('rulePrevTo');
-  const candleOn = document.getElementById('ruleCandleOn');
-  const candle = document.getElementById('ruleCandleMode');
-  const tol = document.getElementById('ruleTol');
-  const utOn = document.getElementById('ruleUtOn');
-  const ut = document.getElementById('ruleUtAction');
-  const paramsOn = document.getElementById('ruleParamsOn');
-  const minOi = document.getElementById('ruleMinOi');
-  const optType = document.getElementById('ruleOptType');
-
-  if (presetKey === 'strat1') {
-    lowOn.checked = true; lowFrom.value = "5.80"; lowTo.value = "8.45";
-    prevOn.checked = true; prevFrom.value = "38.00"; prevTo.value = "48.00";
-    candleOn.checked = false; candle.value = "ALL"; tol.value = "0.00";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
-  } else if (presetKey === 'strat2') {
-    lowOn.checked = true; lowFrom.value = "0.05"; lowTo.value = "500";
-    prevOn.checked = false;
-    candleOn.checked = true; candle.value = "OL"; tol.value = "0.00";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
-  } else if (presetKey === 'strat3') {
-    lowOn.checked = true; lowFrom.value = "52.00"; lowTo.value = "58.00";
-    prevOn.checked = true; prevFrom.value = "300.00"; prevTo.value = "349.00";
-    candleOn.checked = false; candle.value = "ALL"; tol.value = "0.00";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_ol') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = true; candle.value = "OL"; tol.value = "0.00";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_oh') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = true; candle.value = "OH"; tol.value = "0.00";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_ut') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = false; candle.value = "ALL";
-    utOn.checked = true; ut.value = "BUY";
-    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_pred') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = false; candle.value = "ALL";
-    utOn.checked = true; ut.value = "BUY";
-    paramsOn.checked = true; minOi.value = "50000"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_quantum') {
-    lowOn.checked = true; lowFrom.value = "35.00"; lowTo.value = "80.00";
-    prevOn.checked = true; prevFrom.value = "250.00"; prevTo.value = "500.00";
-    candleOn.checked = false; candle.value = "ALL";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = true; minOi.value = "10000"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_target') {
-    lowOn.checked = true; lowFrom.value = "10.00"; lowTo.value = "250.00";
-    prevOn.checked = false;
-    candleOn.checked = true; candle.value = "OL";
-    utOn.checked = true; ut.value = "BUY";
-    paramsOn.checked = false; minOi.value = "0"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_supertrend') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = false; candle.value = "ALL";
-    utOn.checked = true; ut.value = "BUY";
-    paramsOn.checked = true; minOi.value = "25000"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_orb15') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = true; candle.value = "OL";
-    utOn.checked = true; ut.value = "BUY";
-    paramsOn.checked = true; minOi.value = "25000"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_vwap') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = false; candle.value = "ALL";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = true; minOi.value = "50000"; optType.value = "BOTH";
-  } else if (presetKey === 'strat_volume') {
-    lowOn.checked = false; prevOn.checked = false;
-    candleOn.checked = false; candle.value = "ALL";
-    utOn.checked = false; ut.value = "ALL";
-    paramsOn.checked = true; minOi.value = "100000"; optType.value = "BOTH";
+const DEFAULT_SCAN_CONFIG = {
+  source: 'strategy', // 'strategy' | 'chartink' | 'manual'
+  strategyId: 'strat1',
+  rules: {
+    dayLow: { enabled: true, min: 5.80, max: 8.45 },
+    previousClose: { enabled: true, min: 38.00, max: 48.00 },
+    candlestick: { enabled: false, mode: 'ALL', tol: 0.00 },
+    utBot: { enabled: false, signal: 'ALL', sens: 1 },
+    expiry: { enabled: false, mode: 'all' },
+    optionType: { enabled: false, type: 'BOTH' },
+    underlying: { enabled: false, symbol: '__ALL__', search: '' },
+    instrument: { enabled: true, index: true, stock: true },
+    minOi: { enabled: false, value: 0 },
+    excludeUntraded: { enabled: true },
+    indicator: { enabled: false, id: null },
+    formula: { enabled: false, premMin: 300.0, premMax: 349.0, lowMin: 52.0, lowMax: 58.0, useDivisors: true }
   }
+};
 
-  syncQueryToSidebar();
-  runChartinkQueryScan();
-}
-
-function syncQueryToSidebar() {
-  document.getElementById('lowOn').checked = document.getElementById('ruleLowOn').checked;
-  document.getElementById('lowFrom').value = document.getElementById('ruleLowFrom').value;
-  document.getElementById('lowTo').value = document.getElementById('ruleLowTo').value;
-  document.getElementById('prevOn').checked = document.getElementById('rulePrevOn').checked;
-  document.getElementById('prevFrom').value = document.getElementById('rulePrevFrom').value;
-  document.getElementById('prevTo').value = document.getElementById('rulePrevTo').value;
-  document.getElementById('tol').value = document.getElementById('ruleTol').value;
-  document.getElementById('includeUntraded').checked = !document.getElementById('ruleExcludeUntraded').checked;
-
-  // Rule 3 (Candlestick Open=Low / Open=High) is what actually has to drive the
-  // server's "Show" mode -- previously this rule only affected a client-side
-  // re-filter after the fact, while the request itself still went out with
-  // whatever showMode happened to be left over (usually "any"). Under "any"
-  // the server includes a contract if EITHER its Day Low/Prev Close range
-  // matches OR it independently has an Open=Low/High print -- so presets like
-  // "Strategy 2" (which intentionally use a near-passthrough ₹0.05-500 Day Low
-  // range because the real filter is meant to be the candlestick condition)
-  // ended up showing almost every traded contract, including ones with a
-  // ₹0.05 Day Low that have nothing to do with the selected strategy.
-  const candleOnForShow = document.getElementById('ruleCandleOn').checked;
-  const candleModeForShow = document.getElementById('ruleCandleMode').value;
-  let resolvedShowMode;
-  if (candleOnForShow) {
-    resolvedShowMode = candleModeForShow === 'OL' ? 'ol' : candleModeForShow === 'OH' ? 'oh' : 'ol_oh';
-  } else if (document.getElementById('ruleLowOn').checked || document.getElementById('rulePrevOn').checked) {
-    resolvedShowMode = 'matches';
-  } else {
-    resolvedShowMode = 'any';
+const STRATEGY_REGISTRY = {
+  strat1: {
+    title: "1️⃣ Strategy 1: Low Range Setup (₹5.80–₹8.45)",
+    desc: "Day Low ₹5.80–₹8.45 & Prev Close ₹38–₹48",
+    rules: {
+      dayLow: { enabled: true, min: 5.80, max: 8.45 },
+      previousClose: { enabled: true, min: 38.00, max: 48.00 },
+      candlestick: { enabled: false, mode: 'ALL', tol: 0.00 },
+      utBot: { enabled: false, signal: 'ALL', sens: 1 },
+      expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 },
+      excludeUntraded: { enabled: true },
+      indicator: { enabled: false, id: null },
+      formula: { enabled: false }
+    }
+  },
+  strat2: {
+    title: "2️⃣ Strategy 2: OH/OL + VIX Targets",
+    desc: "Open=Low / Open=High setups with profit targets and stop losses",
+    rules: {
+      dayLow: { enabled: false, min: 5.80, max: 8.45 },
+      previousClose: { enabled: false, min: 38.00, max: 48.00 },
+      candlestick: { enabled: true, mode: 'OL', tol: 0.00 },
+      utBot: { enabled: false, signal: 'ALL', sens: 1 },
+      expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 },
+      excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'strat2' },
+      formula: { enabled: false }
+    }
+  },
+  strat3: {
+    title: "3️⃣ Strategy 3: Premium ÷8 & ÷6.5 Scanner",
+    desc: "Prem ₹300–₹349 & Day Low ₹52–₹58 or formula zones",
+    rules: {
+      dayLow: { enabled: false, min: 5.80, max: 8.45 },
+      previousClose: { enabled: false, min: 38.00, max: 48.00 },
+      candlestick: { enabled: false, mode: 'ALL', tol: 0.00 },
+      utBot: { enabled: false, signal: 'ALL', sens: 1 },
+      expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 },
+      excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'strat3' },
+      formula: { enabled: true, premMin: 300.0, premMax: 349.0, lowMin: 52.0, lowMax: 58.0, useDivisors: true }
+    }
+  },
+  strat_ol: {
+    title: "🟢 Bullish Open = Low Scan",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: true, mode: 'OL', tol: 0.00 },
+      utBot: { enabled: false }, expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: false, id: null }, formula: { enabled: false }
+    }
+  },
+  strat_oh: {
+    title: "🔴 Bearish Open = High Scan",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: true, mode: 'OH', tol: 0.00 },
+      utBot: { enabled: false }, expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: false, id: null }, formula: { enabled: false }
+    }
+  },
+  strat_ut: {
+    title: "🤖 UT Bot BUY Signals",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: false },
+      utBot: { enabled: true, signal: 'BUY', sens: 1 },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: false, id: null }, formula: { enabled: false }
+    }
+  },
+  strat_pred: {
+    title: "🔮 Trade Predictor 200 EMA",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: false }, utBot: { enabled: false },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: true, value: 50000 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'trade_pred' }, formula: { enabled: false }
+    }
+  },
+  strat_quantum: {
+    title: "🌌 Quantum Matrix Scan",
+    rules: {
+      dayLow: { enabled: true, min: 35.0, max: 80.0 },
+      previousClose: { enabled: true, min: 250.0, max: 500.0 },
+      candlestick: { enabled: false }, utBot: { enabled: false },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: true, value: 10000 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'quantum' }, formula: { enabled: false }
+    }
+  },
+  strat_target: {
+    title: "🎯 Target Projections (+9%, +18%)",
+    rules: {
+      dayLow: { enabled: true, min: 10.0, max: 250.0 },
+      previousClose: { enabled: false },
+      candlestick: { enabled: true, mode: 'OL', tol: 0.00 },
+      utBot: { enabled: true, signal: 'BUY', sens: 1 },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'target_proj' }, formula: { enabled: false }
+    }
+  },
+  strat_supertrend: {
+    title: "📈 Supertrend MTF Strategy",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: false }, utBot: { enabled: false },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: true, value: 25000 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'supertrend' }, formula: { enabled: false }
+    }
+  },
+  strat_orb15: {
+    title: "🚀 15-Min ORB Breakout",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: true, mode: 'OL', tol: 0.00 },
+      utBot: { enabled: true, signal: 'BUY', sens: 1 },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: true, value: 25000 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'orb15' }, formula: { enabled: false }
+    }
+  },
+  strat_vwap: {
+    title: "🌊 VWAP + RSI Mean Reversion",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: false }, utBot: { enabled: false },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: true, value: 50000 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'vwap_rsi' }, formula: { enabled: false }
+    }
+  },
+  strat_volume: {
+    title: "📊 Volume Spurt & OI Spike",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: false }, utBot: { enabled: false },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: true, value: 100000 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'volume_oi' }, formula: { enabled: false }
+    }
+  },
+  candle_pattern: {
+    title: "🕯️ Candlestick Signals",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: true, mode: 'ALL', tol: 0.00 },
+      utBot: { enabled: false }, expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'candle_pattern' }, formula: { enabled: false }
+    }
+  },
+  alphascan: {
+    title: "⭐ AlphaScan Institutional Setup",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: false }, utBot: { enabled: false },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'alphascan' }, formula: { enabled: false }
+    }
+  },
+  ut: {
+    title: "🤖 UT Bot Signals",
+    rules: {
+      dayLow: { enabled: false }, previousClose: { enabled: false },
+      candlestick: { enabled: false },
+      utBot: { enabled: true, signal: 'BUY', sens: 1 },
+      expiry: { enabled: false, mode: 'all' }, optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 }, excludeUntraded: { enabled: true },
+      indicator: { enabled: true, id: 'ut' }, formula: { enabled: false }
+    }
   }
-  document.getElementById('showMode').value = resolvedShowMode;
+};
 
-  // Rule 5 (Expiry / Option Type / Min OI) only takes effect when its checkbox is on —
-  // otherwise fall back to the app's normal defaults (nearest expiry, both option types, no OI floor).
-  const paramsOn = document.getElementById('ruleParamsOn').checked;
-  document.getElementById('minOi').value = paramsOn ? document.getElementById('ruleMinOi').value : '0';
-  document.getElementById('expSelect').value = paramsOn ? document.getElementById('ruleExpiry').value : 'nearest';
-  const optVal = paramsOn ? document.getElementById('ruleOptType').value : 'BOTH';
-  document.querySelectorAll('#optTypeSeg button').forEach(b => {
-    b.classList.toggle('active', b.dataset.v === optVal);
-  });
-}
-
-function syncSidebarToQuery() {
-  document.getElementById('ruleLowOn').checked = document.getElementById('lowOn').checked;
-  document.getElementById('ruleLowFrom').value = document.getElementById('lowFrom').value;
-  document.getElementById('ruleLowTo').value = document.getElementById('lowTo').value;
-  document.getElementById('rulePrevOn').checked = document.getElementById('prevOn').checked;
-  document.getElementById('rulePrevFrom').value = document.getElementById('prevFrom').value;
-  document.getElementById('rulePrevTo').value = document.getElementById('prevTo').value;
-  document.getElementById('ruleTol').value = document.getElementById('tol').value;
-  document.getElementById('ruleMinOi').value = document.getElementById('minOi').value;
-  document.getElementById('ruleExpiry').value = document.getElementById('expSelect').value;
-  document.getElementById('ruleExcludeUntraded').checked = !document.getElementById('includeUntraded').checked;
-
-  const activeOpt = document.querySelector('#optTypeSeg button.active');
-  if (activeOpt) {
-    document.getElementById('ruleOptType').value = activeOpt.dataset.v;
-  }
-
-  // Infer Rule 5's on/off state from whatever the sidebar currently holds,
-  // so the two views of the same filters never contradict each other.
-  const minOiVal = parseFloat(document.getElementById('minOi').value) || 0;
-  const expVal = document.getElementById('expSelect').value;
-  const optVal = activeOpt ? activeOpt.dataset.v : 'BOTH';
-  document.getElementById('ruleParamsOn').checked = (minOiVal > 0 || expVal !== 'nearest' || optVal !== 'BOTH');
-}
-
-function resetChartinkQueryDefaults() {
-  applyPreset('strat1');
-}
-
-function runChartinkQueryScan() {
-  syncQueryToSidebar();
-  if (currentMode === 'live') {
-    runLiveScan();
-  } else {
-    runServerScan();
-  }
-}
-
+window.activeScan = JSON.parse(JSON.stringify(DEFAULT_SCAN_CONFIG));
 let currentActiveIndicatorScan = null;
 
-async function runIndicatorScan(indKey) {
-  currentActiveIndicatorScan = indKey;
-  currentHubStratKey = indKey;
+// Authoritative Contract Evaluator: Only enabled rules can return false
+function evaluateContract(contract, activeScan, explain = false) {
+  const rules = activeScan ? activeScan.rules : {};
+  if (!rules) return explain ? { passed: true, failedRule: null, reason: "No rules" } : true;
 
-  // 1. Highlight button in top indicator strip
-  document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
-    const attr = btn.getAttribute('data-ind');
-    btn.classList.toggle('active', attr === indKey);
-  });
-
-  // 2. Ensure Daily Settlement mode is active so all 216 symbols are scanned
-  if (typeof currentMode !== 'undefined' && currentMode !== 'auto') {
-    currentMode = 'auto';
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'auto'));
-    const autoB = document.getElementById('autoBanner'); if (autoB) autoB.style.display = 'flex';
-    const liveB = document.getElementById('liveBar'); if (liveB) liveB.style.display = 'none';
-    const manB = document.getElementById('manualUploadRow'); if (manB) manB.style.display = 'none';
-    const symG = document.getElementById('symbolFilterGroup'); if (symG) symG.style.display = 'block';
+  // 1. Exclude Untraded Contracts (Volume > 0)
+  if (rules.excludeUntraded && rules.excludeUntraded.enabled) {
+    const v = contract.vol !== undefined ? contract.vol : (contract.volume !== undefined ? contract.volume : 0);
+    if (v <= 0) {
+      return explain ? { passed: false, failedRule: "excludeUntraded", reason: `Volume ${v} <= 0` } : false;
+    }
   }
 
-  // 3. Ensure ALL symbols, Index AND Stock options are enabled
-  const idxCheck = document.getElementById('instIdx');
-  const stkCheck = document.getElementById('instStk');
-  const symSel = document.getElementById('symSelect');
-  const showModeSel = document.getElementById('showMode');
-  if (idxCheck) idxCheck.checked = true;
-  if (stkCheck) stkCheck.checked = true;
-  if (symSel) symSel.value = '__ALL__';
-  if (showModeSel) showModeSel.value = 'matches';
+  // 2. Underlying Symbol
+  if (rules.underlying && rules.underlying.enabled) {
+    const sym = (contract.symbol || "").toUpperCase();
+    if (rules.underlying.symbol && rules.underlying.symbol !== "__ALL__") {
+      if (sym !== rules.underlying.symbol.toUpperCase()) {
+        return explain ? { passed: false, failedRule: "underlying", reason: `Symbol ${sym} != ${rules.underlying.symbol}` } : false;
+      }
+    }
+    if (rules.underlying.search && rules.underlying.search.trim()) {
+      const q = rules.underlying.search.trim().toUpperCase();
+      if (!sym.includes(q)) {
+        return explain ? { passed: false, failedRule: "underlyingSearch", reason: `Symbol ${sym} does not match search "${q}"` } : false;
+      }
+    }
+  }
 
-  // 4. Reset query builder filters so they do not hide indicator results
+  // 3. Instrument Type (Index vs Stock)
+  if (rules.instrument && rules.instrument.enabled) {
+    const isIdx = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "NIFTYNXT50"].includes(contract.symbol) || contract.instr === "Index";
+    if (isIdx && !rules.instrument.index) {
+      return explain ? { passed: false, failedRule: "instrument", reason: "Index options disabled" } : false;
+    }
+    if (!isIdx && !rules.instrument.stock) {
+      return explain ? { passed: false, failedRule: "instrument", reason: "Stock options disabled" } : false;
+    }
+  }
+
+  // 4. Option Type (CE vs PE)
+  if (rules.optionType && rules.optionType.enabled) {
+    if (rules.optionType.type && rules.optionType.type !== "BOTH") {
+      if (contract.type !== rules.optionType.type) {
+        return explain ? { passed: false, failedRule: "optionType", reason: `Option Type ${contract.type} != ${rules.optionType.type}` } : false;
+      }
+    }
+  }
+
+  // 5. Expiry
+  if (rules.expiry && rules.expiry.enabled) {
+    if (rules.expiry.mode === "nearest" && activeScan._nearestExpiryMap) {
+      const nearestExp = activeScan._nearestExpiryMap[contract.symbol];
+      if (nearestExp && contract.expiry !== nearestExp) {
+        return explain ? { passed: false, failedRule: "expiry", reason: `Expiry ${contract.expiry} != nearest ${nearestExp}` } : false;
+      }
+    }
+  }
+
+  // 6. Day Low
+  if (rules.dayLow && rules.dayLow.enabled) {
+    const low = contract.low;
+    if (low === null || low === undefined || isNaN(low) || low < rules.dayLow.min || low > rules.dayLow.max) {
+      return explain ? { passed: false, failedRule: "dayLow", reason: `Day Low ₹${low} outside [₹${rules.dayLow.min}, ₹${rules.dayLow.max}]` } : false;
+    }
+  }
+
+  // 7. Previous Close
+  if (rules.previousClose && rules.previousClose.enabled) {
+    const prev = contract.prevCloseUsed !== undefined ? contract.prevCloseUsed : (contract.prevClose || 0);
+    if (prev === null || prev === undefined || isNaN(prev) || prev < rules.previousClose.min || prev > rules.previousClose.max) {
+      return explain ? { passed: false, failedRule: "previousClose", reason: `Prev Close ₹${prev} outside [₹${rules.previousClose.min}, ₹${rules.previousClose.max}]` } : false;
+    }
+  }
+
+  // 8. Candlestick Action (Open=Low / Open=High)
+  if (rules.candlestick && rules.candlestick.enabled) {
+    const tol = rules.candlestick.tol || 0.0;
+    const hasActivity = ((contract.vol || 0) > 0 || (contract.close || 0) > 0);
+    const isOL = hasActivity && contract.open > 0 && contract.low > 0 && Math.abs(contract.open - contract.low) <= tol;
+    const isOH = hasActivity && contract.open > 0 && contract.high > 0 && Math.abs(contract.open - contract.high) <= tol;
+
+    if (rules.candlestick.mode === "OL") {
+      if (!isOL) return explain ? { passed: false, failedRule: "candlestick", reason: "Not Open = Low" } : false;
+    } else if (rules.candlestick.mode === "OH") {
+      if (!isOH) return explain ? { passed: false, failedRule: "candlestick", reason: "Not Open = High" } : false;
+    } else if (rules.candlestick.mode === "OL_OH" || rules.candlestick.mode === "ALL") {
+      if (!isOL && !isOH) return explain ? { passed: false, failedRule: "candlestick", reason: "Neither Open=Low nor Open=High" } : false;
+    }
+  }
+
+  // 9. UT Bot Signal
+  if (rules.utBot && rules.utBot.enabled) {
+    const sig = contract.utBot || "";
+    const isOL = contract.isOL || (contract.open > 0 && contract.low > 0 && Math.abs(contract.open - contract.low) <= 0.05);
+    const isOH = contract.isOH || (contract.open > 0 && contract.high > 0 && Math.abs(contract.open - contract.high) <= 0.05);
+    const prev = contract.prevCloseUsed !== undefined ? contract.prevCloseUsed : (contract.prevClose || 0);
+
+    const isBuy = sig.includes("BUY") || isOL || (contract.close > contract.open && contract.close >= prev);
+    const isSell = sig.includes("SELL") || isOH || (contract.close < contract.open && contract.close <= prev);
+
+    if (rules.utBot.signal === "BUY" && !isBuy) {
+      return explain ? { passed: false, failedRule: "utBot", reason: "Not UT Bot BUY signal" } : false;
+    }
+    if (rules.utBot.signal === "SELL" && !isSell) {
+      return explain ? { passed: false, failedRule: "utBot", reason: "Not UT Bot SELL signal" } : false;
+    }
+  }
+
+  // 10. Min OI
+  if (rules.minOi && rules.minOi.enabled && rules.minOi.value > 0) {
+    const oi = contract.oi || 0;
+    if (oi < rules.minOi.value) {
+      return explain ? { passed: false, failedRule: "minOi", reason: `OI ${oi} < ${rules.minOi.value}` } : false;
+    }
+  }
+
+  // 11. Formula S3 (Premium ÷8 & ÷6.5)
+  if (rules.formula && rules.formula.enabled) {
+    const prev = contract.prevCloseUsed !== undefined ? contract.prevCloseUsed : (contract.prevClose || 0);
+    const low = contract.low || 0;
+    const div8 = prev > 0 ? prev / 8.0 : 0;
+    const div65 = prev > 0 ? prev / 6.5 : 0;
+
+    const inPrem = prev >= rules.formula.premMin && prev <= rules.formula.premMax;
+    const inLow = low >= rules.formula.lowMin && low <= rules.formula.lowMax;
+    const inDiv = rules.formula.useDivisors && div8 > 0 && low >= div8 && low <= div65;
+
+    if (!(inPrem && (inLow || inDiv))) {
+      return explain ? { passed: false, failedRule: "formula", reason: `Formula S3 mismatch: prev=${prev}, low=${low}, div8=${div8.toFixed(1)}, div65=${div65.toFixed(1)}` } : false;
+    }
+  }
+
+  // 12. Indicator Specific
+  if (rules.indicator && rules.indicator.enabled && rules.indicator.id) {
+    const ind = rules.indicator.id;
+    if (ind === "strat1") {
+      // Handled by dayLow & previousClose
+    } else if (ind === "strat2") {
+      const isOL = contract.isOL || (contract.open > 0 && contract.low > 0 && Math.abs(contract.open - contract.low) <= 0.05);
+      const isOH = contract.isOH || (contract.open > 0 && contract.high > 0 && Math.abs(contract.open - contract.high) <= 0.05);
+      if (!isOL && !isOH) {
+        return explain ? { passed: false, failedRule: "indicator", reason: "Strat 2 requires Open=Low or Open=High" } : false;
+      }
+    } else if (ind === "strat3") {
+      // Handled by formula
+    } else if (contract.indicatorMatch !== undefined && !contract.indicatorMatch) {
+      return explain ? { passed: false, failedRule: "indicator", reason: `Did not match indicator ${ind}` } : false;
+    }
+  }
+
+  return explain ? { passed: true, failedRule: null, reason: "PASS" } : true;
+}
+
+// Log Active Scan Trace to Console (Requirement 18 & 19)
+function logActiveScanTrace(activeScan, rawCount, finalResults, samplePass, sampleFail) {
+  const enabledRules = [];
+  const disabledRules = [];
+
+  for (const [key, rule] of Object.entries(activeScan.rules || {})) {
+    if (rule.enabled) {
+      if (key === 'dayLow') enabledRules.push(`  ✓ Day Low: [₹${rule.min}, ₹${rule.max}]`);
+      else if (key === 'previousClose') enabledRules.push(`  ✓ Prev Close: [₹${rule.min}, ₹${rule.max}]`);
+      else if (key === 'candlestick') enabledRules.push(`  ✓ Candlestick: ${rule.mode} (tol ±₹${rule.tol})`);
+      else if (key === 'utBot') enabledRules.push(`  ✓ UT Bot: ${rule.signal} (sens ${rule.sens})`);
+      else if (key === 'formula') enabledRules.push(`  ✓ S3 Formula: Prem [₹${rule.premMin}, ₹${rule.premMax}] & ÷8/÷6.5`);
+      else if (key === 'indicator') enabledRules.push(`  ✓ Indicator: ${rule.id}`);
+      else if (key === 'minOi') enabledRules.push(`  ✓ Min OI: ${rule.value}`);
+      else if (key === 'excludeUntraded') enabledRules.push(`  ✓ Exclude Untraded: Volume > 0`);
+      else if (key === 'underlying') enabledRules.push(`  ✓ Underlying: ${rule.symbol || rule.search}`);
+      else if (key === 'expiry') enabledRules.push(`  ✓ Expiry: ${rule.mode}`);
+      else if (key === 'optionType') enabledRules.push(`  ✓ Option Type: ${rule.type}`);
+      else if (key === 'instrument') enabledRules.push(`  ✓ Instrument: Idx=${rule.index}, Stk=${rule.stock}`);
+    } else {
+      disabledRules.push(`  ✗ ${key}`);
+    }
+  }
+
+  console.groupCollapsed(`%c🎯 [ACTIVE SCAN] Source: ${activeScan.source.toUpperCase()} | Strategy: ${activeScan.strategyId || 'custom'} | Matches: ${finalResults.length} / ${rawCount}`, 'color:#38bdf8; font-weight:bold;');
+  console.log('%cENABLED RULES (Evaluated):', 'color:#10b981; font-weight:bold;\n' + (enabledRules.length ? enabledRules.join('\n') : '  (None - All Traded Contracts)'));
+  console.log('%cDISABLED RULES (Zero Effect / Skipped):', 'color:#94a3b8;\n' + disabledRules.join('\n'));
+  if (samplePass) {
+    const c = samplePass.contract;
+    console.log(`%cSample Passing Contract: %c${c.symbol} ${c.strike} ${c.type} (Low: ₹${c.low}, Prev: ₹${c.prevCloseUsed || c.prevClose}, Vol: ${c.vol}) -> PASS`, 'color:#10b981; font-weight:bold;', 'color:#fff;');
+  }
+  if (sampleFail) {
+    const c = sampleFail.contract;
+    console.log(`%cSample Failing Contract: %c${c.symbol} ${c.strike} ${c.type} (Low: ₹${c.low}, Prev: ₹${c.prevCloseUsed || c.prevClose}, Vol: ${c.vol}) -> FAIL: ${sampleFail.res.reason}`, 'color:#ef4444; font-weight:bold;', 'color:#fff;');
+  }
+  console.groupEnd();
+}
+
+// Synchronize Active Scan Configuration to All UI Controls
+function syncActiveScanToUI() {
+  const scan = window.activeScan || DEFAULT_SCAN_CONFIG;
+  const rules = scan.rules;
+
+  // 1. Query Builder Rule 1 (Day Low)
+  const rLowOn = document.getElementById('ruleLowOn');
+  const rLowFrom = document.getElementById('ruleLowFrom');
+  const rLowTo = document.getElementById('ruleLowTo');
+  if (rLowOn) rLowOn.checked = !!(rules.dayLow && rules.dayLow.enabled);
+  if (rLowFrom) rLowFrom.value = (rules.dayLow && rules.dayLow.min !== undefined) ? rules.dayLow.min.toFixed(2) : '5.80';
+  if (rLowTo) rLowTo.value = (rules.dayLow && rules.dayLow.max !== undefined) ? rules.dayLow.max.toFixed(2) : '8.45';
+
+  // 2. Query Builder Rule 2 (Prev Close)
+  const rPrevOn = document.getElementById('rulePrevOn');
+  const rPrevFrom = document.getElementById('rulePrevFrom');
+  const rPrevTo = document.getElementById('rulePrevTo');
+  if (rPrevOn) rPrevOn.checked = !!(rules.previousClose && rules.previousClose.enabled);
+  if (rPrevFrom) rPrevFrom.value = (rules.previousClose && rules.previousClose.min !== undefined) ? rules.previousClose.min.toFixed(2) : '38.00';
+  if (rPrevTo) rPrevTo.value = (rules.previousClose && rules.previousClose.max !== undefined) ? rules.previousClose.max.toFixed(2) : '48.00';
+
+  // 3. Query Builder Rule 3 (Candlestick)
   const rCandleOn = document.getElementById('ruleCandleOn');
   const rCandle = document.getElementById('ruleCandleMode');
+  const rTol = document.getElementById('ruleTol');
+  if (rCandleOn) rCandleOn.checked = !!(rules.candlestick && rules.candlestick.enabled);
+  if (rCandle && rules.candlestick && rules.candlestick.mode) rCandle.value = rules.candlestick.mode;
+  if (rTol) rTol.value = (rules.candlestick && rules.candlestick.tol !== undefined) ? rules.candlestick.tol.toFixed(2) : '0.00';
+
+  // 4. Query Builder Rule 4 (UT Bot)
   const rUtOn = document.getElementById('ruleUtOn');
   const rUt = document.getElementById('ruleUtAction');
-  if (rCandleOn) rCandleOn.checked = false;
-  if (rCandle) rCandle.value = 'ALL';
-  if (rUtOn) rUtOn.checked = false;
-  if (rUt) rUt.value = 'ALL';
+  const rUtSens = document.getElementById('ruleUtSens');
+  if (rUtOn) rUtOn.checked = !!(rules.utBot && rules.utBot.enabled);
+  if (rUt && rules.utBot && rules.utBot.signal) rUt.value = rules.utBot.signal;
+  if (rUtSens && rules.utBot && rules.utBot.sens) rUtSens.value = rules.utBot.sens;
 
-  // 3. Clear quick filter and table search
+  // 5. Query Builder Rule 5 (Contract Parameters)
+  const rParamsOn = document.getElementById('ruleParamsOn');
+  const rExp = document.getElementById('ruleExpiry');
+  const rType = document.getElementById('ruleOptType');
+  const rOi = document.getElementById('ruleMinOi');
+  const hasParams = !!((rules.expiry && rules.expiry.enabled) || (rules.optionType && rules.optionType.enabled) || (rules.minOi && rules.minOi.enabled));
+  if (rParamsOn) rParamsOn.checked = hasParams;
+  if (rExp && rules.expiry && rules.expiry.mode) rExp.value = rules.expiry.mode;
+  if (rType && rules.optionType && rules.optionType.type) rType.value = rules.optionType.type;
+  if (rOi && rules.minOi && rules.minOi.value !== undefined) rOi.value = rules.minOi.value;
+
+  // 6. Query Builder Rule 6 (Untraded)
+  const rUn = document.getElementById('ruleExcludeUntraded');
+  if (rUn) rUn.checked = !!(rules.excludeUntraded && rules.excludeUntraded.enabled);
+
+  // 7. Sidebar Controls
+  const sLowOn = document.getElementById('lowOn');
+  const sLowFrom = document.getElementById('lowFrom');
+  const sLowTo = document.getElementById('lowTo');
+  if (sLowOn) sLowOn.checked = !!(rules.dayLow && rules.dayLow.enabled);
+  if (sLowFrom) sLowFrom.value = (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.min : '';
+  if (sLowTo) sLowTo.value = (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.max : '';
+
+  const sPrevOn = document.getElementById('prevOn');
+  const sPrevFrom = document.getElementById('prevFrom');
+  const sPrevTo = document.getElementById('prevTo');
+  if (sPrevOn) sPrevOn.checked = !!(rules.previousClose && rules.previousClose.enabled);
+  if (sPrevFrom) sPrevFrom.value = (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.min : '';
+  if (sPrevTo) sPrevTo.value = (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.max : '';
+
+  const sTol = document.getElementById('tol');
+  if (sTol) sTol.value = (rules.candlestick && rules.candlestick.enabled) ? rules.candlestick.tol : '0.00';
+
+  const sOi = document.getElementById('minOi');
+  if (sOi) sOi.value = (rules.minOi && rules.minOi.enabled) ? rules.minOi.value : '0';
+
+  const sUntraded = document.getElementById('includeUntraded');
+  if (sUntraded) sUntraded.checked = !(rules.excludeUntraded && rules.excludeUntraded.enabled);
+
+  const sExp = document.getElementById('expSelect');
+  if (sExp) sExp.value = (rules.expiry && rules.expiry.enabled) ? rules.expiry.mode : 'all';
+
+  const sTypeVal = (rules.optionType && rules.optionType.enabled) ? rules.optionType.type : 'BOTH';
+  document.querySelectorAll('#optTypeSeg button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === sTypeVal);
+  });
+
+  const sShowMode = document.getElementById('showMode');
+  if (sShowMode) {
+    if (rules.candlestick && rules.candlestick.enabled) {
+      sShowMode.value = rules.candlestick.mode === 'OL' ? 'ol' : (rules.candlestick.mode === 'OH' ? 'oh' : 'ol_oh');
+    } else if ((rules.dayLow && rules.dayLow.enabled) || (rules.previousClose && rules.previousClose.enabled)) {
+      sShowMode.value = 'matches';
+    } else {
+      sShowMode.value = 'any';
+    }
+  }
+
+  // 8. Buttons & Pills Visual Highlight
+  const stratKey = scan.strategyId;
+  document.querySelectorAll('.preset-pill').forEach(p => {
+    p.classList.toggle('active', p.getAttribute('data-preset') === stratKey);
+  });
+  const strat1Btn = document.getElementById('strat1Btn');
+  const strat2Btn = document.getElementById('strat2Btn');
+  const strat3Btn = document.getElementById('strat3Btn');
+  if (strat1Btn) strat1Btn.classList.toggle('active', stratKey === 'strat1');
+  if (strat2Btn) strat2Btn.classList.toggle('active', stratKey === 'strat2');
+  if (strat3Btn) strat3Btn.classList.toggle('active', stratKey === 'strat3');
+
+  document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
+    const attr = btn.getAttribute('data-ind');
+    btn.classList.toggle('active', attr === stratKey || (rules.indicator && rules.indicator.enabled && attr === rules.indicator.id));
+  });
+
+  updateActiveScanBanner(stratKey);
+}
+
+// Read from UI to build activeScan
+function syncUIToActiveScan(source = 'chartink') {
+  if (source === 'chartink') {
+    const rLowOn = document.getElementById('ruleLowOn');
+    const rPrevOn = document.getElementById('rulePrevOn');
+    const rCandleOn = document.getElementById('ruleCandleOn');
+    const rUtOn = document.getElementById('ruleUtOn');
+    const rParamsOn = document.getElementById('ruleParamsOn');
+    const rUn = document.getElementById('ruleExcludeUntraded');
+
+    window.activeScan = {
+      source: 'chartink',
+      strategyId: 'custom',
+      rules: {
+        dayLow: {
+          enabled: !!(rLowOn && rLowOn.checked),
+          min: parseFloat(document.getElementById('ruleLowFrom').value) || 5.80,
+          max: parseFloat(document.getElementById('ruleLowTo').value) || 8.45
+        },
+        previousClose: {
+          enabled: !!(rPrevOn && rPrevOn.checked),
+          min: parseFloat(document.getElementById('rulePrevFrom').value) || 38.00,
+          max: parseFloat(document.getElementById('rulePrevTo').value) || 48.00
+        },
+        candlestick: {
+          enabled: !!(rCandleOn && rCandleOn.checked),
+          mode: document.getElementById('ruleCandleMode').value || 'ALL',
+          tol: parseFloat(document.getElementById('ruleTol').value) || 0.00
+        },
+        utBot: {
+          enabled: !!(rUtOn && rUtOn.checked),
+          signal: document.getElementById('ruleUtAction').value || 'ALL',
+          sens: parseFloat(document.getElementById('ruleUtSens').value) || 1
+        },
+        expiry: {
+          enabled: !!(rParamsOn && rParamsOn.checked),
+          mode: document.getElementById('ruleExpiry').value || 'all'
+        },
+        optionType: {
+          enabled: !!(rParamsOn && rParamsOn.checked && document.getElementById('ruleOptType').value !== 'BOTH'),
+          type: document.getElementById('ruleOptType').value || 'BOTH'
+        },
+        underlying: {
+          enabled: document.getElementById('symSelect').value !== '__ALL__',
+          symbol: document.getElementById('symSelect').value || '__ALL__',
+          search: (document.getElementById('symSearch').value || '').trim()
+        },
+        instrument: {
+          enabled: true,
+          index: document.getElementById('instIdx') ? document.getElementById('instIdx').checked : true,
+          stock: document.getElementById('instStk') ? document.getElementById('instStk').checked : true
+        },
+        minOi: {
+          enabled: !!(rParamsOn && rParamsOn.checked && parseFloat(document.getElementById('ruleMinOi').value) > 0),
+          value: parseFloat(document.getElementById('ruleMinOi').value) || 0
+        },
+        excludeUntraded: {
+          enabled: !!(rUn && rUn.checked)
+        },
+        indicator: {
+          enabled: false,
+          id: null
+        },
+        formula: {
+          enabled: false
+        }
+      }
+    };
+  } else if (source === 'manual') {
+    const sLowOn = document.getElementById('lowOn');
+    const sPrevOn = document.getElementById('prevOn');
+    const showModeVal = document.getElementById('showMode').value;
+    const isCandle = (showModeVal === 'ol' || showModeVal === 'oh' || showModeVal === 'ol_oh');
+    const candleMode = showModeVal === 'ol' ? 'OL' : (showModeVal === 'oh' ? 'OH' : 'OL_OH');
+    const activeOptBtn = document.querySelector('#optTypeSeg button.active');
+    const optTypeVal = activeOptBtn ? activeOptBtn.dataset.v : 'BOTH';
+
+    window.activeScan = {
+      source: 'manual',
+      strategyId: 'manual',
+      rules: {
+        dayLow: {
+          enabled: !!(sLowOn && sLowOn.checked),
+          min: parseFloat(document.getElementById('lowFrom').value) || 5.80,
+          max: parseFloat(document.getElementById('lowTo').value) || 8.45
+        },
+        previousClose: {
+          enabled: !!(sPrevOn && sPrevOn.checked),
+          min: parseFloat(document.getElementById('prevFrom').value) || 38.00,
+          max: parseFloat(document.getElementById('prevTo').value) || 48.00
+        },
+        candlestick: {
+          enabled: isCandle,
+          mode: isCandle ? candleMode : 'ALL',
+          tol: parseFloat(document.getElementById('tol').value) || 0.00
+        },
+        utBot: {
+          enabled: false,
+          signal: 'ALL',
+          sens: 1
+        },
+        expiry: {
+          enabled: document.getElementById('expSelect').value !== 'all',
+          mode: document.getElementById('expSelect').value || 'all'
+        },
+        optionType: {
+          enabled: optTypeVal !== 'BOTH',
+          type: optTypeVal
+        },
+        underlying: {
+          enabled: document.getElementById('symSelect').value !== '__ALL__',
+          symbol: document.getElementById('symSelect').value || '__ALL__',
+          search: (document.getElementById('symSearch').value || '').trim()
+        },
+        instrument: {
+          enabled: true,
+          index: document.getElementById('instIdx') ? document.getElementById('instIdx').checked : true,
+          stock: document.getElementById('instStk') ? document.getElementById('instStk').checked : true
+        },
+        minOi: {
+          enabled: parseFloat(document.getElementById('minOi').value) > 0,
+          value: parseFloat(document.getElementById('minOi').value) || 0
+        },
+        excludeUntraded: {
+          enabled: !document.getElementById('includeUntraded').checked
+        },
+        indicator: {
+          enabled: false,
+          id: null
+        },
+        formula: {
+          enabled: false
+        }
+      }
+    };
+  }
+
+  currentActiveIndicatorScan = null;
+  syncActiveScanToUI();
+  updateActiveFilterChips();
+}
+
+// Master Strategy Selection Function
+function setActiveScanStrategy(stratKey) {
+  const preset = STRATEGY_REGISTRY[stratKey] || STRATEGY_REGISTRY.strat1;
+
+  // 1. Clear previous state and leftover locks
+  currentActiveIndicatorScan = (preset.rules.indicator && preset.rules.indicator.enabled) ? preset.rules.indicator.id : null;
+  currentHubStratKey = stratKey;
+
+  // 2. Load isolated rules cleanly
+  window.activeScan = {
+    source: 'strategy',
+    strategyId: stratKey,
+    rules: JSON.parse(JSON.stringify(preset.rules))
+  };
+
+  // 3. Clear quick table filter and search query
   currentQuickFilter = 'ALL';
   currentTableSearchQuery = '';
   const searchInp = document.getElementById('resultsSearchInput');
@@ -5450,76 +5941,37 @@ async function runIndicatorScan(indKey) {
     btn.classList.toggle('active', btn.getAttribute('data-q') === 'ALL');
   });
 
-  const indData = PINE_SCRIPTS[indKey] || { title: indKey };
-  showToast(`⚡ Scanning all stocks & index data for ${indData.title}…`, 'info');
+  // 4. Synchronize UI & chips
+  syncActiveScanToUI();
+  updateActiveFilterChips();
 
-  // 4. Request scan with indicator
-  await runServerScanWithIndicator(indKey);
+  showToast(`🎯 Loaded ${preset.title || stratKey}! Only its isolated rules are active.`, 'info');
 
-  // 5. Update active scan banner
-  updateActiveScanBanner(indKey);
-
-  // 6. Scroll smoothly to results
-  const toolbar = document.querySelector('.results-filter-toolbar') || document.getElementById('resultsTable');
-  if (toolbar) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // 5. Execute scan
+  executeActiveScan();
 }
 
-async function runServerScanWithIndicator(indKey) {
-  const mySeq = ++scanRequestSeq;
-  const btn = document.getElementById('scanBtn');
-  if (btn) {
-    btn.textContent = 'Scanning…';
-    btn.disabled = true;
-  }
+function applyPreset(presetKey) {
+  setActiveScanStrategy(presetKey);
+}
 
-  try {
-    const filters = getFilters();
-    filters.indicator = indKey;
-    filters.symSelect = '__ALL__';
-    filters.instIdx = true;
-    filters.instStk = true;
-    filters.showMode = 'matches';
-
-    const res = await fetch(`${API_BASE}/api/scan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(filters)
-    });
-    const data = await res.json();
-    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
-    if (res.ok) {
-      lastResults = data.results || [];
-      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
-      document.getElementById('statMatch').textContent = (data.results ? data.results.length : 0).toLocaleString();
-      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
-      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
-      document.getElementById('summary').style.display = 'flex';
-      filterAndRender();
-
-      const indTitle = PINE_SCRIPTS[indKey] ? PINE_SCRIPTS[indKey].title : indKey;
-      showToast(`✔ Found ${lastResults.length} matching contracts across all stocks and indices for ${indTitle}!`, 'success');
-    } else {
-      showToast(data.detail || 'Scan failed', 'error');
-    }
-  } catch (e) {
-    console.error(e);
-  } finally {
-    if (btn && mySeq === scanRequestSeq) {
-      btn.textContent = '⚡ Scan Market';
-      btn.disabled = false;
-    }
-  }
+function runIndicatorScan(indKey) {
+  setActiveScanStrategy(indKey);
 }
 
 function clearIndicatorScan() {
   currentActiveIndicatorScan = null;
-  document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  const banner = document.getElementById('activeScanBanner');
-  if (banner) banner.style.display = 'none';
-  runServerScan();
-  showToast('Reset indicator scan. Showing general market scan.', 'info');
+  setActiveScanStrategy('strat1');
+  showToast('Reset indicator scan. Showing Strategy 1.', 'info');
+}
+
+function resetChartinkQueryDefaults() {
+  setActiveScanStrategy('strat1');
+}
+
+function runChartinkQueryScan() {
+  syncUIToActiveScan('chartink');
+  executeActiveScan();
 }
 
 function updateActiveScanBanner(indKey) {
@@ -5533,17 +5985,23 @@ function updateActiveScanBanner(indKey) {
     toolbar.parentNode.insertBefore(banner, toolbar);
   }
 
-  const indData = PINE_SCRIPTS[indKey] || { title: indKey };
-  const count = lastResults ? lastResults.length : 0;
+  const strat = STRATEGY_REGISTRY[indKey] || PINE_SCRIPTS[indKey];
+  if (!strat) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  const title = strat.title || indKey;
+  const count = (window.lastResults && window.lastResults.length) ? window.lastResults.length : 0;
   banner.innerHTML = `
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <span style="font-size:16px;">⚡</span>
-      <span style="font-size:13.5px; color:#fff; font-weight:700;">Active Indicator Scan: <span style="color:#60a5fa;">${indData.title}</span></span>
-      <span style="font-size:11.5px; color:#38bdf8; background:#0b1320; padding:2px 8px; border-radius:12px; border:1px solid #1e3a8a; font-weight:700;">${count} contracts found across all stocks & indices</span>
+      <span style="font-size:13.5px; color:#fff; font-weight:700;">Active Strategy: <span style="color:#60a5fa;">${title}</span></span>
+      <span style="font-size:11.5px; color:#38bdf8; background:#0b1320; padding:2px 8px; border-radius:12px; border:1px solid #1e3a8a; font-weight:700;">${count} contracts matched</span>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <button class="chain-btn" onclick="openIndicatorModal('${indKey}')" style="padding:4px 10px; font-size:11.5px;" title="View Pine Script v6 for this indicator">📋 View Pine Script</button>
-      <button class="dl-btn" onclick="clearIndicatorScan()" style="padding:4px 10px; font-size:11.5px;" title="Clear indicator scan filter">✕ Clear</button>
+      <button class="chain-btn" onclick="openIndicatorModal('${indKey}')" style="padding:4px 10px; font-size:11.5px;" title="View Pine Script for this strategy">📋 View Script</button>
+      <button class="dl-btn" onclick="clearIndicatorScan()" style="padding:4px 10px; font-size:11.5px;" title="Reset to default">✕ Reset</button>
     </div>
   `;
   banner.style.display = 'flex';
@@ -6356,114 +6814,269 @@ function clearAllTriggeredAlerts() {
 /* ============================================================
    SERVER & LIVE SCAN ENGINE
 ============================================================ */
+let currentScanRequestId = 0;
+
 function getFilters() {
-  const lowFromVal = document.getElementById('lowFrom').value.trim();
-  const lowToVal = document.getElementById('lowTo').value.trim();
-  const prevFromVal = document.getElementById('prevFrom').value.trim();
-  const prevToVal = document.getElementById('prevTo').value.trim();
-  const tolVal = document.getElementById('tol').value.trim();
-  const minOiVal = document.getElementById('minOi').value.trim();
+  const lowFromVal = document.getElementById('lowFrom')?.value.trim() || '';
+  const lowToVal = document.getElementById('lowTo')?.value.trim() || '';
+  const prevFromVal = document.getElementById('prevFrom')?.value.trim() || '';
+  const prevToVal = document.getElementById('prevTo')?.value.trim() || '';
+  const tolVal = document.getElementById('tol')?.value.trim() || '';
+  const minOiVal = document.getElementById('minOi')?.value.trim() || '';
   const activeOptSeg = document.querySelector('#optTypeSeg button.active');
 
   return {
-    symSelect: document.getElementById('symSelect').value,
-    instIdx: document.getElementById('instIdx').checked,
-    instStk: document.getElementById('instStk').checked,
+    symSelect: document.getElementById('symSelect')?.value || '__ALL__',
+    instIdx: document.getElementById('instIdx') ? document.getElementById('instIdx').checked : true,
+    instStk: document.getElementById('instStk') ? document.getElementById('instStk').checked : true,
     optType: activeOptSeg ? activeOptSeg.dataset.v : 'BOTH',
-    expSelect: document.getElementById('expSelect').value,
-    lowOn: document.getElementById('lowOn').checked,
+    expSelect: document.getElementById('expSelect')?.value || 'all',
+    lowOn: document.getElementById('lowOn') ? document.getElementById('lowOn').checked : false,
     lowFrom: lowFromVal !== '' ? parseFloat(lowFromVal) : 5.80,
     lowTo: lowToVal !== '' ? parseFloat(lowToVal) : 8.45,
-    prevOn: document.getElementById('prevOn').checked,
+    prevOn: document.getElementById('prevOn') ? document.getElementById('prevOn').checked : false,
     prevFrom: prevFromVal !== '' ? parseFloat(prevFromVal) : 38.00,
     prevTo: prevToVal !== '' ? parseFloat(prevToVal) : 48.00,
     tol: tolVal !== '' ? parseFloat(tolVal) : 0.00,
     minOi: minOiVal !== '' ? parseFloat(minOiVal) : 0.00,
-    includeUntraded: document.getElementById('includeUntraded').checked,
-    showMode: document.getElementById('showMode').value
+    includeUntraded: document.getElementById('includeUntraded') ? document.getElementById('includeUntraded').checked : false,
+    showMode: document.getElementById('showMode')?.value || 'any'
   };
 }
 
-async function runServerScan() {
-  // Guards against an older in-flight scan (e.g. the initial page-load boot
-  // scan, which can take several seconds to resolve) completing AFTER a
-  // newer one the user just triggered (like clicking a strategy preset) and
-  // silently overwriting its correctly-filtered results with stale/wrong data.
-  const mySeq = ++scanRequestSeq;
+async function executeActiveScan() {
+  const thisRequestId = ++currentScanRequestId;
+  scanRequestSeq = thisRequestId;
 
   const btn = document.getElementById('scanBtn');
-  btn.textContent = 'Scanning…';
-  btn.disabled = true;
+  if (btn) {
+    btn.textContent = 'Scanning…';
+    btn.disabled = true;
+  }
+  const qBtn = document.getElementById('queryRunBtn');
+  if (qBtn) {
+    qBtn.innerHTML = '<span>⏳</span> <b>Scanning…</b>';
+    qBtn.disabled = true;
+  }
+  const liveBtn = document.getElementById('liveScanBtn');
+  if (liveBtn) {
+    liveBtn.textContent = '⏳ Fetching…';
+    liveBtn.disabled = true;
+  }
 
   try {
-    const filters = getFilters();
-    if (currentActiveIndicatorScan) {
-      filters.indicator = currentActiveIndicatorScan;
+    if (!window.activeScan || !window.activeScan.rules) {
+      syncUIToActiveScan('manual');
     }
+    const config = window.activeScan;
+    const rules = config.rules;
+
+    // Check if live mode is active (Direct Upstox Live Scan)
+    if (typeof currentMode !== 'undefined' && currentMode === 'live') {
+      const liveSym = document.getElementById('liveSymbolSelect')?.value || 'NIFTY';
+      const params = new URLSearchParams({
+        symbol: liveSym,
+        optType: (rules.optionType && rules.optionType.enabled) ? rules.optionType.type : 'BOTH',
+        lowOn: !!(rules.dayLow && rules.dayLow.enabled),
+        lowFrom: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.min : 0.05,
+        lowTo: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.max : 50000.0,
+        prevOn: !!(rules.previousClose && rules.previousClose.enabled),
+        prevFrom: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.min : 0.05,
+        prevTo: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.max : 50000.0,
+        tol: (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.00,
+        minOi: (rules.minOi && rules.minOi.enabled) ? (rules.minOi.value || 0) : 0,
+        includeUntraded: !(rules.excludeUntraded && rules.excludeUntraded.enabled),
+        showMode: (rules.candlestick && rules.candlestick.enabled) ?
+          (rules.candlestick.mode === 'OL' ? 'ol' : (rules.candlestick.mode === 'OH' ? 'oh' : (rules.candlestick.mode === 'OL_OH' ? 'ol_oh' : 'any'))) : 'any'
+      });
+
+      const res = await fetch(`${API_BASE}/api/live/scan?${params.toString()}`);
+      const data = await res.json();
+      if (thisRequestId !== currentScanRequestId) return;
+      if (res.ok) {
+        const rawCandidates = data.results || [];
+        const matched = [];
+        let samplePass = null;
+        let sampleFail = null;
+
+        for (const contract of rawCandidates) {
+          const evalRes = evaluateContract(contract, config, true);
+          if (evalRes.passed) {
+            matched.push(contract);
+            if (!samplePass) samplePass = { contract, res: evalRes };
+          } else {
+            if (!sampleFail) sampleFail = { contract, res: evalRes };
+          }
+        }
+
+        window.lastResults = matched;
+        logActiveScanTrace(config, rawCandidates.length, matched, samplePass, sampleFail);
+
+        const liveTimeEl = document.getElementById('liveLastTime');
+        const prov = data.provider || 'Upstox';
+        if (liveTimeEl) liveTimeEl.textContent = `🟢 ${prov} Live: ${data.liveTimestamp || ''}`;
+
+        const totalCount = matched.length;
+        let olCount = 0;
+        let ohCount = 0;
+        let matchCount = 0;
+
+        for (const c of matched) {
+          const o = c.open || 0;
+          const h = c.high || 0;
+          const l = c.low || 0;
+          const tol = (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.05;
+          const isOl = o > 0 && Math.abs(o - l) <= tol;
+          const isOh = o > 0 && Math.abs(o - h) <= tol;
+          if (isOl) olCount++;
+          if (isOh) ohCount++;
+          if (isOl || isOh || c.isMatch) matchCount++;
+        }
+
+        const statTotalEl = document.getElementById('statTotal');
+        if (statTotalEl) statTotalEl.textContent = totalCount.toLocaleString();
+        const statMatchEl = document.getElementById('statMatch');
+        if (statMatchEl) statMatchEl.textContent = matchCount.toLocaleString();
+        const statOLEl = document.getElementById('statOL');
+        if (statOLEl) statOLEl.textContent = olCount.toLocaleString();
+        const statOHEl = document.getElementById('statOH');
+        if (statOHEl) statOHEl.textContent = ohCount.toLocaleString();
+
+        const qCountEl = document.getElementById('queryMatchCount');
+        if (qCountEl) qCountEl.textContent = `${totalCount} Matches`;
+
+        const summaryEl = document.getElementById('summary');
+        if (summaryEl) summaryEl.style.display = 'flex';
+
+        filterAndRender();
+        updateActiveFilterChips();
+        return;
+      }
+    }
+
+    // Bhavcopy Scan Pipeline
+    const payload = {
+      symSelect: (rules.underlying && rules.underlying.enabled && rules.underlying.symbol) ? rules.underlying.symbol : '__ALL__',
+      instIdx: (rules.instrument && rules.instrument.enabled) ? rules.instrument.index : true,
+      instStk: (rules.instrument && rules.instrument.enabled) ? rules.instrument.stock : true,
+      optType: (rules.optionType && rules.optionType.enabled) ? rules.optionType.type : 'BOTH',
+      expSelect: (rules.expiry && rules.expiry.enabled) ? rules.expiry.mode : 'all',
+      lowOn: !!(rules.dayLow && rules.dayLow.enabled),
+      lowFrom: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.min : 0.05,
+      lowTo: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.max : 50000.0,
+      prevOn: !!(rules.previousClose && rules.previousClose.enabled),
+      prevFrom: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.min : 0.05,
+      prevTo: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.max : 50000.0,
+      tol: (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.00,
+      minOi: (rules.minOi && rules.minOi.enabled) ? (rules.minOi.value || 0) : 0,
+      includeUntraded: !(rules.excludeUntraded && rules.excludeUntraded.enabled),
+      showMode: (rules.candlestick && rules.candlestick.enabled) ?
+        (rules.candlestick.mode === 'OL' ? 'ol' : (rules.candlestick.mode === 'OH' ? 'oh' : (rules.candlestick.mode === 'OL_OH' ? 'ol_oh' : 'any'))) : 'any'
+    };
+
+    if (rules.indicator && rules.indicator.enabled && rules.indicator.id) {
+      payload.indicator = rules.indicator.id;
+    }
+
     const res = await fetch(`${API_BASE}/api/scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(filters)
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
+
+    if (thisRequestId !== currentScanRequestId) return;
+
     if (res.ok) {
-      lastResults = data.results || [];
-      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
-      document.getElementById('statMatch').textContent = (data.statMatch || 0).toLocaleString();
-      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
-      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
-      document.getElementById('summary').style.display = 'flex';
+      const rawCandidates = data.results || [];
+      const matched = [];
+      let samplePass = null;
+      let sampleFail = null;
+
+      for (const contract of rawCandidates) {
+        const evalRes = evaluateContract(contract, config, true);
+        if (evalRes.passed) {
+          matched.push(contract);
+          if (!samplePass) samplePass = { contract, res: evalRes };
+        } else {
+          if (!sampleFail) sampleFail = { contract, res: evalRes };
+        }
+      }
+
+      window.lastResults = matched;
+      logActiveScanTrace(config, rawCandidates.length, matched, samplePass, sampleFail);
+
+      const totalCount = matched.length;
+      let olCount = 0;
+      let ohCount = 0;
+      let matchCount = 0;
+
+      for (const c of matched) {
+        const o = c.open || 0;
+        const h = c.high || 0;
+        const l = c.low || 0;
+        const tol = (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.05;
+        const isOl = o > 0 && Math.abs(o - l) <= tol;
+        const isOh = o > 0 && Math.abs(o - h) <= tol;
+        if (isOl) olCount++;
+        if (isOh) ohCount++;
+        if (isOl || isOh || c.isMatch) matchCount++;
+      }
+
+      const statTotalEl = document.getElementById('statTotal');
+      if (statTotalEl) statTotalEl.textContent = totalCount.toLocaleString();
+      const statMatchEl = document.getElementById('statMatch');
+      if (statMatchEl) statMatchEl.textContent = matchCount.toLocaleString();
+      const statOLEl = document.getElementById('statOL');
+      if (statOLEl) statOLEl.textContent = olCount.toLocaleString();
+      const statOHEl = document.getElementById('statOH');
+      if (statOHEl) statOHEl.textContent = ohCount.toLocaleString();
+
+      const qCountEl = document.getElementById('queryMatchCount');
+      if (qCountEl) qCountEl.textContent = `${totalCount} Matches`;
+
+      const summaryEl = document.getElementById('summary');
+      if (summaryEl) summaryEl.style.display = 'flex';
+
+      if (config.strategyId && config.strategyId !== 'manual') {
+        updateActiveScanBanner(config.strategyId);
+      } else {
+        const banner = document.getElementById('activeScanBanner');
+        if (banner) banner.style.display = 'none';
+      }
+
       filterAndRender();
+      updateActiveFilterChips();
     } else {
       showToast(data.detail || 'Scan failed', 'error');
     }
   } catch (e) {
-    console.error(e);
+    console.error('Active scan failed:', e);
   } finally {
-    if (mySeq === scanRequestSeq) {
-      btn.textContent = '⚡ Scan Market';
-      btn.disabled = false;
+    if (thisRequestId === currentScanRequestId) {
+      if (btn) {
+        btn.textContent = '⚡ Scan Market';
+        btn.disabled = false;
+      }
+      if (qBtn) {
+        qBtn.innerHTML = '<span>▶</span> <b>Run Screener Scan</b>';
+        qBtn.disabled = false;
+      }
+      if (liveBtn) {
+        liveBtn.textContent = '⚡ Fetch Live Chain';
+        liveBtn.disabled = false;
+      }
     }
   }
 }
 
-async function runLiveScan() {
-  const mySeq = ++scanRequestSeq;
-  const sym = document.getElementById('liveSymbolSelect').value;
-  const filters = getFilters();
-  const params = new URLSearchParams({
-    symbol: sym,
-    optType: filters.optType,
-    lowOn: filters.lowOn,
-    lowFrom: filters.lowFrom,
-    lowTo: filters.lowTo,
-    prevOn: filters.prevOn,
-    prevFrom: filters.prevFrom,
-    prevTo: filters.prevTo,
-    tol: filters.tol,
-    minOi: filters.minOi,
-    includeUntraded: filters.includeUntraded,
-    showMode: filters.showMode
-  });
+async function runServerScan() {
+  syncUIToActiveScan('manual');
+  return executeActiveScan();
+}
 
-  try {
-    const res = await fetch(`${API_BASE}/api/live/scan?${params.toString()}`);
-    const data = await res.json();
-    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
-    if (res.ok) {
-      lastResults = data.results || [];
-      document.getElementById('liveLastTime').textContent = 'Last updated: ' + (data.liveTimestamp || '');
-      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
-      document.getElementById('statMatch').textContent = (data.statMatch || 0).toLocaleString();
-      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
-      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
-      document.getElementById('summary').style.display = 'flex';
-      filterAndRender();
-    }
-  } catch (e) {
-    console.error(e);
-  }
+async function runLiveScan() {
+  return executeActiveScan();
 }
 
 /* ============================================================
@@ -7977,11 +8590,11 @@ function clearAllScreenerFilters() {
     symSelect.value = '__ALL__';
   }
 
-  // 2. Instrument types (No filter selected by default)
+  // 2. Instrument types
   const instIdx = document.getElementById('instIdx');
-  if (instIdx) instIdx.checked = false;
+  if (instIdx) instIdx.checked = true;
   const instStk = document.getElementById('instStk');
-  if (instStk) instStk.checked = false;
+  if (instStk) instStk.checked = true;
 
   // 3. Option type
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
@@ -8010,17 +8623,31 @@ function clearAllScreenerFilters() {
 
   // 7. Tolerance & Min OI
   const tol = document.getElementById('tol');
-  if (tol) tol.value = '';
+  if (tol) tol.value = '0.00';
   const minOi = document.getElementById('minOi');
-  if (minOi) minOi.value = '';
+  if (minOi) minOi.value = '0';
 
   // 8. Include untraded & show mode
   const includeUntraded = document.getElementById('includeUntraded');
-  if (includeUntraded) includeUntraded.checked = false;
+  if (includeUntraded) includeUntraded.checked = true;
   const showMode = document.getElementById('showMode');
   if (showMode) showMode.value = 'any';
 
-  // 9. Results search & quick pills
+  // 9. Query builder rules unchecked
+  const rLow = document.getElementById('ruleLowOn');
+  if (rLow) rLow.checked = false;
+  const rPrev = document.getElementById('rulePrevOn');
+  if (rPrev) rPrev.checked = false;
+  const rCandleOn = document.getElementById('ruleCandleOn');
+  if (rCandleOn) rCandleOn.checked = false;
+  const rUtOn = document.getElementById('ruleUtOn');
+  if (rUtOn) rUtOn.checked = false;
+  const rParamsOn = document.getElementById('ruleParamsOn');
+  if (rParamsOn) rParamsOn.checked = false;
+  const rUn = document.getElementById('ruleExcludeUntraded');
+  if (rUn) rUn.checked = false;
+
+  // 10. Results search & quick pills
   const resSearch = document.getElementById('resultsSearchInput');
   if (resSearch) resSearch.value = '';
   const resClearBtn = document.getElementById('searchClearBtn');
@@ -8031,19 +8658,39 @@ function clearAllScreenerFilters() {
     p.classList.toggle('active', p.dataset.q === 'ALL');
   });
 
-  // 10. Deactivate strategy presets & ribbon pills
+  // 11. Deactivate strategy presets & ribbon pills
   document.querySelectorAll('.strat-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.preset-pill').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.small-strat-btn').forEach(b => b.classList.remove('active'));
   currentActiveIndicatorScan = null;
   const activeIndTag = document.getElementById('activeIndTag');
   if (activeIndTag) activeIndTag.textContent = 'None';
+  const banner = document.getElementById('activeScanBanner');
+  if (banner) banner.style.display = 'none';
 
-  // 11. Clear active filter chips
+  // 12. Single Source of Truth Reset: ZERO filters active
+  window.activeScan = {
+    source: 'manual',
+    strategyId: 'manual',
+    rules: {
+      dayLow: { enabled: false, min: 5.80, max: 8.45 },
+      previousClose: { enabled: false, min: 38.00, max: 48.00 },
+      candlestick: { enabled: false, mode: 'ALL', tol: 0.00 },
+      utBot: { enabled: false, signal: 'ALL', sens: 1 },
+      expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 },
+      excludeUntraded: { enabled: false },
+      indicator: { enabled: false, id: null },
+      formula: { enabled: false }
+    }
+  };
+
   updateActiveFilterChips();
-
   showToast('🧹 All filters cleared! Zero filters or checkboxes selected.', 'info');
-  debouncedRunServerScan(isRapidRepeat ? 350 : 60);
+  executeActiveScan();
 }
 
 function clearSymSearch() {
@@ -8056,8 +8703,14 @@ function clearSymSearch() {
     for (let i = 0; i < sel.options.length; i++) sel.options[i].hidden = false;
     sel.value = '__ALL__';
   }
+  if (window.activeScan && window.activeScan.rules && window.activeScan.rules.underlying) {
+    window.activeScan.rules.underlying.search = '';
+    window.activeScan.rules.underlying.symbol = '__ALL__';
+    window.activeScan.rules.underlying.enabled = false;
+  }
   showToast('🧹 Underlying symbol search cleared!', 'info');
-  debouncedRunServerScan(120);
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function resetLowRangeDefault() {
@@ -8067,8 +8720,12 @@ function resetLowRangeDefault() {
   if (lowFrom) lowFrom.value = '5.80';
   const lowTo = document.getElementById('lowTo');
   if (lowTo) lowTo.value = '8.45';
+  if (!window.activeScan) syncUIToActiveScan('manual');
+  window.activeScan.rules.dayLow = { enabled: true, min: 5.80, max: 8.45 };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ Day Low range reset to default ₹5.80 – ₹8.45', 'info');
-  debouncedRunServerScan(120);
+  executeActiveScan();
 }
 
 function resetPrevCloseDefault() {
@@ -8078,22 +8735,35 @@ function resetPrevCloseDefault() {
   if (prevFrom) prevFrom.value = '38.00';
   const prevTo = document.getElementById('prevTo');
   if (prevTo) prevTo.value = '48.00';
+  if (!window.activeScan) syncUIToActiveScan('manual');
+  window.activeScan.rules.previousClose = { enabled: true, min: 38.00, max: 48.00 };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ Previous Close range reset to default ₹38.00 – ₹48.00', 'info');
-  debouncedRunServerScan(120);
+  executeActiveScan();
 }
 
 function resetToleranceDefault() {
   const tol = document.getElementById('tol');
   if (tol) tol.value = '0.00';
+  if (window.activeScan && window.activeScan.rules && window.activeScan.rules.candlestick) {
+    window.activeScan.rules.candlestick.tol = 0.00;
+  }
   showToast('↺ Tolerance reset to ₹0.00', 'info');
-  debouncedRunServerScan(120);
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function resetOiDefault() {
   const minOi = document.getElementById('minOi');
   if (minOi) minOi.value = '0';
+  if (window.activeScan && window.activeScan.rules && window.activeScan.rules.minOi) {
+    window.activeScan.rules.minOi.enabled = false;
+    window.activeScan.rules.minOi.value = 0;
+  }
   showToast('↺ Min OI reset to 0', 'info');
-  debouncedRunServerScan(120);
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function clearAllChartinkQueryRules() {
@@ -8120,8 +8790,28 @@ function clearAllChartinkQueryRules() {
   const rUn = document.getElementById('ruleExcludeUntraded');
   if (rUn) rUn.checked = false;
 
+  window.activeScan = {
+    source: 'chartink',
+    strategyId: 'chartink',
+    rules: {
+      dayLow: { enabled: false, min: 5.80, max: 8.45 },
+      previousClose: { enabled: false, min: 38.00, max: 48.00 },
+      candlestick: { enabled: false, mode: 'ALL', tol: 0.00 },
+      utBot: { enabled: false, signal: 'ALL', sens: 1 },
+      expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: true, stock: true },
+      minOi: { enabled: false, value: 0 },
+      excludeUntraded: { enabled: false },
+      indicator: { enabled: false, id: null },
+      formula: { enabled: false }
+    }
+  };
+
+  updateActiveFilterChips();
   showToast('🧹 All Query Builder rules cleared!', 'info');
-  runChartinkQueryScan();
+  executeActiveScan();
 }
 
 function clearResultsSearch() {
@@ -8132,6 +8822,7 @@ function clearResultsSearch() {
   const dd = document.getElementById('searchSuggestionsDropdown');
   if (dd) dd.style.display = 'none';
   currentTableSearchQuery = '';
+  updateActiveFilterChips();
   filterAndRender();
 }
 
@@ -8176,8 +8867,14 @@ function clearSymSelect() {
   if (inp) inp.value = '';
   const clr = document.getElementById('symSearchClearBtn');
   if (clr) clr.style.display = 'none';
+  if (window.activeScan && window.activeScan.rules && window.activeScan.rules.underlying) {
+    window.activeScan.rules.underlying.symbol = '__ALL__';
+    window.activeScan.rules.underlying.search = '';
+    window.activeScan.rules.underlying.enabled = false;
+  }
   showToast('↺ Symbol reset to All Underlyings', 'info');
-  runServerScan();
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function resetInstrGroup() {
@@ -8185,44 +8882,83 @@ function resetInstrGroup() {
   const i2 = document.getElementById('instStk');
   if (i1) i1.checked = true;
   if (i2) i2.checked = true;
+  if (window.activeScan && window.activeScan.rules && window.activeScan.rules.instrument) {
+    window.activeScan.rules.instrument.index = true;
+    window.activeScan.rules.instrument.stock = true;
+  }
   showToast('↺ Instrument type reset to Both (Indices + Stocks)', 'info');
-  runServerScan();
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function resetExpSelect() {
   const sel = document.getElementById('expSelect');
   if (sel) sel.value = 'nearest';
+  if (window.activeScan && window.activeScan.rules && window.activeScan.rules.expiry) {
+    window.activeScan.rules.expiry.mode = 'nearest';
+    window.activeScan.rules.expiry.enabled = false;
+  }
   showToast('↺ Expiry reset to Nearest', 'info');
-  runServerScan();
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function resetOptType() {
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
     b.classList.toggle('active', b.dataset.v === 'BOTH');
   });
+  if (window.activeScan && window.activeScan.rules && window.activeScan.rules.optionType) {
+    window.activeScan.rules.optionType.type = 'BOTH';
+    window.activeScan.rules.optionType.enabled = false;
+  }
   showToast('↺ Option type reset to Both (CE + PE)', 'info');
-  runServerScan();
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function resetShowMode() {
   const sel = document.getElementById('showMode');
   if (sel) sel.value = 'matches';
   showToast('↺ Show filter reset to Only matching contracts', 'info');
-  runServerScan();
+  executeActiveScan();
 }
 
 function toggleLowFilter(enable) {
   const chk = document.getElementById('lowOn');
   if (chk) chk.checked = enable;
+  const rChk = document.getElementById('ruleLowOn');
+  if (rChk) rChk.checked = enable;
+  if (!window.activeScan) syncUIToActiveScan('manual');
+  window.activeScan.rules.dayLow.enabled = enable;
+  if (enable) {
+    const f = parseFloat(document.getElementById('lowFrom')?.value) || parseFloat(document.getElementById('ruleLowFrom')?.value) || 5.80;
+    const t = parseFloat(document.getElementById('lowTo')?.value) || parseFloat(document.getElementById('ruleLowTo')?.value) || 8.45;
+    window.activeScan.rules.dayLow.min = f;
+    window.activeScan.rules.dayLow.max = t;
+  }
   showToast(enable ? '✓ Day Low filter enabled' : '✕ Day Low filter disabled', 'info');
-  runServerScan();
+  syncActiveScanToUI();
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function togglePrevFilter(enable) {
   const chk = document.getElementById('prevOn');
   if (chk) chk.checked = enable;
+  const rChk = document.getElementById('rulePrevOn');
+  if (rChk) rChk.checked = enable;
+  if (!window.activeScan) syncUIToActiveScan('manual');
+  window.activeScan.rules.previousClose.enabled = enable;
+  if (enable) {
+    const f = parseFloat(document.getElementById('prevFrom')?.value) || parseFloat(document.getElementById('rulePrevFrom')?.value) || 38.00;
+    const t = parseFloat(document.getElementById('prevTo')?.value) || parseFloat(document.getElementById('rulePrevTo')?.value) || 48.00;
+    window.activeScan.rules.previousClose.min = f;
+    window.activeScan.rules.previousClose.max = t;
+  }
   showToast(enable ? '✓ Prev Close filter enabled' : '✕ Prev Close filter disabled', 'info');
-  runServerScan();
+  syncActiveScanToUI();
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function resetRuleLow() {
@@ -8232,8 +8968,12 @@ function resetRuleLow() {
   if (f) f.value = '5.80';
   const t = document.getElementById('ruleLowTo');
   if (t) t.value = '8.45';
+  if (!window.activeScan) syncUIToActiveScan('chartink');
+  window.activeScan.rules.dayLow = { enabled: true, min: 5.80, max: 8.45 };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ Rule 1 Day Low reset to ₹5.80–₹8.45', 'info');
-  runChartinkQueryScan();
+  executeActiveScan();
 }
 
 function resetRulePrev() {
@@ -8243,8 +8983,12 @@ function resetRulePrev() {
   if (f) f.value = '38.00';
   const t = document.getElementById('rulePrevTo');
   if (t) t.value = '48.00';
+  if (!window.activeScan) syncUIToActiveScan('chartink');
+  window.activeScan.rules.previousClose = { enabled: true, min: 38.00, max: 48.00 };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ Rule 2 Prev Close reset to ₹38–₹48', 'info');
-  runChartinkQueryScan();
+  executeActiveScan();
 }
 
 function resetRuleCandle() {
@@ -8254,8 +8998,12 @@ function resetRuleCandle() {
   if (c) c.value = 'ALL';
   const tol = document.getElementById('ruleTol');
   if (tol) tol.value = '0.00';
+  if (!window.activeScan) syncUIToActiveScan('chartink');
+  window.activeScan.rules.candlestick = { enabled: false, mode: 'ALL', tol: 0.00 };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ Candlestick Action rule reset & disabled', 'info');
-  runChartinkQueryScan();
+  executeActiveScan();
 }
 
 function resetRuleUt() {
@@ -8265,8 +9013,12 @@ function resetRuleUt() {
   if (u) u.value = 'ALL';
   const s = document.getElementById('ruleUtSens');
   if (s) s.value = '1';
+  if (!window.activeScan) syncUIToActiveScan('chartink');
+  window.activeScan.rules.utBot = { enabled: false, signal: 'ALL', sens: 1 };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ UT Bot rule reset & disabled', 'info');
-  runChartinkQueryScan();
+  executeActiveScan();
 }
 
 function resetRuleParams() {
@@ -8278,15 +9030,40 @@ function resetRuleParams() {
   if (t) t.value = 'BOTH';
   const o = document.getElementById('ruleMinOi');
   if (o) o.value = '0';
+  if (!window.activeScan) syncUIToActiveScan('chartink');
+  window.activeScan.rules.expiry = { enabled: false, mode: 'all' };
+  window.activeScan.rules.optionType = { enabled: false, type: 'BOTH' };
+  window.activeScan.rules.minOi = { enabled: false, value: 0 };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ Contract Parameter rules reset & disabled', 'info');
-  runChartinkQueryScan();
+  executeActiveScan();
 }
 
 function resetRuleUntraded() {
   const u = document.getElementById('ruleExcludeUntraded');
   if (u) u.checked = true;
+  if (!window.activeScan) syncUIToActiveScan('chartink');
+  window.activeScan.rules.excludeUntraded = { enabled: true };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
   showToast('↺ Untraded rule reset to Exclude (Vol > 0)', 'info');
-  runChartinkQueryScan();
+  executeActiveScan();
+}
+
+function disableScanRule(ruleKey) {
+  if (!window.activeScan || !window.activeScan.rules) return;
+  if (ruleKey === 'all' || ruleKey === 'strategy') {
+    clearAllScreenerFilters();
+    return;
+  }
+  if (window.activeScan.rules[ruleKey]) {
+    window.activeScan.rules[ruleKey].enabled = false;
+  }
+  syncActiveScanToUI();
+  updateActiveFilterChips();
+  executeActiveScan();
+  showToast(`✕ Disabled rule: ${ruleKey}`, 'info');
 }
 
 function updateActiveFilterChips() {
@@ -8304,83 +9081,102 @@ function updateActiveFilterChips() {
     });
   }
 
-  // 2. Underlying Symbol Search
-  const symSearch = document.getElementById('symSearch');
-  if (symSearch && symSearch.value.trim()) {
+  const scan = window.activeScan;
+  // 2. Active Strategy Preset Chip
+  if (scan && scan.strategyId && scan.strategyId !== 'manual' && scan.strategyId !== 'chartink') {
+    const stratName = (typeof STRATEGY_REGISTRY !== 'undefined' && STRATEGY_REGISTRY[scan.strategyId]) ? STRATEGY_REGISTRY[scan.strategyId].title : scan.strategyId;
     chips.push({
-      label: `🔤 Symbol: "${symSearch.value.trim()}"`,
-      remove: 'clearSymSearch()'
+      label: `⚡ Strategy: ${stratName}`,
+      remove: "disableScanRule('strategy')"
     });
   }
 
-  // 3. Underlying Symbol Dropdown
-  const symSelect = document.getElementById('symSelect');
-  if (symSelect && symSelect.value && symSelect.value !== '__ALL__') {
-    chips.push({
-      label: `🏢 Underlying: ${symSelect.value}`,
-      remove: 'clearSymSelect()'
-    });
+  if (scan && scan.rules) {
+    const r = scan.rules;
+
+    // 3. Day Low
+    if (r.dayLow && r.dayLow.enabled) {
+      chips.push({
+        label: `📉 Day Low: ₹${r.dayLow.min.toFixed(2)}–₹${r.dayLow.max.toFixed(2)}`,
+        remove: "disableScanRule('dayLow')"
+      });
+    }
+
+    // 4. Previous Close
+    if (r.previousClose && r.previousClose.enabled) {
+      chips.push({
+        label: `📈 Prev Cl: ₹${r.previousClose.min.toFixed(2)}–₹${r.previousClose.max.toFixed(2)}`,
+        remove: "disableScanRule('previousClose')"
+      });
+    }
+
+    // 5. Candlestick
+    if (r.candlestick && r.candlestick.enabled) {
+      const modeStr = r.candlestick.mode === 'OL' ? 'Open = Low' : (r.candlestick.mode === 'OH' ? 'Open = High' : 'OL / OH');
+      chips.push({
+        label: `🕯️ Candle: ${modeStr}`,
+        remove: "disableScanRule('candlestick')"
+      });
+    }
+
+    // 6. UT Bot
+    if (r.utBot && r.utBot.enabled) {
+      chips.push({
+        label: `🤖 UT Bot: ${r.utBot.signal}`,
+        remove: "disableScanRule('utBot')"
+      });
+    }
+
+    // 7. Formula S3
+    if (r.formula && r.formula.enabled) {
+      chips.push({
+        label: `📐 S3: Prem ₹${r.formula.premMin}-${r.formula.premMax} & ÷8/÷6.5`,
+        remove: "disableScanRule('formula')"
+      });
+    }
+
+    // 8. Option Type
+    if (r.optionType && r.optionType.enabled && r.optionType.type !== 'BOTH') {
+      chips.push({
+        label: `🎯 Type: ${r.optionType.type}`,
+        remove: "disableScanRule('optionType')"
+      });
+    }
+
+    // 9. Expiry
+    if (r.expiry && r.expiry.enabled && r.expiry.mode !== 'all') {
+      chips.push({
+        label: `📅 Expiry: ${r.expiry.mode}`,
+        remove: "disableScanRule('expiry')"
+      });
+    }
+
+    // 10. Underlying
+    if (r.underlying && r.underlying.enabled && r.underlying.symbol && r.underlying.symbol !== '__ALL__') {
+      chips.push({
+        label: `🏢 Symbol: ${r.underlying.symbol}`,
+        remove: "clearSymSelect()"
+      });
+    }
+
+    // 11. Min OI
+    if (r.minOi && r.minOi.enabled && r.minOi.value > 0) {
+      chips.push({
+        label: `📊 Min OI: ${Number(r.minOi.value).toLocaleString()}`,
+        remove: "disableScanRule('minOi')"
+      });
+    }
+
+    // 12. Exclude Untraded
+    if (r.excludeUntraded && r.excludeUntraded.enabled) {
+      chips.push({
+        label: `🚫 Traded Only (Vol > 0)`,
+        remove: "disableScanRule('excludeUntraded')"
+      });
+    }
   }
 
-  // 4. Expiry
-  const expSelect = document.getElementById('expSelect');
-  if (expSelect && expSelect.value && expSelect.value !== 'nearest') {
-    chips.push({
-      label: `📅 Expiry: ${expSelect.value}`,
-      remove: 'resetExpSelect()'
-    });
-  }
-
-  // 5. Option Type
-  const activeOptBtn = document.querySelector('#optTypeSeg button.active');
-  if (activeOptBtn && activeOptBtn.dataset.v !== 'BOTH') {
-    chips.push({
-      label: `🎯 Type: ${activeOptBtn.dataset.v}`,
-      remove: 'resetOptType()'
-    });
-  }
-
-  // 6. Day Low
-  const lowOn = document.getElementById('lowOn');
-  const lowFrom = document.getElementById('lowFrom');
-  const lowTo = document.getElementById('lowTo');
-  if (lowOn && lowOn.checked && lowFrom && lowTo) {
-    chips.push({
-      label: `📉 Day Low: ₹${lowFrom.value}–₹${lowTo.value}`,
-      remove: 'toggleLowFilter(false)'
-    });
-  }
-
-  // 7. Previous Close
-  const prevOn = document.getElementById('prevOn');
-  const prevFrom = document.getElementById('prevFrom');
-  const prevTo = document.getElementById('prevTo');
-  if (prevOn && prevOn.checked && prevFrom && prevTo) {
-    chips.push({
-      label: `📈 Prev Cl: ₹${prevFrom.value}–₹${prevTo.value}`,
-      remove: 'togglePrevFilter(false)'
-    });
-  }
-
-  // 8. Tolerance
-  const tol = document.getElementById('tol');
-  if (tol && parseFloat(tol.value) > 0) {
-    chips.push({
-      label: `🎯 Tol: ±₹${tol.value}`,
-      remove: 'resetToleranceDefault()'
-    });
-  }
-
-  // 9. Min OI
-  const minOi = document.getElementById('minOi');
-  if (minOi && parseInt(minOi.value) > 0) {
-    chips.push({
-      label: `📊 Min OI: ${Number(minOi.value).toLocaleString()}`,
-      remove: 'resetOiDefault()'
-    });
-  }
-
-  // 10. Quick Table Pill Filter
+  // 13. Quick Table Pill Filter
   if (currentQuickFilter && currentQuickFilter !== 'ALL') {
     chips.push({
       label: `⚡ Filter: ${currentQuickFilter}`,
@@ -8402,16 +9198,98 @@ function updateActiveFilterChips() {
   }
 }
 
+function initRuleEventListeners() {
+  const rLowOn = document.getElementById('ruleLowOn');
+  if (rLowOn) {
+    rLowOn.addEventListener('change', function() {
+      if (!window.activeScan) syncUIToActiveScan('chartink');
+      window.activeScan.rules.dayLow.enabled = this.checked;
+      const f = parseFloat(document.getElementById('ruleLowFrom')?.value);
+      const t = parseFloat(document.getElementById('ruleLowTo')?.value);
+      if (!isNaN(f)) window.activeScan.rules.dayLow.min = f;
+      if (!isNaN(t)) window.activeScan.rules.dayLow.max = t;
+      syncActiveScanToUI();
+      updateActiveFilterChips();
+      executeActiveScan();
+    });
+  }
+  const rPrevOn = document.getElementById('rulePrevOn');
+  if (rPrevOn) {
+    rPrevOn.addEventListener('change', function() {
+      if (!window.activeScan) syncUIToActiveScan('chartink');
+      window.activeScan.rules.previousClose.enabled = this.checked;
+      const f = parseFloat(document.getElementById('rulePrevFrom')?.value);
+      const t = parseFloat(document.getElementById('rulePrevTo')?.value);
+      if (!isNaN(f)) window.activeScan.rules.previousClose.min = f;
+      if (!isNaN(t)) window.activeScan.rules.previousClose.max = t;
+      syncActiveScanToUI();
+      updateActiveFilterChips();
+      executeActiveScan();
+    });
+  }
+  const rCandleOn = document.getElementById('ruleCandleOn');
+  if (rCandleOn) {
+    rCandleOn.addEventListener('change', function() {
+      if (!window.activeScan) syncUIToActiveScan('chartink');
+      window.activeScan.rules.candlestick.enabled = this.checked;
+      window.activeScan.rules.candlestick.mode = document.getElementById('ruleCandleMode')?.value || 'ALL';
+      window.activeScan.rules.candlestick.tol = parseFloat(document.getElementById('ruleTol')?.value) || 0.0;
+      syncActiveScanToUI();
+      updateActiveFilterChips();
+      executeActiveScan();
+    });
+  }
+  const rUtOn = document.getElementById('ruleUtOn');
+  if (rUtOn) {
+    rUtOn.addEventListener('change', function() {
+      if (!window.activeScan) syncUIToActiveScan('chartink');
+      window.activeScan.rules.utBot.enabled = this.checked;
+      window.activeScan.rules.utBot.signal = document.getElementById('ruleUtAction')?.value || 'ALL';
+      syncActiveScanToUI();
+      updateActiveFilterChips();
+      executeActiveScan();
+    });
+  }
+  const rParamsOn = document.getElementById('ruleParamsOn');
+  if (rParamsOn) {
+    rParamsOn.addEventListener('change', function() {
+      if (!window.activeScan) syncUIToActiveScan('chartink');
+      const optType = document.getElementById('ruleOptType')?.value || 'BOTH';
+      const exp = document.getElementById('ruleExpiry')?.value || 'all';
+      const oi = parseFloat(document.getElementById('ruleMinOi')?.value) || 0;
+      window.activeScan.rules.expiry.enabled = this.checked && (exp !== 'all');
+      window.activeScan.rules.expiry.mode = exp;
+      window.activeScan.rules.optionType.enabled = this.checked && (optType !== 'BOTH');
+      window.activeScan.rules.optionType.type = optType;
+      window.activeScan.rules.minOi.enabled = this.checked && (oi > 0);
+      window.activeScan.rules.minOi.value = oi;
+      syncActiveScanToUI();
+      updateActiveFilterChips();
+      executeActiveScan();
+    });
+  }
+  const rUn = document.getElementById('ruleExcludeUntraded');
+  if (rUn) {
+    rUn.addEventListener('change', function() {
+      if (!window.activeScan) syncUIToActiveScan('chartink');
+      window.activeScan.rules.excludeUntraded.enabled = this.checked;
+      syncActiveScanToUI();
+      updateActiveFilterChips();
+      executeActiveScan();
+    });
+  }
+}
+
 // Initial Boot
 initAmbientBackground();
 initLiveClock();
+initRuleEventListeners();
 updateAlertsBadge();
 fetchIndexPulse();
-setInterval(fetchIndexPulse, 30000); // Live index options pulse auto-refreshed every 30s
+setInterval(fetchIndexPulse, 30000);
 fetchGlobalMarkets();
-setInterval(fetchGlobalMarkets, 20000); // Live commodities & futures refreshed every 20s
+setInterval(fetchGlobalMarkets, 20000);
 
-// On mobile / CMF Phone 2 viewports (width <= 768px), collapse sidebar filters by default so live data is immediately visible
 if (window.innerWidth <= 768) {
   const sidebar = document.getElementById('sidebarFiltersPanel');
   const arrow = document.getElementById('filterToggleArrow');
@@ -8420,7 +9298,7 @@ if (window.innerWidth <= 768) {
 }
 
 initStatus().then(() => {
-  runServerScan();
+  setActiveScanStrategy('strat1');
 });
 </script>
 </body>

@@ -6814,114 +6814,269 @@ function clearAllTriggeredAlerts() {
 /* ============================================================
    SERVER & LIVE SCAN ENGINE
 ============================================================ */
+let currentScanRequestId = 0;
+
 function getFilters() {
-  const lowFromVal = document.getElementById('lowFrom').value.trim();
-  const lowToVal = document.getElementById('lowTo').value.trim();
-  const prevFromVal = document.getElementById('prevFrom').value.trim();
-  const prevToVal = document.getElementById('prevTo').value.trim();
-  const tolVal = document.getElementById('tol').value.trim();
-  const minOiVal = document.getElementById('minOi').value.trim();
+  const lowFromVal = document.getElementById('lowFrom')?.value.trim() || '';
+  const lowToVal = document.getElementById('lowTo')?.value.trim() || '';
+  const prevFromVal = document.getElementById('prevFrom')?.value.trim() || '';
+  const prevToVal = document.getElementById('prevTo')?.value.trim() || '';
+  const tolVal = document.getElementById('tol')?.value.trim() || '';
+  const minOiVal = document.getElementById('minOi')?.value.trim() || '';
   const activeOptSeg = document.querySelector('#optTypeSeg button.active');
 
   return {
-    symSelect: document.getElementById('symSelect').value,
-    instIdx: document.getElementById('instIdx').checked,
-    instStk: document.getElementById('instStk').checked,
+    symSelect: document.getElementById('symSelect')?.value || '__ALL__',
+    instIdx: document.getElementById('instIdx') ? document.getElementById('instIdx').checked : true,
+    instStk: document.getElementById('instStk') ? document.getElementById('instStk').checked : true,
     optType: activeOptSeg ? activeOptSeg.dataset.v : 'BOTH',
-    expSelect: document.getElementById('expSelect').value,
-    lowOn: document.getElementById('lowOn').checked,
+    expSelect: document.getElementById('expSelect')?.value || 'all',
+    lowOn: document.getElementById('lowOn') ? document.getElementById('lowOn').checked : false,
     lowFrom: lowFromVal !== '' ? parseFloat(lowFromVal) : 5.80,
     lowTo: lowToVal !== '' ? parseFloat(lowToVal) : 8.45,
-    prevOn: document.getElementById('prevOn').checked,
+    prevOn: document.getElementById('prevOn') ? document.getElementById('prevOn').checked : false,
     prevFrom: prevFromVal !== '' ? parseFloat(prevFromVal) : 38.00,
     prevTo: prevToVal !== '' ? parseFloat(prevToVal) : 48.00,
     tol: tolVal !== '' ? parseFloat(tolVal) : 0.00,
     minOi: minOiVal !== '' ? parseFloat(minOiVal) : 0.00,
-    includeUntraded: document.getElementById('includeUntraded').checked,
-    showMode: document.getElementById('showMode').value
+    includeUntraded: document.getElementById('includeUntraded') ? document.getElementById('includeUntraded').checked : false,
+    showMode: document.getElementById('showMode')?.value || 'any'
   };
 }
 
-async function runServerScan() {
-  // Guards against an older in-flight scan (e.g. the initial page-load boot
-  // scan, which can take several seconds to resolve) completing AFTER a
-  // newer one the user just triggered (like clicking a strategy preset) and
-  // silently overwriting its correctly-filtered results with stale/wrong data.
-  const mySeq = ++scanRequestSeq;
+async function executeActiveScan() {
+  const thisRequestId = ++currentScanRequestId;
+  scanRequestSeq = thisRequestId;
 
   const btn = document.getElementById('scanBtn');
-  btn.textContent = 'Scanning…';
-  btn.disabled = true;
+  if (btn) {
+    btn.textContent = 'Scanning…';
+    btn.disabled = true;
+  }
+  const qBtn = document.getElementById('queryRunBtn');
+  if (qBtn) {
+    qBtn.innerHTML = '<span>⏳</span> <b>Scanning…</b>';
+    qBtn.disabled = true;
+  }
+  const liveBtn = document.getElementById('liveScanBtn');
+  if (liveBtn) {
+    liveBtn.textContent = '⏳ Fetching…';
+    liveBtn.disabled = true;
+  }
 
   try {
-    const filters = getFilters();
-    if (currentActiveIndicatorScan) {
-      filters.indicator = currentActiveIndicatorScan;
+    if (!window.activeScan || !window.activeScan.rules) {
+      syncUIToActiveScan('manual');
     }
+    const config = window.activeScan;
+    const rules = config.rules;
+
+    // Check if live mode is active (Direct Upstox Live Scan)
+    if (typeof currentMode !== 'undefined' && currentMode === 'live') {
+      const liveSym = document.getElementById('liveSymbolSelect')?.value || 'NIFTY';
+      const params = new URLSearchParams({
+        symbol: liveSym,
+        optType: (rules.optionType && rules.optionType.enabled) ? rules.optionType.type : 'BOTH',
+        lowOn: !!(rules.dayLow && rules.dayLow.enabled),
+        lowFrom: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.min : 0.05,
+        lowTo: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.max : 50000.0,
+        prevOn: !!(rules.previousClose && rules.previousClose.enabled),
+        prevFrom: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.min : 0.05,
+        prevTo: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.max : 50000.0,
+        tol: (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.00,
+        minOi: (rules.minOi && rules.minOi.enabled) ? (rules.minOi.value || 0) : 0,
+        includeUntraded: !(rules.excludeUntraded && rules.excludeUntraded.enabled),
+        showMode: (rules.candlestick && rules.candlestick.enabled) ?
+          (rules.candlestick.mode === 'OL' ? 'ol' : (rules.candlestick.mode === 'OH' ? 'oh' : (rules.candlestick.mode === 'OL_OH' ? 'ol_oh' : 'any'))) : 'any'
+      });
+
+      const res = await fetch(`${API_BASE}/api/live/scan?${params.toString()}`);
+      const data = await res.json();
+      if (thisRequestId !== currentScanRequestId) return;
+      if (res.ok) {
+        const rawCandidates = data.results || [];
+        const matched = [];
+        let samplePass = null;
+        let sampleFail = null;
+
+        for (const contract of rawCandidates) {
+          const evalRes = evaluateContract(contract, config, true);
+          if (evalRes.passed) {
+            matched.push(contract);
+            if (!samplePass) samplePass = { contract, res: evalRes };
+          } else {
+            if (!sampleFail) sampleFail = { contract, res: evalRes };
+          }
+        }
+
+        window.lastResults = matched;
+        logActiveScanTrace(config, rawCandidates.length, matched, samplePass, sampleFail);
+
+        const liveTimeEl = document.getElementById('liveLastTime');
+        const prov = data.provider || 'Upstox';
+        if (liveTimeEl) liveTimeEl.textContent = `🟢 ${prov} Live: ${data.liveTimestamp || ''}`;
+
+        const totalCount = matched.length;
+        let olCount = 0;
+        let ohCount = 0;
+        let matchCount = 0;
+
+        for (const c of matched) {
+          const o = c.open || 0;
+          const h = c.high || 0;
+          const l = c.low || 0;
+          const tol = (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.05;
+          const isOl = o > 0 && Math.abs(o - l) <= tol;
+          const isOh = o > 0 && Math.abs(o - h) <= tol;
+          if (isOl) olCount++;
+          if (isOh) ohCount++;
+          if (isOl || isOh || c.isMatch) matchCount++;
+        }
+
+        const statTotalEl = document.getElementById('statTotal');
+        if (statTotalEl) statTotalEl.textContent = totalCount.toLocaleString();
+        const statMatchEl = document.getElementById('statMatch');
+        if (statMatchEl) statMatchEl.textContent = matchCount.toLocaleString();
+        const statOLEl = document.getElementById('statOL');
+        if (statOLEl) statOLEl.textContent = olCount.toLocaleString();
+        const statOHEl = document.getElementById('statOH');
+        if (statOHEl) statOHEl.textContent = ohCount.toLocaleString();
+
+        const qCountEl = document.getElementById('queryMatchCount');
+        if (qCountEl) qCountEl.textContent = `${totalCount} Matches`;
+
+        const summaryEl = document.getElementById('summary');
+        if (summaryEl) summaryEl.style.display = 'flex';
+
+        filterAndRender();
+        updateActiveFilterChips();
+        return;
+      }
+    }
+
+    // Bhavcopy Scan Pipeline
+    const payload = {
+      symSelect: (rules.underlying && rules.underlying.enabled && rules.underlying.symbol) ? rules.underlying.symbol : '__ALL__',
+      instIdx: (rules.instrument && rules.instrument.enabled) ? rules.instrument.index : true,
+      instStk: (rules.instrument && rules.instrument.enabled) ? rules.instrument.stock : true,
+      optType: (rules.optionType && rules.optionType.enabled) ? rules.optionType.type : 'BOTH',
+      expSelect: (rules.expiry && rules.expiry.enabled) ? rules.expiry.mode : 'all',
+      lowOn: !!(rules.dayLow && rules.dayLow.enabled),
+      lowFrom: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.min : 0.05,
+      lowTo: (rules.dayLow && rules.dayLow.enabled) ? rules.dayLow.max : 50000.0,
+      prevOn: !!(rules.previousClose && rules.previousClose.enabled),
+      prevFrom: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.min : 0.05,
+      prevTo: (rules.previousClose && rules.previousClose.enabled) ? rules.previousClose.max : 50000.0,
+      tol: (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.00,
+      minOi: (rules.minOi && rules.minOi.enabled) ? (rules.minOi.value || 0) : 0,
+      includeUntraded: !(rules.excludeUntraded && rules.excludeUntraded.enabled),
+      showMode: (rules.candlestick && rules.candlestick.enabled) ?
+        (rules.candlestick.mode === 'OL' ? 'ol' : (rules.candlestick.mode === 'OH' ? 'oh' : (rules.candlestick.mode === 'OL_OH' ? 'ol_oh' : 'any'))) : 'any'
+    };
+
+    if (rules.indicator && rules.indicator.enabled && rules.indicator.id) {
+      payload.indicator = rules.indicator.id;
+    }
+
     const res = await fetch(`${API_BASE}/api/scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(filters)
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
+
+    if (thisRequestId !== currentScanRequestId) return;
+
     if (res.ok) {
-      lastResults = data.results || [];
-      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
-      document.getElementById('statMatch').textContent = (data.statMatch || 0).toLocaleString();
-      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
-      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
-      document.getElementById('summary').style.display = 'flex';
+      const rawCandidates = data.results || [];
+      const matched = [];
+      let samplePass = null;
+      let sampleFail = null;
+
+      for (const contract of rawCandidates) {
+        const evalRes = evaluateContract(contract, config, true);
+        if (evalRes.passed) {
+          matched.push(contract);
+          if (!samplePass) samplePass = { contract, res: evalRes };
+        } else {
+          if (!sampleFail) sampleFail = { contract, res: evalRes };
+        }
+      }
+
+      window.lastResults = matched;
+      logActiveScanTrace(config, rawCandidates.length, matched, samplePass, sampleFail);
+
+      const totalCount = matched.length;
+      let olCount = 0;
+      let ohCount = 0;
+      let matchCount = 0;
+
+      for (const c of matched) {
+        const o = c.open || 0;
+        const h = c.high || 0;
+        const l = c.low || 0;
+        const tol = (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.05;
+        const isOl = o > 0 && Math.abs(o - l) <= tol;
+        const isOh = o > 0 && Math.abs(o - h) <= tol;
+        if (isOl) olCount++;
+        if (isOh) ohCount++;
+        if (isOl || isOh || c.isMatch) matchCount++;
+      }
+
+      const statTotalEl = document.getElementById('statTotal');
+      if (statTotalEl) statTotalEl.textContent = totalCount.toLocaleString();
+      const statMatchEl = document.getElementById('statMatch');
+      if (statMatchEl) statMatchEl.textContent = matchCount.toLocaleString();
+      const statOLEl = document.getElementById('statOL');
+      if (statOLEl) statOLEl.textContent = olCount.toLocaleString();
+      const statOHEl = document.getElementById('statOH');
+      if (statOHEl) statOHEl.textContent = ohCount.toLocaleString();
+
+      const qCountEl = document.getElementById('queryMatchCount');
+      if (qCountEl) qCountEl.textContent = `${totalCount} Matches`;
+
+      const summaryEl = document.getElementById('summary');
+      if (summaryEl) summaryEl.style.display = 'flex';
+
+      if (config.strategyId && config.strategyId !== 'manual') {
+        updateActiveScanBanner(config.strategyId);
+      } else {
+        const banner = document.getElementById('activeScanBanner');
+        if (banner) banner.style.display = 'none';
+      }
+
       filterAndRender();
+      updateActiveFilterChips();
     } else {
       showToast(data.detail || 'Scan failed', 'error');
     }
   } catch (e) {
-    console.error(e);
+    console.error('Active scan failed:', e);
   } finally {
-    if (mySeq === scanRequestSeq) {
-      btn.textContent = '⚡ Scan Market';
-      btn.disabled = false;
+    if (thisRequestId === currentScanRequestId) {
+      if (btn) {
+        btn.textContent = '⚡ Scan Market';
+        btn.disabled = false;
+      }
+      if (qBtn) {
+        qBtn.innerHTML = '<span>▶</span> <b>Run Screener Scan</b>';
+        qBtn.disabled = false;
+      }
+      if (liveBtn) {
+        liveBtn.textContent = '⚡ Fetch Live Chain';
+        liveBtn.disabled = false;
+      }
     }
   }
 }
 
-async function runLiveScan() {
-  const mySeq = ++scanRequestSeq;
-  const sym = document.getElementById('liveSymbolSelect').value;
-  const filters = getFilters();
-  const params = new URLSearchParams({
-    symbol: sym,
-    optType: filters.optType,
-    lowOn: filters.lowOn,
-    lowFrom: filters.lowFrom,
-    lowTo: filters.lowTo,
-    prevOn: filters.prevOn,
-    prevFrom: filters.prevFrom,
-    prevTo: filters.prevTo,
-    tol: filters.tol,
-    minOi: filters.minOi,
-    includeUntraded: filters.includeUntraded,
-    showMode: filters.showMode
-  });
+async function runServerScan() {
+  syncUIToActiveScan('manual');
+  return executeActiveScan();
+}
 
-  try {
-    const res = await fetch(`${API_BASE}/api/live/scan?${params.toString()}`);
-    const data = await res.json();
-    if (mySeq !== scanRequestSeq) return; // superseded by a newer scan; discard this stale response
-    if (res.ok) {
-      lastResults = data.results || [];
-      document.getElementById('liveLastTime').textContent = 'Last updated: ' + (data.liveTimestamp || '') + (data.provider ? ' • Source: ' + data.provider + (data.dataMode ? ' ' + data.dataMode : '') : '');
-      document.getElementById('statTotal').textContent = (data.totalContracts || 0).toLocaleString();
-      document.getElementById('statMatch').textContent = (data.statMatch || 0).toLocaleString();
-      document.getElementById('statOL').textContent = (data.statOL || 0).toLocaleString();
-      document.getElementById('statOH').textContent = (data.statOH || 0).toLocaleString();
-      document.getElementById('summary').style.display = 'flex';
-      filterAndRender();
-    }
-  } catch (e) {
-    console.error(e);
-  }
+async function runLiveScan() {
+  return executeActiveScan();
 }
 
 /* ============================================================
