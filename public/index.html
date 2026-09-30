@@ -8680,7 +8680,7 @@ async function fetchGlobalMarkets() {
           const elSub = document.getElementById('goldUsdSub');
           if (elVal) elVal.textContent = c.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${c.isPos ? '▲ +' : '▼ '}${fmtPct(c.chgPct)}`;
+            elChg.textContent = `${c.isPos ? '▲ ' : '▼ '}${fmtPct(c.chgPct)}`;
             elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
           }
           if (elSub && c.subLabel) elSub.textContent = c.subLabel;
@@ -8690,7 +8690,7 @@ async function fetchGlobalMarkets() {
           const elSub = document.getElementById('crudeUsdSub');
           if (elVal) elVal.textContent = c.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${c.isPos ? '▲ +' : '▼ '}${fmtPct(c.chgPct)}`;
+            elChg.textContent = `${c.isPos ? '▲ ' : '▼ '}${fmtPct(c.chgPct)}`;
             elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
           }
           if (elSub && c.subLabel) elSub.textContent = c.subLabel;
@@ -8700,7 +8700,7 @@ async function fetchGlobalMarkets() {
           const elSub = document.getElementById('btcUsdSub');
           if (elVal) elVal.textContent = c.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${c.isPos ? '▲ +' : '▼ '}${fmtPct(c.chgPct)}`;
+            elChg.textContent = `${c.isPos ? '▲ ' : '▼ '}${fmtPct(c.chgPct)}`;
             elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
           }
           if (elSub && c.subLabel) elSub.textContent = c.subLabel;
@@ -8715,7 +8715,7 @@ async function fetchGlobalMarkets() {
       if (elVal) elVal.textContent = `₹${data.inrUsd.toFixed(2)}`;
       if (elChg) {
         const isPos = data.inrChgPct >= 0;
-        elChg.textContent = `${isPos ? '▲ +' : '▼ '}${fmtPct(data.inrChgPct)}`;
+        elChg.textContent = `${isPos ? '▲ ' : '▼ '}${fmtPct(data.inrChgPct)}`;
         elChg.className = `index-ticker-chg ${isPos ? 'pos' : 'neg'}`;
       }
     }
@@ -8729,7 +8729,7 @@ async function fetchGlobalMarkets() {
           const elSub = document.getElementById('giftNiftyBasis');
           if (elVal) elVal.textContent = f.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
             elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
           }
           if (elSub && f.subLabel) elSub.textContent = f.subLabel;
@@ -8739,7 +8739,7 @@ async function fetchGlobalMarkets() {
           const elSub = document.getElementById('niftyNearBasis');
           if (elVal) elVal.textContent = f.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
             elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
           }
           if (elSub && f.subLabel) elSub.textContent = f.subLabel;
@@ -8749,7 +8749,7 @@ async function fetchGlobalMarkets() {
           const elSub = document.getElementById('niftyNextBasis');
           if (elVal) elVal.textContent = f.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
             elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
           }
           if (elSub && f.subLabel) elSub.textContent = f.subLabel;
@@ -8759,7 +8759,7 @@ async function fetchGlobalMarkets() {
           const elSub = document.getElementById('bankNearBasis');
           if (elVal) elVal.textContent = f.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
             elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
           }
           if (elSub && f.subLabel) elSub.textContent = f.subLabel;
@@ -8768,7 +8768,7 @@ async function fetchGlobalMarkets() {
           const elChg = document.getElementById('dowFutChg');
           if (elVal) elVal.textContent = f.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
             elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
           }
         } else if (f.id === 'sp_fut') {
@@ -8776,7 +8776,7 @@ async function fetchGlobalMarkets() {
           const elChg = document.getElementById('spFutChg');
           if (elVal) elVal.textContent = f.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
             elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
           }
         } else if (f.id === 'nasdaq_fut') {
@@ -8784,7 +8784,7 @@ async function fetchGlobalMarkets() {
           const elChg = document.getElementById('nasdaqFutChg');
           if (elVal) elVal.textContent = f.priceFormatted;
           if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ +' : '▼ '}${fmtPct(f.chgPct)}`;
+            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
             elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
           }
         }

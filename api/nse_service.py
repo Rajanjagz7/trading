@@ -1157,23 +1157,61 @@ class NSEService:
         nasdaq_pct = market_data.get('NQ=F', {}).get('pct') or 0.42
         nasdaq_chg = market_data.get('NQ=F', {}).get('chg') or 85.0
 
-        # Indian Spot reference
+        # Indian Spot reference -- prefer live Upstox quotes (same source already
+        # proven live in get_market_status/get_indices_pulse) over the bhavcopy
+        # settlement cache, which can be several days stale. This also gives a
+        # real day change % to drive the futures chg/chgPct below instead of the
+        # hardcoded constants that previously never changed.
         nifty_spot = 24852.15
+        nifty_chg_pct = 0.0
         bank_spot = 51785.40
-        if self.today_rows:
+        bank_chg_pct = 0.0
+
+        up_idx_quotes = {}
+        try:
+            if upstox_service.is_configured():
+                up_idx_quotes = upstox_service.get_all_indices_quotes()
+        except Exception as e:
+            print(f"[Upstox] get_global_markets index quote error: {e}")
+
+        if up_idx_quotes.get("NIFTY", {}).get("last"):
+            nifty_spot = up_idx_quotes["NIFTY"]["last"]
+            nifty_chg_pct = up_idx_quotes["NIFTY"]["pct"]
+        elif self.today_rows:
             for r in self.today_rows:
                 if r.get('symbol') == 'NIFTY' and r.get('spot', 0) > 0:
                     nifty_spot = r['spot']
                     break
+            for prow in self.prev_map.values():
+                if prow.get('symbol') == 'NIFTY' and prow.get('spot', 0) > 0 and nifty_spot > 0:
+                    nifty_chg_pct = round(((nifty_spot - prow['spot']) / prow['spot']) * 100.0, 2)
+                    break
+
+        if up_idx_quotes.get("BANKNIFTY", {}).get("last"):
+            bank_spot = up_idx_quotes["BANKNIFTY"]["last"]
+            bank_chg_pct = up_idx_quotes["BANKNIFTY"]["pct"]
+        elif self.today_rows:
             for r in self.today_rows:
                 if r.get('symbol') == 'BANKNIFTY' and r.get('spot', 0) > 0:
                     bank_spot = r['spot']
+                    break
+            for prow in self.prev_map.values():
+                if prow.get('symbol') == 'BANKNIFTY' and prow.get('spot', 0) > 0 and bank_spot > 0:
+                    bank_chg_pct = round(((bank_spot - prow['spot']) / prow['spot']) * 100.0, 2)
                     break
 
         gift_nifty = round(nifty_spot + 68.0, 2)
         nifty_fut_near = round(nifty_spot + 45.0, 2)
         nifty_fut_next = round(nifty_spot + 128.0, 2)
         bank_fut_near = round(bank_spot + 165.0, 2)
+
+        # Real change applied to each synthetic futures price -- a near-dated
+        # index future's % move tracks its underlying closely intraday, so this
+        # is an honest live-updating proxy rather than a frozen guess.
+        gift_nifty_chg = round(gift_nifty * (nifty_chg_pct / 100.0), 2)
+        nifty_fut_near_chg = round(nifty_fut_near * (nifty_chg_pct / 100.0), 2)
+        nifty_fut_next_chg = round(nifty_fut_next * (nifty_chg_pct / 100.0), 2)
+        bank_fut_near_chg = round(bank_fut_near * (bank_chg_pct / 100.0), 2)
 
         data = {
             "success": True,
@@ -1229,9 +1267,9 @@ class NSEService:
                     "priceFormatted": f"{gift_nifty:,.2f}",
                     "basis": "+68.0",
                     "subLabel": "Basis: +68.0",
-                    "chg": 112.5,
-                    "chgPct": 0.48,
-                    "isPos": True,
+                    "chg": gift_nifty_chg,
+                    "chgPct": round(nifty_chg_pct, 2),
+                    "isPos": nifty_chg_pct >= 0,
                     "market": "NSE IX"
                 },
                 {
@@ -1242,9 +1280,9 @@ class NSEService:
                     "priceFormatted": f"{nifty_fut_near:,.2f}",
                     "basis": "+45.0",
                     "subLabel": "Premium: +45.0",
-                    "chg": 105.0,
-                    "chgPct": 0.42,
-                    "isPos": True,
+                    "chg": nifty_fut_near_chg,
+                    "chgPct": round(nifty_chg_pct, 2),
+                    "isPos": nifty_chg_pct >= 0,
                     "market": "NSE F&O"
                 },
                 {
@@ -1255,9 +1293,9 @@ class NSEService:
                     "priceFormatted": f"{nifty_fut_next:,.2f}",
                     "basis": "+128.0",
                     "subLabel": "Roll Spread: +83.0",
-                    "chg": 110.0,
-                    "chgPct": 0.44,
-                    "isPos": True,
+                    "chg": nifty_fut_next_chg,
+                    "chgPct": round(nifty_chg_pct, 2),
+                    "isPos": nifty_chg_pct >= 0,
                     "market": "NSE F&O"
                 },
                 {
@@ -1268,9 +1306,9 @@ class NSEService:
                     "priceFormatted": f"{bank_fut_near:,.2f}",
                     "basis": "+165.0",
                     "subLabel": "Premium: +165.0",
-                    "chg": 240.0,
-                    "chgPct": 0.46,
-                    "isPos": True,
+                    "chg": bank_fut_near_chg,
+                    "chgPct": round(bank_chg_pct, 2),
+                    "isPos": bank_chg_pct >= 0,
                     "market": "NSE F&O"
                 },
                 {
