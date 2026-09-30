@@ -352,6 +352,32 @@ class NSEService:
             except Exception as e:
                 print(f"[Upstox] get_indices_pulse quote error: {e}")
 
+        # Prefer a live Upstox option chain over bhavcopy settlement data for
+        # ALL 5 indices, not just SENSEX -- bhavcopy can be several days stale
+        # (self.today_date may lag real market days), so even when a symbol
+        # has bhavcopy candidates it can still be pointing at an
+        # already-expired series. This mirrors the same live-first pattern
+        # already used successfully in get_option_chain_for_symbol().
+        #
+        # Fetched concurrently (not one at a time in the loop below) --
+        # five sequential Upstox option-chain fetches took 5-7+ seconds in
+        # practice, which is long enough to noticeably delay unrelated
+        # requests on a single-worker server. Fetching them in parallel
+        # brings this down to roughly the slowest single fetch instead of
+        # the sum of all five.
+        live_chains = {}
+        if upstox_service.is_configured():
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as ex:
+                future_to_sym = {ex.submit(upstox_service.fetch_option_chain, sym): sym for sym in target_indices}
+                for future in concurrent.futures.as_completed(future_to_sym):
+                    sym = future_to_sym[future]
+                    try:
+                        up_chain = future.result()
+                        if up_chain and up_chain.get("rows"):
+                            live_chains[sym] = up_chain
+                    except Exception as e:
+                        print(f"[Upstox] {sym} pulse chain error: {e}")
+
         for sym in target_indices:
             candidates = [r for r in self.today_rows if r["symbol"] == sym]
             if not candidates:
@@ -360,20 +386,10 @@ class NSEService:
             target_exp = ""
             chain_rows = []
 
-            # Prefer a live Upstox option chain over bhavcopy settlement data for
-            # ALL 5 indices, not just SENSEX -- bhavcopy can be several days stale
-            # (self.today_date may lag real market days), so even when `candidates`
-            # is non-empty it can still be pointing at an already-expired series.
-            # This mirrors the same live-first pattern already used successfully
-            # in get_option_chain_for_symbol().
-            if upstox_service.is_configured():
-                try:
-                    up_chain = upstox_service.fetch_option_chain(sym)
-                    if up_chain and up_chain.get("rows"):
-                        chain_rows = up_chain["rows"]
-                        target_exp = up_chain.get("targetExpiry", "")
-                except Exception as e:
-                    print(f"[Upstox] {sym} pulse chain error: {e}")
+            up_chain = live_chains.get(sym)
+            if up_chain:
+                chain_rows = up_chain["rows"]
+                target_exp = up_chain.get("targetExpiry", "")
 
             if not chain_rows and candidates:
                 expiries = sorted(list({r["expiry"] for r in candidates}))
@@ -1110,20 +1126,29 @@ class NSEService:
         syms = ['GC=F', 'CL=F', 'YM=F', 'ES=F', 'NQ=F', 'BTC-USD', 'INR=X']
         market_data = {}
 
-        for s in syms:
-            try:
-                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{s}?interval=1d&range=1d"
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-                with urllib.request.urlopen(req, timeout=3.0) as r:
-                    d = json.loads(r.read())
-                    meta = d['chart']['result'][0]['meta']
-                    price = meta.get('regularMarketPrice', 0.0)
-                    prev = meta.get('chartPreviousClose', price)
-                    chg = price - prev if price and prev else 0.0
-                    pct = (chg / prev) * 100.0 if prev else 0.0
-                    market_data[s] = {'price': price, 'prev': prev, 'chg': chg, 'pct': pct}
-            except Exception:
-                pass
+        def _fetch_yahoo_symbol(s):
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{s}?interval=1d&range=1d"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=3.0) as r:
+                d = json.loads(r.read())
+                meta = d['chart']['result'][0]['meta']
+                price = meta.get('regularMarketPrice', 0.0)
+                prev = meta.get('chartPreviousClose', price)
+                chg = price - prev if price and prev else 0.0
+                pct = (chg / prev) * 100.0 if prev else 0.0
+                return {'price': price, 'prev': prev, 'chg': chg, 'pct': pct}
+
+        # Fetched concurrently -- 7 sequential Yahoo calls (up to 3s timeout
+        # each) could take up to 21s in the worst case, long enough to
+        # noticeably delay unrelated requests on a single-worker server.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=7) as ex:
+            future_to_sym = {ex.submit(_fetch_yahoo_symbol, s): s for s in syms}
+            for future in concurrent.futures.as_completed(future_to_sym):
+                s = future_to_sym[future]
+                try:
+                    market_data[s] = future.result()
+                except Exception:
+                    pass
 
         inr_rate = market_data.get('INR=X', {}).get('price') or 85.20
         inr_pct = market_data.get('INR=X', {}).get('pct') or -0.05

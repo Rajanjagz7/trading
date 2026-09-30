@@ -2784,6 +2784,32 @@
     margin: 0 0 var(--rx-space-2) 2px;
   }
 
+  /* Phase 2b (BRD redesign): loading skeleton for Results while a scan is
+     in-flight, replacing the previous behavior of silently leaving the old
+     table content on screen with no indication a new scan was running. */
+  @keyframes rxSkeletonShimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: 200px 0; }
+  }
+  .rx-skeleton-cell {
+    display: inline-block;
+    height: 12px;
+    width: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--rx-surface) 25%, var(--rx-surface-2) 37%, var(--rx-surface) 63%);
+    background-size: 400px 100%;
+    animation: rxSkeletonShimmer 1.4s ease-in-out infinite;
+  }
+  .rx-skeleton-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--rx-card);
+    border: 1px solid var(--rx-border);
+    border-radius: var(--rx-radius);
+    padding: var(--rx-space-4);
+    margin-bottom: var(--rx-space-2);
+  }
+
   @media (max-width: 768px) {
     .rx-nav { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
     .rx-nav-btn { flex: 0 0 auto; }
@@ -6472,6 +6498,36 @@ function switchResultsView(view) {
   }
 }
 
+// Phase 2b (BRD redesign): real loading state while a scan is in-flight,
+// instead of silently leaving the previous scan's results on screen with only
+// the button text changing. filterAndRender() replaces this with real content
+// (or the empty-state message) once the response lands.
+function showResultsLoading() {
+  const table = document.getElementById('resultsTable');
+  const cardsWrap = document.getElementById('resultsCardsWrap');
+  const body = document.getElementById('resultsBody');
+  const empty = document.getElementById('emptyMsg');
+  if (empty) empty.style.display = 'none';
+
+  const skeletonCard = '<div class="rx-skeleton-card">' +
+    '<span class="rx-skeleton-cell" style="width:40%;"></span>' +
+    '<span class="rx-skeleton-cell" style="width:90%; margin-top:6px;"></span>' +
+    '<span class="rx-skeleton-cell" style="width:70%; margin-top:6px;"></span>' +
+    '</div>';
+
+  if (typeof currentResultsView !== 'undefined' && currentResultsView === 'cards' && cardsWrap) {
+    cardsWrap.innerHTML = Array(6).fill(skeletonCard).join('');
+    cardsWrap.style.display = 'flex';
+    if (table) table.style.display = 'none';
+  } else if (body && table) {
+    const colCount = table.querySelectorAll('thead th').length || 18;
+    const rowHtml = '<tr>' + Array(colCount).fill('<td><span class="rx-skeleton-cell"></span></td>').join('') + '</tr>';
+    body.innerHTML = Array(8).fill(rowHtml).join('');
+    table.style.display = 'table';
+    if (cardsWrap) cardsWrap.style.display = 'none';
+  }
+}
+
 function toggleMobileFilters() {
   const panel = document.getElementById('sidebarFiltersPanel');
   const queryCard = document.querySelector('.chartink-query-card');
@@ -7083,6 +7139,7 @@ async function executeActiveScan() {
     liveBtn.textContent = '⏳ Fetching…';
     liveBtn.disabled = true;
   }
+  showResultsLoading();
 
   try {
     if (!window.activeScan || !window.activeScan.rules) {
@@ -7136,22 +7193,16 @@ async function executeActiveScan() {
         const prov = data.provider || 'Upstox';
         if (liveTimeEl) liveTimeEl.textContent = `🟢 ${prov} Live: ${data.liveTimestamp || ''}`;
 
+        // Trust the server's own per-contract isOL/isOH/isMatch flags (already
+        // computed authoritatively in nse_service.scan()) instead of
+        // re-deriving Open=Low/Open=High from scratch with a second,
+        // independently-guessed tolerance -- that was a duplicate
+        // implementation of the same business rule that could silently drift
+        // out of sync with the server's actual logic.
         const totalCount = matched.length;
-        let olCount = 0;
-        let ohCount = 0;
-        let matchCount = 0;
-
-        for (const c of matched) {
-          const o = c.open || 0;
-          const h = c.high || 0;
-          const l = c.low || 0;
-          const tol = (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.05;
-          const isOl = o > 0 && Math.abs(o - l) <= tol;
-          const isOh = o > 0 && Math.abs(o - h) <= tol;
-          if (isOl) olCount++;
-          if (isOh) ohCount++;
-          if (isOl || isOh || c.isMatch) matchCount++;
-        }
+        const olCount = matched.filter(c => c.isOL).length;
+        const ohCount = matched.filter(c => c.isOH).length;
+        const matchCount = matched.filter(c => c.isOL || c.isOH || c.isMatch).length;
 
         const statTotalEl = document.getElementById('statTotal');
         if (statTotalEl) statTotalEl.textContent = totalCount.toLocaleString();
@@ -7226,22 +7277,13 @@ async function executeActiveScan() {
       lastResults = matched;
       logActiveScanTrace(config, rawCandidates.length, matched, samplePass, sampleFail);
 
+      // Trust the server's own per-contract isOL/isOH/isMatch flags (see the
+      // matching comment in the live-mode branch above) instead of a second,
+      // independently-guessed recomputation of Open=Low/Open=High.
       const totalCount = matched.length;
-      let olCount = 0;
-      let ohCount = 0;
-      let matchCount = 0;
-
-      for (const c of matched) {
-        const o = c.open || 0;
-        const h = c.high || 0;
-        const l = c.low || 0;
-        const tol = (rules.candlestick && rules.candlestick.enabled) ? (rules.candlestick.tol || 0.00) : 0.05;
-        const isOl = o > 0 && Math.abs(o - l) <= tol;
-        const isOh = o > 0 && Math.abs(o - h) <= tol;
-        if (isOl) olCount++;
-        if (isOh) ohCount++;
-        if (isOl || isOh || c.isMatch) matchCount++;
-      }
+      const olCount = matched.filter(c => c.isOL).length;
+      const ohCount = matched.filter(c => c.isOH).length;
+      const matchCount = matched.filter(c => c.isOL || c.isOH || c.isMatch).length;
 
       const statTotalEl = document.getElementById('statTotal');
       if (statTotalEl) statTotalEl.textContent = totalCount.toLocaleString();
@@ -7269,9 +7311,12 @@ async function executeActiveScan() {
       updateActiveFilterChips();
     } else {
       showToast(data.detail || 'Scan failed', 'error');
+      filterAndRender(); // clear the loading skeleton, falling back to the last known results
     }
   } catch (e) {
     console.error('Active scan failed:', e);
+    showToast('Could not complete the scan (network or server error). Please try again.', 'error');
+    filterAndRender(); // clear the loading skeleton, falling back to the last known results
   } finally {
     if (thisRequestId === currentScanRequestId) {
       if (btn) {
