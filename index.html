@@ -2958,7 +2958,6 @@
       <button class="action-btn" id="startTourBtn" onclick="startGuidedTour()" style="border-color:#7c3aed; color:#c4b5fd;" title="Interactive step-by-step walkthrough highlighting the real buttons on this page">🎬 Watch Walkthrough</button>
       <button class="action-btn" id="openChainHeaderBtn">📊 View Option Chain</button>
       <button class="action-btn" id="refreshBhavBtn">🔄 Sync Latest NSE Contract Archive</button>
-      <button class="action-btn" id="clearCacheBtn" onclick="clearServerCache()" title="Clear stored CSV files & reset memory">🧹 Clear Stored CSVs</button>
     </div>
   </div>
 
@@ -6092,7 +6091,7 @@ function updateActiveScanBanner(indKey) {
   }
 
   const title = strat.title || indKey;
-  const count = (window.lastResults && window.lastResults.length) ? window.lastResults.length : 0;
+  const count = (lastResults && lastResults.length) ? lastResults.length : 0;
   banner.innerHTML = `
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <span style="font-size:16px;">⚡</span>
@@ -7009,7 +7008,7 @@ async function executeActiveScan() {
           }
         }
 
-        window.lastResults = matched;
+        lastResults = matched;
         logActiveScanTrace(config, rawCandidates.length, matched, samplePass, sampleFail);
 
         const liveTimeEl = document.getElementById('liveLastTime');
@@ -7103,7 +7102,7 @@ async function executeActiveScan() {
         }
       }
 
-      window.lastResults = matched;
+      lastResults = matched;
       logActiveScanTrace(config, rawCandidates.length, matched, samplePass, sampleFail);
 
       const totalCount = matched.length;
@@ -8270,34 +8269,6 @@ document.getElementById('refreshBhavBtn').addEventListener('click', async () => 
     btn.disabled = false;
   }
 });
-
-// Clear Server Stored CSVs button
-async function clearServerCache() {
-  const btn = document.getElementById('clearCacheBtn');
-  if (btn) {
-    btn.textContent = '🧹 Clearing…';
-    btn.disabled = true;
-  }
-  try {
-    const res = await fetch(`${API_BASE}/api/cleanup`, { method: 'POST' });
-    const data = await res.json();
-    if (res.ok) {
-      showToast(`✔ Storage Clean: ${data.message || 'Stored CSV data cleared.'}`, 'success');
-      document.getElementById('autoBannerMsg').textContent = 'Storage cleaned. Ready for fresh live data sync.';
-      await initStatus();
-      runServerScan();
-    } else {
-      showToast(data.detail || 'Cleanup failed', 'error');
-    }
-  } catch (e) {
-    showToast('Failed to clear cache: ' + e.message, 'error');
-  } finally {
-    if (btn) {
-      btn.textContent = '🧹 Clear Stored CSVs';
-      btn.disabled = false;
-    }
-  }
-}
 
 // CSV Download
 document.getElementById('dlBtn').addEventListener('click', () => {
