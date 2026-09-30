@@ -2674,6 +2674,119 @@
   #tourCaptionCard .tour-btn:hover {
     filter: brightness(1.15);
   }
+
+  /* ============================================================
+     PHASE 1 — Persistent nav shell + Dashboard (BRD redesign)
+  ============================================================ */
+  .rx-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rx-space-2);
+    padding: var(--rx-space-3) 0;
+    margin-bottom: var(--rx-space-2);
+    border-bottom: 1px solid var(--rx-border);
+  }
+  .rx-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--rx-surface);
+    border: 1px solid var(--rx-border);
+    color: var(--rx-muted);
+    border-radius: var(--rx-radius-sm);
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .rx-nav-btn:hover {
+    color: var(--rx-text);
+    border-color: var(--rx-border-active);
+  }
+  .rx-nav-btn.active {
+    background: var(--rx-brand);
+    border-color: var(--rx-brand);
+    color: #fff;
+  }
+
+  .rx-dashboard-issue {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--rx-space-3);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid var(--rx-stale);
+    color: #fcd34d;
+    border-radius: var(--rx-radius-sm);
+    padding: var(--rx-space-3) var(--rx-space-4);
+    margin-bottom: var(--rx-space-4);
+    font-size: 12.5px;
+  }
+  .rx-dashboard-issue button {
+    background: var(--rx-stale);
+    color: #1c1204;
+    border: none;
+    border-radius: var(--rx-radius-sm);
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .rx-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--rx-space-3);
+    margin-bottom: var(--rx-space-5);
+  }
+  .rx-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    background: var(--rx-card);
+    border: 1px solid var(--rx-border);
+    border-radius: var(--rx-radius);
+    padding: var(--rx-space-4);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .rx-tile:hover {
+    border-color: var(--rx-brand);
+    transform: translateY(-2px);
+  }
+  .rx-tile .rx-tile-icon {
+    font-size: 22px;
+  }
+  .rx-tile span {
+    color: var(--rx-text);
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .rx-tile small {
+    color: var(--rx-muted);
+    font-size: 11px;
+  }
+
+  .rx-section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--rx-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 var(--rx-space-2) 2px;
+  }
+
+  @media (max-width: 768px) {
+    .rx-nav { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+    .rx-nav-btn { flex: 0 0 auto; }
+    .rx-quick-actions { grid-template-columns: repeat(2, 1fr); }
+  }
   </style>
 </head>
 <body>
@@ -2706,6 +2819,17 @@
       <div id="loadedInfo" style="font-size:12px; color:var(--muted);"></div>
     </div>
   </header>
+
+  <!-- Phase 1 (BRD redesign): persistent primary navigation -->
+  <nav class="rx-nav" id="rxNav">
+    <button class="rx-nav-btn active" data-route="/" onclick="navigate('/')">🏠 Dashboard</button>
+    <button class="rx-nav-btn" data-route="/scanner" onclick="navigate('/scanner')">🔍 Scanner</button>
+    <button class="rx-nav-btn" data-route="/indicators" onclick="navigate('/indicators')">⚡ Indicators</button>
+    <button class="rx-nav-btn" data-route="/chain" onclick="navigate('/chain')">📊 Option Chain</button>
+    <button class="rx-nav-btn" data-route="/chart" onclick="navigate('/chart')">📈 Charts</button>
+    <button class="rx-nav-btn" data-route="/alerts" onclick="navigate('/alerts')">🔔 Alerts</button>
+    <button class="rx-nav-btn" data-route="/help" onclick="navigate('/help')">📖 Help</button>
+  </nav>
 
   <!-- 🌐 Indian & Global Markets Selector Tabs -->
   <div class="market-bar-tabs">
@@ -2915,8 +3039,25 @@
     </div>
   </div>
 
+  <!-- Phase 1 (BRD redesign): clean Dashboard landing view (FR-01) -->
+  <div class="rx-dashboard" id="rxDashboard" style="display:none;">
+    <div class="rx-dashboard-issue" id="rxDashboardIssue" style="display:none;">
+      <span id="rxDashboardIssueMsg"></span>
+      <button onclick="initStatus(); fetchIndexPulse(); fetchGlobalMarkets();">🔄 Retry</button>
+    </div>
+    <div class="rx-section-label">Quick Actions</div>
+    <div class="rx-quick-actions">
+      <button class="rx-tile" onclick="navigate('/scanner')"><span class="rx-tile-icon">⚡</span><span>Run Scanner</span><small>Preset scans &amp; advanced filters</small></button>
+      <button class="rx-tile" onclick="navigate('/indicators')"><span class="rx-tile-icon">📊</span><span>Indicators</span><small>13 strategies, live option chain</small></button>
+      <button class="rx-tile" onclick="navigate('/chain')"><span class="rx-tile-icon">📈</span><span>Option Chain</span><small>Calls, puts, OI &amp; ATM</small></button>
+      <button class="rx-tile" onclick="navigate('/chart')"><span class="rx-tile-icon">📉</span><span>Charts</span><small>Fitted indicator charts</small></button>
+      <button class="rx-tile" onclick="navigate('/alerts')"><span class="rx-tile-icon">🔔</span><span>Alerts</span><small>Price &amp; signal alerts</small></button>
+      <button class="rx-tile" onclick="navigate('/help')"><span class="rx-tile-icon">📖</span><span>Help</span><small>Tutorial &amp; walkthrough</small></button>
+    </div>
+  </div>
+
   <!-- ⚡ Technical & Algo Indicator Bar (13 Indicators) -->
-  <div class="indicator-bar">
+  <div class="indicator-bar rx-legacy-tools">
     <div class="indicator-bar-label">
       <span>⚡</span> <b>Technical &amp; Algo Indicators:</b>
     </div>
@@ -2939,14 +3080,14 @@
   </div>
 
   <!-- Mode Selector Tabs -->
-  <div class="mode-tabs">
+  <div class="mode-tabs rx-legacy-tools">
     <button class="tab-btn active" data-tab="auto">⚡ Daily Settlement Data (NSE Auto-Sync)</button>
     <button class="tab-btn" data-tab="live">🔴 Live Market Scanner</button>
     <button class="tab-btn" data-tab="manual">📁 Manual CSV Upload</button>
   </div>
 
   <!-- Auto Fetch Banner -->
-  <div class="banner" id="autoBanner">
+  <div class="banner rx-legacy-tools" id="autoBanner">
     <div class="banner-text">
       <span>📥</span>
       <span id="autoBannerMsg">Daily NSE F&amp;O Settlement &amp; Contract Archive automatically synced.</span>
@@ -2962,7 +3103,7 @@
   </div>
 
   <!-- Manual Upload Section -->
-  <div class="upload-row" id="manualUploadRow" style="display:none;">
+  <div class="upload-row rx-legacy-tools" id="manualUploadRow" style="display:none;">
     <label class="drop" id="dropToday">
       <div class="tag">Required</div>
       <div class="title" id="todayTitle">Today's Settlement Sheet</div>
@@ -2978,7 +3119,7 @@
   </div>
 
   <!-- Live Market Bar -->
-  <div class="banner" id="liveBar" style="display:none;">
+  <div class="banner rx-legacy-tools" id="liveBar" style="display:none;">
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <label style="font-size:13px; font-weight:600; color:var(--muted);">Live Symbol:</label>
       <select id="liveSymbolSelect" style="width:160px; padding:5px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:6px;">
@@ -3002,7 +3143,7 @@
   </div>
 
   <!-- Workspace -->
-  <div class="workspace">
+  <div class="workspace rx-legacy-tools">
     <!-- Mobile Filter Toggle (Visible on Mobile / Nothing Phone 2) -->
     <button class="mobile-filter-toggle" id="mobileFilterToggle" onclick="toggleMobileFilters()">
       <span>⚙️ Strategy Filters &amp; Scans</span>
@@ -3975,14 +4116,18 @@ const API_BASE = window.location.origin;
 const UI_MODE = new URLSearchParams(location.search).get('ui') || localStorage.getItem('uiMode') || 'next';
 
 const ROUTES = {
-  '/': { legacy: () => {} },
-  '/scanner': { legacy: () => {} },
-  '/results': { legacy: () => {} },
-  '/indicators': { legacy: () => {} },
-  '/chain': { legacy: () => {} },
-  '/chart/:symbol/:expiry/:strike/:type': { legacy: () => {} },
-  '/alerts': { legacy: () => {} },
-  '/help': { legacy: () => {} }
+  '/': { legacy: () => {}, next: () => showView('dashboard') },
+  '/scanner': { legacy: () => {}, next: () => showView('legacy') },
+  '/results': { legacy: () => {}, next: () => showView('legacy') },
+  '/indicators': { legacy: () => {}, next: () => showView('legacy') },
+  '/chain': { legacy: () => {}, next: () => { showView('dashboard'); openChainModal(currentChainSymbol || 'NIFTY', ''); } },
+  '/chart': { legacy: () => {}, next: () => { showView('dashboard'); openOptionChartModal('NIFTY', '', 0, ''); } },
+  '/chart/:symbol/:expiry/:strike/:type': {
+    legacy: () => {},
+    next: (p) => { showView('dashboard'); openOptionChartModal(p.symbol, p.expiry, Number(p.strike), p.type); }
+  },
+  '/alerts': { legacy: () => {}, next: () => { showView('dashboard'); openAlertsModal(); } },
+  '/help': { legacy: () => {}, next: () => { showView('dashboard'); openTutorialModal(); } }
 };
 
 function matchRoute(hash) {
@@ -4028,6 +4173,58 @@ function renderRoute() {
 }
 
 window.addEventListener('hashchange', renderRoute);
+
+/* ============================================================
+   PHASE 1 — Dashboard / legacy view toggle + nav active state
+   'dashboard' = new clean landing view (BRD FR-01). 'legacy' = today's
+   full always-on page, shown for modules not rebuilt yet (Scanner,
+   Indicators, Results) -- later phases will replace showView('legacy')
+   with their own dedicated view for one route at a time.
+============================================================ */
+function showView(mode) {
+  const dash = document.getElementById('rxDashboard');
+  const legacyEls = document.querySelectorAll('.rx-legacy-tools');
+  if (mode === 'dashboard') {
+    if (dash) dash.style.display = 'block';
+    legacyEls.forEach(el => { el.style.display = 'none'; });
+  } else {
+    if (dash) dash.style.display = 'none';
+    legacyEls.forEach(el => { el.style.display = ''; });
+    applyModeVisibility(); // restore auto/live/manual panel state the mode tabs manage
+  }
+  updateNavActiveState();
+}
+
+function applyModeVisibility() {
+  const autoBanner = document.getElementById('autoBanner');
+  const liveBar = document.getElementById('liveBar');
+  const manualRow = document.getElementById('manualUploadRow');
+  const symGroup = document.getElementById('symbolFilterGroup');
+  if (autoBanner) autoBanner.style.display = currentMode === 'auto' ? 'flex' : 'none';
+  if (liveBar) liveBar.style.display = currentMode === 'live' ? 'flex' : 'none';
+  if (manualRow) manualRow.style.display = currentMode === 'manual' ? 'flex' : 'none';
+  if (symGroup) symGroup.style.display = currentMode === 'live' ? 'none' : 'block';
+}
+
+function updateNavActiveState() {
+  const path = (location.hash || '').replace(/^#/, '') || '/';
+  const topPath = '/' + (path.split('/').filter(Boolean)[0] || '');
+  document.querySelectorAll('.rx-nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.route === topPath || (topPath === '/' && btn.dataset.route === '/'));
+  });
+}
+
+function showDashboardIssue(msg) {
+  const box = document.getElementById('rxDashboardIssue');
+  const msgEl = document.getElementById('rxDashboardIssueMsg');
+  if (msgEl) msgEl.textContent = '⚠️ ' + msg;
+  if (box) box.style.display = 'flex';
+}
+
+function clearDashboardIssue() {
+  const box = document.getElementById('rxDashboardIssue');
+  if (box) box.style.display = 'none';
+}
 
 let lastResults = [];
 let allSymbols = [];
@@ -6535,7 +6732,8 @@ async function fetchIndexPulse() {
     const res = await fetch(`${API_BASE}/api/indices/pulse`);
     if (!res.ok) throw new Error('Pulse endpoint returned ' + res.status);
     const data = await res.json();
-    
+    clearDashboardIssue();
+
     if (badge) {
       const now = new Date();
       badge.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kolkata' })} IST`;
@@ -6614,6 +6812,7 @@ async function fetchIndexPulse() {
   } catch (err) {
     console.warn('Index pulse fetch error:', err);
     if (badge) badge.textContent = 'Syncing...';
+    showDashboardIssue('Live index option flow is temporarily unavailable. Retrying automatically.');
   }
 }
 
@@ -7193,7 +7392,9 @@ function renderTickerChange(elId, change, pct) {
 async function initStatus() {
   try {
     const res = await fetch(`${API_BASE}/api/status`);
+    if (!res.ok) throw new Error('Status endpoint returned ' + res.status);
     const data = await res.json();
+    clearDashboardIssue();
     const dot = document.getElementById('statusDot');
     const txt = document.getElementById('marketStatusText');
     const info = document.getElementById('loadedInfo');
@@ -7241,6 +7442,7 @@ async function initStatus() {
     await loadSymbols();
   } catch (e) {
     console.error('Status check error:', e);
+    showDashboardIssue('Couldn\'t reach the server for market status. Data shown may be out of date.');
   }
 }
 
@@ -8237,11 +8439,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentMode = btn.dataset.tab;
-
-    document.getElementById('autoBanner').style.display = currentMode === 'auto' ? 'flex' : 'none';
-    document.getElementById('liveBar').style.display = currentMode === 'live' ? 'flex' : 'none';
-    document.getElementById('manualUploadRow').style.display = currentMode === 'manual' ? 'flex' : 'none';
-    document.getElementById('symbolFilterGroup').style.display = currentMode === 'live' ? 'none' : 'block';
+    applyModeVisibility();
 
     if (currentMode === 'live') runLiveScan();
     else if (currentMode === 'auto') runServerScan();
@@ -8468,9 +8666,10 @@ function initLiveClock() {
 async function fetchGlobalMarkets() {
   try {
     const res = await fetch(`${API_BASE}/api/market/global`);
-    if (!res.ok) return;
+    if (!res.ok) { showDashboardIssue('Global markets data is temporarily unavailable. Retrying automatically.'); return; }
     const data = await res.json();
-    if (!data.success) return;
+    if (!data.success) { showDashboardIssue('Global markets data is temporarily unavailable. Retrying automatically.'); return; }
+    clearDashboardIssue();
 
     // 1. Commodities (Gold, Crude, BTC)
     if (data.commodities && data.commodities.length) {
@@ -8593,6 +8792,7 @@ async function fetchGlobalMarkets() {
     }
   } catch (err) {
     console.warn('Failed to fetch global markets:', err);
+    showDashboardIssue('Global markets data is temporarily unavailable. Retrying automatically.');
   }
 }
 
