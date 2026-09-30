@@ -2010,8 +2010,29 @@
     border-color: #ef4444;
     background: rgba(239, 68, 68, 0.08);
   }
+  /* Phase 2a (BRD redesign): advanced filters (sidebar + query builder) are
+     collapsed by default on every viewport, not just mobile (BRD FR-03) --
+     this reuses the existing toggleMobileFilters() toggle/collapsed pattern
+     rather than the display:none-outside-mobile version it started as. */
   .mobile-filter-toggle {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: #141c2c;
+    border: 1px solid #2b394f;
+    color: #93c5fd;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12.5px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .panel.filters.collapsed,
+  .chartink-query-card.collapsed {
+    display: none !important;
   }
 
   @media (max-width: 900px) {
@@ -2056,25 +2077,6 @@
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
     table { min-width: 880px; }
     .results-view-toggle { display: flex; }
-    .mobile-filter-toggle {
-      display: flex !important;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      background: #141c2c;
-      border: 1px solid #2b394f;
-      color: #93c5fd;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 12.5px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    .panel.filters.collapsed {
-      display: none !important;
-    }
     .search-autocomplete-dropdown {
       width: min(420px, calc(100vw - 40px)) !important;
     }
@@ -3076,6 +3078,8 @@
       <button class="small-strat-btn" data-ind="strat1" onclick="runIndicatorScan('strat1')" title="Scan all stocks & indices with Strategy 1">1️⃣ Low Range</button>
       <button class="small-strat-btn" data-ind="strat2" onclick="runIndicatorScan('strat2')" title="Scan all stocks & indices with Strategy 2">2️⃣ OH/OL + VIX</button>
       <button class="small-strat-btn" data-ind="strat3" onclick="runIndicatorScan('strat3')" title="Scan all stocks & indices with Strategy 3">3️⃣ ÷8 &amp; ÷6.5</button>
+      <button class="small-strat-btn" data-ind="strat_ol" onclick="applyPreset('strat_ol')" title="Scan all stocks & indices for Bullish Open=Low setups">🟢 Bullish O=L</button>
+      <button class="small-strat-btn" data-ind="strat_oh" onclick="applyPreset('strat_oh')" title="Scan all stocks & indices for Bearish Open=High setups">🔴 Bearish O=H</button>
     </div>
   </div>
 
@@ -3144,10 +3148,10 @@
 
   <!-- Workspace -->
   <div class="workspace rx-legacy-tools">
-    <!-- Mobile Filter Toggle (Visible on Mobile / Nothing Phone 2) -->
+    <!-- Advanced Filters toggle (BRD FR-03: hidden by default on every viewport) -->
     <button class="mobile-filter-toggle" id="mobileFilterToggle" onclick="toggleMobileFilters()">
-      <span>⚙️ Strategy Filters &amp; Scans</span>
-      <span id="filterToggleArrow">▼ Show Filters</span>
+      <span>⚙️ Advanced Filters &amp; Custom Query Builder</span>
+      <span id="filterToggleArrow">▼ Show Advanced Filters</span>
     </button>
 
     <!-- Sidebar Filters -->
@@ -3156,35 +3160,6 @@
       <button type="button" class="clear-all-filters-btn" id="clearAllFiltersBtn" onclick="clearAllScreenerFilters()" title="Reset all strategy ranges, symbols, tolerance, and filters to defaults">
         <span>🧹</span> <b>Clear All Filters &amp; Reset</b>
       </button>
-
-      <div class="group" style="background:#151b27; border:1px solid #232d40; border-radius:8px; padding:12px; margin-bottom:16px;">
-        <label style="color:#93c5fd; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-          <span>📈</span> Algorithmic Strategies
-        </label>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          <button class="strat-btn" id="strat1Btn">
-            <span class="strat-icon">🎯</span>
-            <div>
-              <div class="strat-title">Strategy 1: Low Range (₹5.80–8.45)</div>
-              <div class="strat-desc">Prev Cl ₹38–48 + Open=Low / Open=High</div>
-            </div>
-          </button>
-          <button class="strat-btn" id="strat2Btn">
-            <span class="strat-icon">⚡</span>
-            <div>
-              <div class="strat-title">Strategy 2: OH/OL + VIX Targets</div>
-              <div class="strat-desc">Buy @ Low, Targets +9%/+18%, SL -5%/-9%</div>
-            </div>
-          </button>
-          <button class="strat-btn" id="strat3Btn">
-            <span class="strat-icon">💎</span>
-            <div>
-              <div class="strat-title">Strategy 3: Premium ÷8 &amp; ÷6.5</div>
-              <div class="strat-desc">Prem ₹300–349, Low ₹52–58 / Formulas</div>
-            </div>
-          </button>
-        </div>
-      </div>
 
       <div class="group" id="symbolFilterGroup">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
@@ -3322,24 +3297,6 @@
 
     <!-- Main Content Area -->
     <main>
-      <!-- 🌟 Chartink Strategy Presets Ribbon (Quick Scan Tabs) -->
-      <div class="chartink-preset-ribbon">
-        <div class="preset-label"><b>Chartink Scans:</b></div>
-        <button class="preset-pill" data-preset="strat1" onclick="applyPreset('strat1')">🎯 Strategy 1: Low Range (₹5.80–₹8.45)</button>
-        <button class="preset-pill" data-preset="strat2" onclick="applyPreset('strat2')">⚡ Strategy 2: OH/OL + VIX Targets</button>
-        <button class="preset-pill" data-preset="strat3" onclick="applyPreset('strat3')">💎 Strategy 3: Premium ÷8 &amp; ÷6.5</button>
-        <button class="preset-pill" data-preset="strat_ol" onclick="applyPreset('strat_ol')">🟢 Bullish Open = Low Scan</button>
-        <button class="preset-pill" data-preset="strat_oh" onclick="applyPreset('strat_oh')">🔴 Bearish Open = High Scan</button>
-        <button class="preset-pill" data-preset="strat_ut" onclick="applyPreset('strat_ut')">🤖 UT Bot BUY Signals</button>
-        <button class="preset-pill" data-preset="strat_pred" onclick="applyPreset('strat_pred')">🔮 Trade Predictor 200 EMA</button>
-        <button class="preset-pill" data-preset="strat_quantum" onclick="applyPreset('strat_quantum')">🌌 Quantum Matrix Scan</button>
-        <button class="preset-pill" data-preset="strat_target" onclick="applyPreset('strat_target')">🎯 Target Projections (+9%, +18%)</button>
-        <button class="preset-pill" data-preset="strat_supertrend" onclick="applyPreset('strat_supertrend')">📈 Supertrend MTF Strategy</button>
-        <button class="preset-pill" data-preset="strat_orb15" onclick="applyPreset('strat_orb15')">🚀 15-Min ORB Breakout</button>
-        <button class="preset-pill" data-preset="strat_vwap" onclick="applyPreset('strat_vwap')">🌊 VWAP + RSI Mean Reversion</button>
-        <button class="preset-pill" data-preset="strat_volume" onclick="applyPreset('strat_volume')">📊 Volume Spurt &amp; OI Spike</button>
-      </div>
-
       <!-- 🎯 Chartink Interactive Filter / Screener Query Card -->
       <div class="chartink-query-card">
         <div class="query-card-header">
@@ -6053,15 +6010,6 @@ function syncActiveScanToUI() {
 
   // 8. Buttons & Pills Visual Highlight
   const stratKey = scan.strategyId;
-  document.querySelectorAll('.preset-pill').forEach(p => {
-    p.classList.toggle('active', p.getAttribute('data-preset') === stratKey);
-  });
-  const strat1Btn = document.getElementById('strat1Btn');
-  const strat2Btn = document.getElementById('strat2Btn');
-  const strat3Btn = document.getElementById('strat3Btn');
-  if (strat1Btn) strat1Btn.classList.toggle('active', stratKey === 'strat1');
-  if (strat2Btn) strat2Btn.classList.toggle('active', stratKey === 'strat2');
-  if (strat3Btn) strat3Btn.classList.toggle('active', stratKey === 'strat3');
 
   document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
     const attr = btn.getAttribute('data-ind');
@@ -6526,11 +6474,13 @@ function switchResultsView(view) {
 
 function toggleMobileFilters() {
   const panel = document.getElementById('sidebarFiltersPanel');
+  const queryCard = document.querySelector('.chartink-query-card');
   const arrow = document.getElementById('filterToggleArrow');
   if (!panel) return;
   const isCollapsed = panel.classList.toggle('collapsed');
+  if (queryCard) queryCard.classList.toggle('collapsed', isCollapsed);
   if (arrow) {
-    arrow.textContent = isCollapsed ? '▼ Show Filters' : '▲ Hide Filters';
+    arrow.textContent = isCollapsed ? '▼ Show Advanced Filters' : '▲ Hide Advanced Filters';
   }
 }
 
@@ -7113,34 +7063,6 @@ function clearAllTriggeredAlerts() {
    SERVER & LIVE SCAN ENGINE
 ============================================================ */
 let currentScanRequestId = 0;
-
-function getFilters() {
-  const lowFromVal = document.getElementById('lowFrom')?.value.trim() || '';
-  const lowToVal = document.getElementById('lowTo')?.value.trim() || '';
-  const prevFromVal = document.getElementById('prevFrom')?.value.trim() || '';
-  const prevToVal = document.getElementById('prevTo')?.value.trim() || '';
-  const tolVal = document.getElementById('tol')?.value.trim() || '';
-  const minOiVal = document.getElementById('minOi')?.value.trim() || '';
-  const activeOptSeg = document.querySelector('#optTypeSeg button.active');
-
-  return {
-    symSelect: document.getElementById('symSelect')?.value || '__ALL__',
-    instIdx: document.getElementById('instIdx') ? document.getElementById('instIdx').checked : true,
-    instStk: document.getElementById('instStk') ? document.getElementById('instStk').checked : true,
-    optType: activeOptSeg ? activeOptSeg.dataset.v : 'BOTH',
-    expSelect: document.getElementById('expSelect')?.value || 'all',
-    lowOn: document.getElementById('lowOn') ? document.getElementById('lowOn').checked : false,
-    lowFrom: lowFromVal !== '' ? parseFloat(lowFromVal) : 5.80,
-    lowTo: lowToVal !== '' ? parseFloat(lowToVal) : 8.45,
-    prevOn: document.getElementById('prevOn') ? document.getElementById('prevOn').checked : false,
-    prevFrom: prevFromVal !== '' ? parseFloat(prevFromVal) : 38.00,
-    prevTo: prevToVal !== '' ? parseFloat(prevToVal) : 48.00,
-    tol: tolVal !== '' ? parseFloat(tolVal) : 0.00,
-    minOi: minOiVal !== '' ? parseFloat(minOiVal) : 0.00,
-    includeUntraded: document.getElementById('includeUntraded') ? document.getElementById('includeUntraded').checked : false,
-    showMode: document.getElementById('showMode')?.value || 'any'
-  };
-}
 
 async function executeActiveScan() {
   const thisRequestId = ++currentScanRequestId;
@@ -8413,11 +8335,6 @@ document.getElementById('chainSymbolSelect').addEventListener('change', function
 document.getElementById('openChainHeaderBtn').addEventListener('click', () => openChainModal('NIFTY'));
 document.getElementById('openLiveChainBtn').addEventListener('click', () => openChainModal(document.getElementById('liveSymbolSelect').value));
 
-// Strategy preset buttons in sidebar
-document.getElementById('strat1Btn').addEventListener('click', () => applyPreset('strat1'));
-document.getElementById('strat2Btn').addEventListener('click', () => applyPreset('strat2'));
-document.getElementById('strat3Btn').addEventListener('click', () => applyPreset('strat3'));
-
 // Scan button
 document.getElementById('scanBtn').addEventListener('click', () => {
   if (currentMode === 'live') runLiveScan();
@@ -8429,7 +8346,6 @@ document.querySelectorAll('#optTypeSeg button').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('#optTypeSeg button').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
-    syncSidebarToQuery();
   });
 });
 
@@ -9561,12 +9477,15 @@ setInterval(fetchIndexPulse, 30000);
 fetchGlobalMarkets();
 setInterval(fetchGlobalMarkets, 20000);
 
-if (window.innerWidth <= 768) {
+// BRD FR-03: advanced filters collapsed by default on every viewport, not just mobile.
+(function collapseAdvancedFiltersByDefault() {
   const sidebar = document.getElementById('sidebarFiltersPanel');
+  const queryCard = document.querySelector('.chartink-query-card');
   const arrow = document.getElementById('filterToggleArrow');
   if (sidebar) sidebar.classList.add('collapsed');
-  if (arrow) arrow.textContent = '▼ Show Filters (Tap to Expand)';
-}
+  if (queryCard) queryCard.classList.add('collapsed');
+  if (arrow) arrow.textContent = '▼ Show Advanced Filters';
+})();
 
 initStatus().then(() => {
   setActiveScanStrategy('strat1');
