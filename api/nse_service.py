@@ -156,7 +156,8 @@ class NSEService:
             "prevDateLoaded": self.prev_date,
             "totalLoaded": len(self.today_rows),
             "version": "2.2.0",
-            "buildTime": "2026-09-27T07:30:00Z"
+            "buildTime": "2026-09-27T07:30:00Z",
+            "indices": {}
         }
         if sensex:
             status["sensexLast"] = sensex["last"]
@@ -166,6 +167,40 @@ class NSEService:
             status["vixLast"] = vix["last"]
             status["vixChange"] = vix["change"]
             status["vixPct"] = vix["pct"]
+
+        # If Upstox is configured, enrich all index tickers with real-time live quotes
+        if upstox_service.is_configured():
+            try:
+                up_quotes = upstox_service.get_all_indices_quotes()
+                if up_quotes:
+                    status["indices"] = up_quotes
+                    if "NIFTY" in up_quotes:
+                        status["niftyLast"] = up_quotes["NIFTY"]["last"]
+                        status["niftyChange"] = up_quotes["NIFTY"]["change"]
+                        status["niftyPct"] = up_quotes["NIFTY"]["pct"]
+                    if "BANKNIFTY" in up_quotes:
+                        status["bankLast"] = up_quotes["BANKNIFTY"]["last"]
+                        status["bankChange"] = up_quotes["BANKNIFTY"]["change"]
+                        status["bankPct"] = up_quotes["BANKNIFTY"]["pct"]
+                    if "SENSEX" in up_quotes:
+                        status["sensexLast"] = up_quotes["SENSEX"]["last"]
+                        status["sensexChange"] = up_quotes["SENSEX"]["change"]
+                        status["sensexPct"] = up_quotes["SENSEX"]["pct"]
+                    if "VIX" in up_quotes:
+                        status["vixLast"] = up_quotes["VIX"]["last"]
+                        status["vixChange"] = up_quotes["VIX"]["change"]
+                        status["vixPct"] = up_quotes["VIX"]["pct"]
+                    if "MIDCPNIFTY" in up_quotes:
+                        status["midcapLast"] = up_quotes["MIDCPNIFTY"]["last"]
+                        status["midcapChange"] = up_quotes["MIDCPNIFTY"]["change"]
+                        status["midcapPct"] = up_quotes["MIDCPNIFTY"]["pct"]
+                    if "FINNIFTY" in up_quotes:
+                        status["finLast"] = up_quotes["FINNIFTY"]["last"]
+                        status["finChange"] = up_quotes["FINNIFTY"]["change"]
+                        status["finPct"] = up_quotes["FINNIFTY"]["pct"]
+            except Exception as e:
+                print(f"[Upstox] get_market_status quote enrich error: {e}")
+
         return status
 
     def fetch_latest_bhavcopy(self, force_refresh=False):
@@ -310,20 +345,65 @@ class NSEService:
         target_indices = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX"]
         summary = {}
 
+        up_quotes = {}
+        if upstox_service.is_configured():
+            try:
+                up_quotes = upstox_service.get_all_indices_quotes()
+            except Exception as e:
+                print(f"[Upstox] get_indices_pulse quote error: {e}")
+
         for sym in target_indices:
             candidates = [r for r in self.today_rows if r["symbol"] == sym]
             if not candidates:
                 candidates = [r for r in self.today_rows if r["symbol"].startswith(sym)]
-            
-            if not candidates:
+
+            target_exp = ""
+            chain_rows = []
+
+            # Prefer a live Upstox option chain over bhavcopy settlement data for
+            # ALL 5 indices, not just SENSEX -- bhavcopy can be several days stale
+            # (self.today_date may lag real market days), so even when `candidates`
+            # is non-empty it can still be pointing at an already-expired series.
+            # This mirrors the same live-first pattern already used successfully
+            # in get_option_chain_for_symbol().
+            if upstox_service.is_configured():
+                try:
+                    up_chain = upstox_service.fetch_option_chain(sym)
+                    if up_chain and up_chain.get("rows"):
+                        chain_rows = up_chain["rows"]
+                        target_exp = up_chain.get("targetExpiry", "")
+                except Exception as e:
+                    print(f"[Upstox] {sym} pulse chain error: {e}")
+
+            if not chain_rows and candidates:
+                expiries = sorted(list({r["expiry"] for r in candidates}))
+                target_exp = expiries[0] if expiries else ""
+                chain_rows = [r for r in candidates if r["expiry"] == target_exp] if target_exp else candidates
+
+            # If still no rows and no live quote, skip
+            if not chain_rows and sym not in up_quotes:
                 continue
 
-            expiries = sorted(list({r["expiry"] for r in candidates}))
-            target_exp = expiries[0] if expiries else ""
-            chain_rows = [r for r in candidates if r["expiry"] == target_exp] if target_exp else candidates
+            # Determine spot price and daily variation
+            spot = 0.0
+            change = 0.0
+            change_pct = 0.0
 
-            spot = chain_rows[0].get("spot", 0.0) if chain_rows else 0.0
-            
+            if sym in up_quotes:
+                q = up_quotes[sym]
+                spot = q["last"]
+                change = q["change"]
+                change_pct = q["pct"]
+            elif chain_rows and chain_rows[0].get("spot"):
+                spot = chain_rows[0]["spot"]
+                prev_spot = 0.0
+                for prow in self.prev_map.values():
+                    if prow.get("symbol") == sym and prow.get("spot", 0) > 0:
+                        prev_spot = prow["spot"]
+                        break
+                change = round(spot - prev_spot, 2) if spot > 0 and prev_spot > 0 else 0.0
+                change_pct = round((change / prev_spot) * 100.0, 2) if prev_spot > 0 else 0.0
+
             step = 100.0 if sym in ("BANKNIFTY", "SENSEX") else (25.0 if sym == "MIDCPNIFTY" else 50.0)
             atm_strike = round(spot / step) * step if spot > 0 else 0.0
 
@@ -340,7 +420,7 @@ class NSEService:
                 o = r.get("oi", 0.0)
                 l = r.get("low", 0.0)
                 pc = r.get("prevClose", 0.0)
-                
+
                 if (5.80 <= l <= 8.45 and 38.0 <= pc <= 48.0) or (52 <= l <= 58 and 300 <= pc <= 349):
                     matches_count += 1
 
@@ -391,14 +471,6 @@ class NSEService:
                 "chg": round(puts_sorted[0]["close"] - puts_sorted[0]["prevClose"], 2) if puts_sorted[0]["prevClose"] > 0 else 0.0,
                 "chgPct": round(((puts_sorted[0]["close"] - puts_sorted[0]["prevClose"]) / puts_sorted[0]["prevClose"]) * 100.0, 1) if puts_sorted[0]["prevClose"] > 0 else 0.0
             } if puts_sorted else None
-
-            prev_spot = 0.0
-            for prow in self.prev_map.values():
-                if prow.get("symbol") == sym and prow.get("spot", 0) > 0:
-                    prev_spot = prow["spot"]
-                    break
-            change = round(spot - prev_spot, 2) if spot > 0 and prev_spot > 0 else 0.0
-            change_pct = round((change / prev_spot) * 100.0, 2) if prev_spot > 0 else 0.0
 
             summary[sym] = {
                 "symbol": sym,
@@ -745,11 +817,26 @@ class NSEService:
             sym = "NIFTY"
         elif sym in ("BANK NIFTY", "NIFTY BANK"):
             sym = "BANKNIFTY"
+        elif sym in ("NIFTY MIDCAP", "NIFTY MID SELECT", "MIDCAP"):
+            sym = "MIDCPNIFTY"
+        elif sym in ("NIFTY FIN SERVICE", "FIN NIFTY"):
+            sym = "FINNIFTY"
 
-        candidates = [r for r in self.today_rows if r["symbol"] == sym]
-        if not candidates:
-            # Fallback search
-            candidates = [r for r in self.today_rows if r["symbol"].startswith(sym)]
+        candidates = []
+        if upstox_service.is_configured():
+            try:
+                up_res = upstox_service.fetch_option_chain(symbol=sym, expiry=expiry)
+                if up_res and up_res.get("rows"):
+                    candidates = up_res["rows"]
+            except Exception as e:
+                print(f"[Upstox] get_option_chain_for_symbol error for {sym}: {e}")
+
+        if not candidates and self.today_rows:
+            candidates = [r for r in self.today_rows if r["symbol"] == sym]
+            if not candidates:
+                # Fallback search
+                candidates = [r for r in self.today_rows if r["symbol"].startswith(sym)]
+
         if not candidates:
             available_symbols = sorted(list({r["symbol"] for r in self.today_rows}))[:50]
             return {

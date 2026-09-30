@@ -51,10 +51,19 @@ class UpstoxService:
 
     INDEX_KEYS = {
         "NIFTY": "NSE_INDEX|Nifty 50",
+        "NIFTY 50": "NSE_INDEX|Nifty 50",
         "BANKNIFTY": "NSE_INDEX|Nifty Bank",
+        "NIFTY BANK": "NSE_INDEX|Nifty Bank",
         "FINNIFTY": "NSE_INDEX|Nifty Fin Service",
-        "MIDCPNIFTY": "NSE_INDEX|Nifty Midcap Select",
+        "NIFTY FIN SERVICE": "NSE_INDEX|Nifty Fin Service",
+        "MIDCPNIFTY": "NSE_INDEX|NIFTY MID SELECT",
+        "NIFTY MIDCAP": "NSE_INDEX|NIFTY MID SELECT",
+        "NIFTY MID SELECT": "NSE_INDEX|NIFTY MID SELECT",
         "NIFTYNXT50": "NSE_INDEX|Nifty Next 50",
+        "SENSEX": "BSE_INDEX|SENSEX",
+        "INDIA VIX": "NSE_INDEX|India VIX",
+        "INDIAVIX": "NSE_INDEX|India VIX",
+        "VIX": "NSE_INDEX|India VIX",
     }
 
     def __init__(self):
@@ -288,8 +297,15 @@ class UpstoxService:
                 f"Upstox returned no option-chain contracts for {symbol} {target_expiry}"
             )
 
+        spot_val = 0.0
+        for r in rows:
+            if r.get("spot") and r["spot"] > 0:
+                spot_val = r["spot"]
+                break
+
         result = {
             "symbol": symbol,
+            "spot": spot_val,
             "targetExpiry": target_expiry,
             "expiryDates": expiry_dates,
             "rows": rows,
@@ -301,6 +317,69 @@ class UpstoxService:
         self.cache[cache_key] = (now, result)
         return result
 
+    def get_all_indices_quotes(self):
+        """
+        Fetches real-time market quotes for all major indices:
+        NIFTY, BANKNIFTY, SENSEX, INDIA VIX, FINNIFTY, MIDCPNIFTY.
+        Cached for 3 seconds to avoid duplicate REST requests.
+        """
+        if not self.is_configured():
+            return {}
+
+        now = time.time()
+        cached = self.cache.get("ALL_INDICES_QUOTES")
+        if cached and now - cached[0] < 3:
+            return cached[1]
+
+        keys_map = {
+            "NIFTY": "NSE_INDEX|Nifty 50",
+            "BANKNIFTY": "NSE_INDEX|Nifty Bank",
+            "SENSEX": "BSE_INDEX|SENSEX",
+            "VIX": "NSE_INDEX|India VIX",
+            "FINNIFTY": "NSE_INDEX|Nifty Fin Service",
+            "MIDCPNIFTY": "NSE_INDEX|NIFTY MID SELECT",
+        }
+
+        try:
+            url = f"{self.BASE_V2}/market-quote/quotes"
+            params = {"instrument_key": ",".join(keys_map.values())}
+            res = self._get(url, params=params, timeout=8)
+            raw_data = res.get("data", {})
+
+            quotes = {}
+            for sym, ikey in keys_map.items():
+                quote_obj = raw_data.get(ikey)
+                if not quote_obj:
+                    colon_key = ikey.replace("|", ":")
+                    quote_obj = raw_data.get(colon_key)
+
+                if quote_obj:
+                    last = self._num(quote_obj.get("last_price"))
+                    ohlc = quote_obj.get("ohlc") or {}
+                    close = self._num(ohlc.get("close"), last)
+                    change = self._num(quote_obj.get("net_change"))
+                    if change == 0.0 and close > 0 and last > 0:
+                        change = round(last - close, 2)
+                    prev_close = last - change if last > 0 else close
+                    pct = round((change / prev_close) * 100.0, 2) if prev_close > 0 else 0.0
+
+                    quotes[sym] = {
+                        "symbol": sym,
+                        "last": last,
+                        "change": change,
+                        "pct": pct,
+                        "open": self._num(ohlc.get("open")),
+                        "high": self._num(ohlc.get("high")),
+                        "low": self._num(ohlc.get("low")),
+                        "close": close,
+                    }
+
+            self.cache["ALL_INDICES_QUOTES"] = (now, quotes)
+            return quotes
+        except Exception as e:
+            print(f"[Upstox] get_all_indices_quotes error: {e}")
+            return {}
+
     def health(self):
         if not self.is_configured():
             return {
@@ -309,8 +388,6 @@ class UpstoxService:
                 "mode": "REST",
             }
         try:
-            # Lightweight authenticated request. Instrument search is used
-            # because it also confirms the token has market-data access.
             key, is_index = self._resolve_underlying("NIFTY")
             return {
                 "configured": True,
