@@ -34,6 +34,38 @@
     --cyan: #06b6d4;
     --purple: #8b5cf6;
     --accent: #f59e0b;
+
+    /* Redesign namespace (BRD UX redesign) — aliases onto the tokens above,
+       never a second palette. New "rx-" components style against these. */
+    --rx-bg: var(--bg);
+    --rx-surface: var(--panel);
+    --rx-surface-2: var(--panel-2);
+    --rx-card: var(--card-bg);
+    --rx-border: var(--line);
+    --rx-border-active: var(--line-active);
+    --rx-text: var(--txt);
+    --rx-muted: var(--muted);
+    --rx-brand: var(--brand);
+    --rx-brand-hover: var(--brand-hover);
+    --rx-ce: var(--ce);
+    --rx-pe: var(--pe);
+    --rx-ol: var(--ol);
+    --rx-oh: var(--oh);
+    --rx-match: var(--match);
+    --rx-cyan: var(--cyan);
+    --rx-purple: var(--purple);
+    --rx-accent: var(--accent);
+    --rx-error: var(--pe);
+    --rx-stale: var(--accent);
+    --rx-radius-sm: 6px;
+    --rx-radius: 10px;
+    --rx-radius-lg: 14px;
+    --rx-space-1: 4px;
+    --rx-space-2: 8px;
+    --rx-space-3: 12px;
+    --rx-space-4: 16px;
+    --rx-space-5: 24px;
+    --rx-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
   * { box-sizing: border-box; }
@@ -3929,6 +3961,74 @@
 
 <script>
 const API_BASE = window.location.origin;
+
+/* ============================================================
+   PHASE 0 — UI_MODE flag + hash router skeleton (BRD redesign)
+   The redesign ships in reviewed phases behind this flag: each phase wires
+   its own route(s) to a "next" renderer while "legacy" keeps today's
+   behavior byte-for-byte unchanged. ?ui=legacy / ?ui=next lets a reviewer
+   compare both without a redeploy. Until a phase implements a route's
+   "next" handler, both modes fall back to the same legacy no-op (the
+   existing single-page layout already shows everything, so there is
+   nothing to switch yet) -- this phase only proves the plumbing works
+   against the real page before anything depends on it.
+============================================================ */
+const UI_MODE = new URLSearchParams(location.search).get('ui') || localStorage.getItem('uiMode') || 'next';
+
+const ROUTES = {
+  '/': { legacy: () => {} },
+  '/scanner': { legacy: () => {} },
+  '/results': { legacy: () => {} },
+  '/indicators': { legacy: () => {} },
+  '/chain': { legacy: () => {} },
+  '/chart/:symbol/:expiry/:strike/:type': { legacy: () => {} },
+  '/alerts': { legacy: () => {} },
+  '/help': { legacy: () => {} }
+};
+
+function matchRoute(hash) {
+  const path = (hash || '').replace(/^#/, '') || '/';
+  const parts = path.split('/').filter(Boolean);
+  for (const pattern in ROUTES) {
+    const patternParts = pattern.split('/').filter(Boolean);
+    if (patternParts.length !== parts.length) continue;
+    const params = {};
+    let matched = true;
+    for (let i = 0; i < patternParts.length; i++) {
+      if (patternParts[i].startsWith(':')) {
+        params[patternParts[i].slice(1)] = decodeURIComponent(parts[i]);
+      } else if (patternParts[i] !== parts[i]) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return { pattern, params };
+  }
+  return null;
+}
+
+function navigate(path, opts) {
+  opts = opts || {};
+  const hash = '#' + (path.startsWith('/') ? path : '/' + path);
+  if (opts.replace) {
+    location.replace(location.pathname + location.search + hash);
+  } else {
+    location.hash = hash.slice(1);
+  }
+}
+
+function renderRoute() {
+  const match = matchRoute(location.hash);
+  if (!match) return;
+  const route = ROUTES[match.pattern];
+  if (!route) return;
+  const handler = route[UI_MODE] || route.legacy;
+  if (typeof handler === 'function') {
+    try { handler(match.params); } catch (e) { console.error('[Router] render error for', match.pattern, e); }
+  }
+}
+
+window.addEventListener('hashchange', renderRoute);
 
 let lastResults = [];
 let allSymbols = [];
@@ -9300,6 +9400,8 @@ if (window.innerWidth <= 768) {
 initStatus().then(() => {
   setActiveScanStrategy('strat1');
 });
+
+renderRoute(); // Phase 0 router: resolve whatever route (or none) is in the URL on first load
 </script>
 </body>
 </html>

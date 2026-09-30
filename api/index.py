@@ -247,10 +247,6 @@ def live_scan(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Live scan error: {str(e)}")
 
-@app.get("/api/upstox/status")
-def upstox_status():
-    return upstox_service.health()
-
 @app.get("/api/live/chain")
 def get_live_chain(symbol: str = "NIFTY", expiry: Optional[str] = None):
     try:
