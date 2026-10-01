@@ -301,6 +301,11 @@
     background: #94a3b8;
   }
   .status-dot.live { background: #10b981; box-shadow: 0 0 8px #10b981; }
+  .status-dot.delayed { background: #eab308; box-shadow: 0 0 8px #eab308; }
+  .status-dot.reconnecting { background: #f59e0b; animation: dotPulse 1s ease-in-out infinite; }
+  .status-dot.unavailable { background: #ef4444; }
+  .status-dot.closed { background: #64748b; }
+  @keyframes dotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
   /* 📊 Chartink Live Market Indices Ticker Bar */
   .chartink-indices-bar {
@@ -2858,9 +2863,13 @@
     </div>
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-        <span class="cron-badge" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
+        <span class="cron-badge" style="display:none;" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
         <span class="ist-clock-badge" id="tvApiBadge" title="TradingView API (@mathieuc/tradingview) active with live technical analysis & quotes" style="display:none; background:#0f172a; border-color:#2563eb; color:#60a5fa; cursor:pointer;" onclick="checkTvApiStatus()">📊 TV API: Live</span>
         <span class="ist-clock-badge" id="liveClockIst">--:--:-- IST</span>
+        <div class="status-badge" id="dataConnBadge" title="Live data connection status -- flips to DELAYED/RECONNECTING honestly instead of staying LIVE" style="cursor:default;">
+          <span class="status-dot" id="dataConnDot"></span>
+          <span>Data: <span id="dataConnText">Connecting…</span></span>
+        </div>
         <div class="status-badge" id="marketBadge">
           <span class="status-dot" id="statusDot"></span>
           <span id="marketStatusText">Checking market status…</span>
@@ -7024,6 +7033,94 @@ function renderSentimentGauge(callPct) {
   </svg>`;
 }
 
+/* ============================================================
+   REAL-TIME CONNECTION STATUS ENGINE (REST polling, no WebSocket --
+   Vercel's Python serverless functions can't hold a persistent socket
+   open; true push would need a separate always-on relay service, which
+   is out of scope here. This approximates the live-dashboard targets
+   with a fast, honest poll instead: visible LIVE/DELAYED/MARKET CLOSED/
+   RECONNECTING/DATA UNAVAILABLE status, auto-retry with backoff, and a
+   client-side staleness ticker so a value is never silently left
+   labelled LIVE past its expected refresh window.
+============================================================ */
+const FAST_POLL_INTERVAL_MS = 2000;
+const STALE_GRACE_MS = 5000;
+let dataConnStatus = 'connecting';
+let lastSuccessfulQuoteTime = 0;
+let fastPollFailureCount = 0;
+let fastPollInFlight = false;
+let marketIsOpenCached = false;
+
+function setDataConnStatus(status, label) {
+  dataConnStatus = status;
+  const dot = document.getElementById('dataConnDot');
+  const text = document.getElementById('dataConnText');
+  if (dot) dot.className = 'status-dot ' + status;
+  if (text) text.textContent = label;
+}
+
+async function fastQuotePoll() {
+  if (fastPollInFlight) return; // never run two polls at once if one runs long
+  fastPollInFlight = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/quotes/fast`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (!data.configured || !data.quotes || Object.keys(data.quotes).length === 0) {
+      fastPollFailureCount++;
+      if (marketIsOpenCached) setDataConnStatus('unavailable', 'DATA UNAVAILABLE');
+      return;
+    }
+
+    fastPollFailureCount = 0;
+    lastSuccessfulQuoteTime = Date.now();
+
+    const map = { NIFTY: 'idxNifty', BANKNIFTY: 'idxBank', SENSEX: 'idxSensex', VIX: 'idxVix', MIDCPNIFTY: 'idxMidcap' };
+    Object.entries(map).forEach(([sym, prefix]) => {
+      const q = data.quotes[sym];
+      if (!q) return;
+      const valEl = document.getElementById(prefix + 'Val');
+      if (valEl) valEl.textContent = fmtNum(q.last);
+      renderTickerChange(prefix + 'Chg', q.change, q.pct);
+      if (sym !== 'VIX') pushSpotSpark(sym, q.last);
+    });
+
+    setDataConnStatus(marketIsOpenCached ? 'live' : 'closed', marketIsOpenCached ? 'LIVE' : 'MARKET CLOSED');
+  } catch (e) {
+    fastPollFailureCount++;
+    setDataConnStatus('reconnecting', 'RECONNECTING…');
+    console.warn('Fast quote poll failed:', e);
+  } finally {
+    fastPollInFlight = false;
+  }
+}
+
+// Independent 1s staleness check -- flips LIVE to DELAYED on its own once
+// the last successful update is older than the poll interval + grace
+// period, rather than waiting for the next poll to notice (spec: no stale
+// value may stay labelled LIVE more than 5s past its expected refresh).
+setInterval(() => {
+  if (dataConnStatus !== 'live') return;
+  if (!marketIsOpenCached) return;
+  const age = Date.now() - lastSuccessfulQuoteTime;
+  if (age > FAST_POLL_INTERVAL_MS + STALE_GRACE_MS) {
+    setDataConnStatus('delayed', 'DELAYED');
+  }
+}, 1000);
+
+let fastPollTimer = null;
+function scheduleFastPoll() {
+  if (fastPollTimer) clearTimeout(fastPollTimer);
+  // Back off slightly on repeated failures, but always cap well inside the
+  // spec's "reconnect within 5s" target rather than waiting a full interval.
+  const delay = fastPollFailureCount > 0 ? Math.min(2000 + fastPollFailureCount * 1000, 5000) : FAST_POLL_INTERVAL_MS;
+  fastPollTimer = setTimeout(async () => {
+    await fastQuotePoll();
+    scheduleFastPoll();
+  }, delay);
+}
+
 async function fetchIndexPulse() {
   const container = document.getElementById('indexPulseGrid');
   const badge = document.getElementById('pulseTimeBadge');
@@ -7715,6 +7812,7 @@ async function initStatus() {
     const isOpen = (data.marketStatus || '').toLowerCase().startsWith('open');
     dot.className = isOpen ? 'status-dot live' : 'status-dot';
     txt.textContent = isOpen ? 'Live Market Open' : 'Market Closed';
+    marketIsOpenCached = isOpen;
 
     if (data.totalLoaded) {
       info.textContent = `EOD data: ${data.todayDateLoaded || ''} (${data.totalLoaded.toLocaleString()} contracts)`;
@@ -10371,6 +10469,7 @@ fetchIndexPulse();
 setInterval(fetchIndexPulse, 30000);
 fetchGlobalMarkets();
 setInterval(fetchGlobalMarkets, 20000);
+scheduleFastPoll();
 
 // BRD FR-03: advanced filters collapsed by default on every viewport, not just mobile.
 (function collapseAdvancedFiltersByDefault() {

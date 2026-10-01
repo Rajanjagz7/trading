@@ -89,6 +89,22 @@ def get_upstox_status():
     """Authenticated Upstox REST integration status."""
     return upstox_service.health()
 
+@app.get("/api/quotes/fast")
+def get_fast_quotes():
+    """
+    Lightweight quote-only poll target for the connection-status indicator
+    and ticker values -- just the already-3s-cached Upstox quote dict, no
+    option-chain/OI/sentiment recomputation, so this is cheap enough to
+    poll on a short interval without hammering Upstox or this server.
+    """
+    if not upstox_service.is_configured():
+        return {"configured": False, "quotes": {}, "dataStatus": "unavailable"}
+    try:
+        quotes = upstox_service.get_all_indices_quotes()
+        return {"configured": True, "quotes": quotes, "dataStatus": "live" if quotes else "unavailable"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fast quote error: {str(e)}")
+
 @app.get("/api/candles")
 def get_candles(symbol: str = "NIFTY", instrumentKey: Optional[str] = None, timeframe: str = "5minute"):
     """
