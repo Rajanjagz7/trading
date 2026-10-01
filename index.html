@@ -877,6 +877,21 @@
     padding-top: 12px;
     border-top: 1px solid #1e293b;
   }
+  .tf-btn {
+    background: #121926;
+    color: #94a3b8;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 4px 11px;
+    font-size: 11.5px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tf-btn:hover { border-color: #3b82f6; color: #cbd5e1; }
+  .tf-btn.active { background: #2563eb; border-color: #3b82f6; color: #fff; }
+
   .query-run-btn {
     background: #10b981;
     color: #fff;
@@ -3697,6 +3712,9 @@
 
     <!-- Interactive Web & Mobile Chart Container Area -->
     <div class="opt-chart-body" style="padding: 12px 16px;">
+      <div id="optTimeframeRow" style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+        <span style="font-size:11px; color:var(--muted); font-weight:600; margin-right:2px;">Timeframe:</span>
+      </div>
       <div id="optCanvasContainer" style="width:100%; height:340px; position:relative; background:#0b0e14; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
         <canvas id="optChartCanvas" width="1140" height="340" style="width:100%; height:100%; display:block;"></canvas>
         <div id="optChartUnavailable" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; color:#94a3b8; text-align:center; padding:0 20px;">
@@ -4277,6 +4295,13 @@ let currentSelectedContract = null;
 // permanently empty when no real historical source is available -- the chart
 // falls back to an honest single-bar view rather than fabricating a series.
 let currentChartCandles = [];
+let currentChartTimeframe = '15minute';
+const CHART_TIMEFRAMES = [
+  { key: '2minute', label: '2m' }, { key: '3minute', label: '3m' },
+  { key: '10minute', label: '10m' }, { key: '15minute', label: '15m' },
+  { key: '30minute', label: '30m' }, { key: '45minute', label: '45m' },
+  { key: '75minute', label: '75m' }, { key: 'day', label: '1D' }
+];
 // Populated from /api/status once it resolves — lets the option-chain "no
 // data" messages for indices with a real quote but no F&O chain (SENSEX)
 // still show the real close instead of a bare "no data" message.
@@ -8275,6 +8300,7 @@ function renderOptionModalContract(contract) {
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   currentChartCandles = [];
+  renderTimeframeButtons();
   applyHubStrat(currentHubStratKey || 'ut');
 
   // Fetch the real candle series in the background and redraw once it
@@ -8384,9 +8410,9 @@ async function openOptionChartModal(symbol, expiry, strike, type) {
    already-correct percentage-based target/stop lines -- never a guess
    standing in for a named technical indicator.
 ============================================================ */
-async function fetchContractCandles(contract) {
+async function fetchContractCandles(contract, timeframe) {
   try {
-    const params = new URLSearchParams({ symbol: contract.symbol, timeframe: '5minute' });
+    const params = new URLSearchParams({ symbol: contract.symbol, timeframe: timeframe || currentChartTimeframe });
     if (contract.instrumentKey) params.set('instrumentKey', contract.instrumentKey);
     const res = await fetch(`${API_BASE}/api/candles?${params.toString()}`);
     if (!res.ok) return [];
@@ -8395,6 +8421,36 @@ async function fetchContractCandles(contract) {
   } catch (e) {
     console.warn('Candle fetch failed:', e);
     return [];
+  }
+}
+
+function renderTimeframeButtons() {
+  const row = document.getElementById('optTimeframeRow');
+  if (!row) return;
+  row.querySelectorAll('.tf-btn').forEach(b => b.remove());
+  CHART_TIMEFRAMES.forEach(tf => {
+    const btn = document.createElement('button');
+    btn.className = 'tf-btn' + (tf.key === currentChartTimeframe ? ' active' : '');
+    btn.textContent = tf.label;
+    btn.title = `Switch chart to ${tf.label} candles`;
+    btn.onclick = () => setChartTimeframe(tf.key);
+    row.appendChild(btn);
+  });
+}
+
+async function setChartTimeframe(tf) {
+  if (tf === currentChartTimeframe || !currentSelectedContract) {
+    currentChartTimeframe = tf;
+    renderTimeframeButtons();
+    return;
+  }
+  currentChartTimeframe = tf;
+  renderTimeframeButtons();
+  const contract = currentSelectedContract;
+  const candles = await fetchContractCandles(contract, tf);
+  if (currentSelectedContract === contract) {
+    currentChartCandles = candles;
+    drawOptionChart(contract);
   }
 }
 
@@ -8543,7 +8599,8 @@ function drawRealCandleChart(c, candles) {
   ctx.fillRect(leftPad, 6, 10, 16);
   ctx.fillStyle = '#93c5fd';
   ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
-  ctx.fillText(`⚡ FITTED: ${indData.title} · ${candles.length} real 5m candles`, leftPad + 16, 18);
+  const tfLabel = (CHART_TIMEFRAMES.find(t => t.key === currentChartTimeframe) || {}).label || currentChartTimeframe;
+  ctx.fillText(`⚡ FITTED: ${indData.title} · ${candles.length} real ${tfLabel} candles`, leftPad + 16, 18);
 
   // Real indicator overlay, chosen by the fitted indicator
   let overlayPoints = null, overlayColor = '#a78bfa', overlayLabel = '';

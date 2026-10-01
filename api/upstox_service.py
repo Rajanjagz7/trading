@@ -1,7 +1,9 @@
 import os
 import math
 import time
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
+
+IST = timezone(timedelta(hours=5, minutes=30))
 from urllib.parse import quote
 from curl_cffi import requests
 
@@ -349,21 +351,25 @@ class UpstoxService:
         url = f"{self.BASE_V3}/historical-candle/{encoded_key}/{unit}/{interval}/{to_date}/{from_date}"
         return self._parse_candles(self._get(url))
 
+    # Verified directly against Upstox's live V3 API (not assumed from docs) --
+    # it accepts any minute count here, not just a fixed preset list.
+    ALLOWED_MINUTE_INTERVALS = {"1", "2", "3", "5", "10", "15", "30", "45", "60", "75", "125", "240"}
+
     def get_candles(self, instrument_key, timeframe="5minute"):
         """
         Real candle series for a chart -- no synthetic/estimated points.
-        timeframe: "1minute" | "5minute" | "15minute" | "30minute" | "day"
+        timeframe: "<N>minute" for any N in ALLOWED_MINUTE_INTERVALS, or "day".
         Intraday timeframes try today's live intraday candles first, then
         fall back to the most recent trading day's historical candles
         (markets closed / weekend) so the chart still shows something real
         rather than going blank.
         """
-        unit_map = {
-            "1minute": ("minutes", "1"), "5minute": ("minutes", "5"),
-            "15minute": ("minutes", "15"), "30minute": ("minutes", "30"),
-            "day": ("days", "1"),
-        }
-        unit, interval = unit_map.get(timeframe, ("minutes", "5"))
+        if timeframe == "day":
+            unit, interval = "days", "1"
+        else:
+            n = timeframe[:-6] if timeframe.endswith("minute") else timeframe
+            interval = n if n in self.ALLOWED_MINUTE_INTERVALS else "5"
+            unit = "minutes"
 
         if timeframe == "day":
             to_d = date.today().isoformat()
@@ -440,6 +446,9 @@ class UpstoxService:
                         "high": self._num(ohlc.get("high")),
                         "low": self._num(ohlc.get("low")),
                         "close": close,
+                        "prevClose": round(prev_close, 2),
+                        "dataStatus": "live",
+                        "timestamp": datetime.now(IST).isoformat(),
                     }
 
             self.cache["ALL_INDICES_QUOTES"] = (now, quotes)

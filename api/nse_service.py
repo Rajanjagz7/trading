@@ -5,9 +5,17 @@ import json
 import time
 import zipfile
 import concurrent.futures
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from curl_cffi import requests
 from .upstox_service import upstox_service
+
+# Fixed UTC+5:30 offset rather than zoneinfo's "Asia/Kolkata" -- India has no
+# DST so the offset never changes, and this avoids a hard dependency on the
+# host OS having IANA tzdata installed (not guaranteed on every runtime).
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def now_ist_iso():
+    return datetime.now(IST).isoformat()
 
 # SENSEX and India VIX have no NSE bhavcopy/F&O source at all (SENSEX is a BSE
 # index, and BSE's own API hard-blocks this app's requests) — Yahoo Finance's
@@ -404,12 +412,20 @@ class NSEService:
             spot = 0.0
             change = 0.0
             change_pct = 0.0
+            day_open = 0.0
+            day_high = 0.0
+            day_low = 0.0
+            data_status = "unavailable"
 
             if sym in up_quotes:
                 q = up_quotes[sym]
                 spot = q["last"]
                 change = q["change"]
                 change_pct = q["pct"]
+                day_open = q.get("open", 0.0)
+                day_high = q.get("high", 0.0)
+                day_low = q.get("low", 0.0)
+                data_status = "live"
             elif chain_rows and chain_rows[0].get("spot"):
                 spot = chain_rows[0]["spot"]
                 prev_spot = 0.0
@@ -419,6 +435,13 @@ class NSEService:
                         break
                 change = round(spot - prev_spot, 2) if spot > 0 and prev_spot > 0 else 0.0
                 change_pct = round((change / prev_spot) * 100.0, 2) if prev_spot > 0 else 0.0
+                data_status = "live" if sym in live_chains else "delayed"
+
+            # Reference close for %-change math (Business Rule 10: % change
+            # must be mathematically consistent with price vs reference) --
+            # derived from the same change value already shown, not a
+            # separately-fetched figure that could silently drift from it.
+            prev_close = round(spot - change, 2) if spot > 0 else 0.0
 
             step = 100.0 if sym in ("BANKNIFTY", "SENSEX") else (25.0 if sym == "MIDCPNIFTY" else 50.0)
             atm_strike = round(spot / step) * step if spot > 0 else 0.0
@@ -512,6 +535,10 @@ class NSEService:
             summary[sym] = {
                 "symbol": sym,
                 "spot": spot,
+                "open": day_open,
+                "high": day_high,
+                "low": day_low,
+                "prevClose": prev_close,
                 "change": change,
                 "changePct": change_pct,
                 "atmStrike": atm_strike,
@@ -523,6 +550,8 @@ class NSEService:
                 "callOi": call_oi,
                 "putOi": put_oi,
                 "oiDistribution": oi_distribution,
+                "dataStatus": data_status,
+                "timestamp": now_ist_iso(),
                 "sentiment": sentiment,
                 "verdict": verdict,
                 "topCall": top_call,
