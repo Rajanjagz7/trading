@@ -2783,6 +2783,13 @@
     letter-spacing: 0.04em;
     margin: 0 0 var(--rx-space-2) 2px;
   }
+  /* Phase 3: .indicator-bar is a flex container, so a bare label would sit
+     inline next to the previous row instead of heading its own -- force it
+     onto its own full-width line. */
+  .indicator-bar .rx-section-label {
+    flex-basis: 100%;
+    margin-top: 6px;
+  }
 
   /* Phase 2b (BRD redesign): loading skeleton for Results while a scan is
      in-flight, replacing the previous behavior of silently leaving the old
@@ -3085,27 +3092,48 @@
   </div>
 
   <!-- ⚡ Technical & Algo Indicator Bar (13 Indicators) -->
+  <!-- Phase 3 (BRD redesign, FR-07): indicators grouped by purpose instead of
+       one flat 15-button row. Every onclick/data-ind is unchanged from
+       before -- this is a pure re-organization, zero behavior change. -->
   <div class="indicator-bar rx-legacy-tools">
     <div class="indicator-bar-label">
-      <span>⚡</span> <b>Technical &amp; Algo Indicators:</b>
+      <span>⚡</span> <b>Technical &amp; Algo Indicators</b>
+      <button class="small-strat-btn" style="background:#2563eb; color:#fff; border-color:#3b82f6; font-weight:700; margin-left:10px;" onclick="openIndicatorModal('ut')" title="Open Indicator Suite with live Option Chain and algorithm code">📊 Browse All Indicators &amp; Scripts</button>
     </div>
+
+    <div class="rx-section-label" style="margin-top:8px;">Trend</div>
     <div class="indicator-btn-row">
-      <button class="small-strat-btn" style="background:#2563eb; color:#fff; border-color:#3b82f6; font-weight:700;" onclick="openIndicatorModal('ut')" title="Open Indicator Suite with live Option Chain and algorithm code">📊 Indicator Option Chain &amp; Scripts</button>
-      <button class="small-strat-btn alpha-btn" data-ind="alphascan" onclick="runIndicatorScan('alphascan')" title="Scan all stocks & indices with AlphaScan Option Matrix">📊 AlphaScan Matrix</button>
-      <button class="small-strat-btn pred-btn" data-ind="trade_pred" onclick="runIndicatorScan('trade_pred')" title="Scan all stocks & indices with Trade Predictor">🔮 Trade Predictor</button>
-      <button class="small-strat-btn quantum-btn" data-ind="quantum" onclick="runIndicatorScan('quantum')" title="Scan all stocks & indices with Quantum Matrix Strategy">🌌 Quantum Matrix</button>
-      <button class="small-strat-btn target-btn" data-ind="target_proj" onclick="runIndicatorScan('target_proj')" title="Scan all stocks & indices with Option Target Projections">🎯 Target Proj</button>
       <button class="small-strat-btn ut-btn" data-ind="ut" onclick="runIndicatorScan('ut')" title="Scan all stocks & indices with UT Bot Alerts">⚡ UT Bot</button>
+      <button class="small-strat-btn pred-btn" data-ind="trade_pred" onclick="runIndicatorScan('trade_pred')" title="Scan all stocks & indices with Trade Predictor">🔮 Trade Predictor</button>
       <button class="small-strat-btn super-btn" data-ind="supertrend" onclick="runIndicatorScan('supertrend')" title="Scan all stocks & indices with Supertrend MTF">📈 Supertrend</button>
-      <button class="small-strat-btn orb-btn" data-ind="orb15" onclick="runIndicatorScan('orb15')" title="Scan all stocks & indices with 15m ORB Breakout">🚀 15m ORB</button>
+    </div>
+
+    <div class="rx-section-label">Momentum</div>
+    <div class="indicator-btn-row">
       <button class="small-strat-btn vwap-btn" data-ind="vwap_rsi" onclick="runIndicatorScan('vwap_rsi')" title="Scan all stocks & indices with VWAP + RSI">🌊 VWAP + RSI</button>
-      <button class="small-strat-btn vol-btn" data-ind="volume_oi" onclick="runIndicatorScan('volume_oi')" title="Scan all stocks & indices with Volume & OI Surge">📊 Volume &amp; OI</button>
       <button class="small-strat-btn candle-btn" data-ind="candle_pattern" onclick="runIndicatorScan('candle_pattern')" title="Scan all stocks & indices with Candlestick Signals">🕯️ Candlestick</button>
+      <button class="small-strat-btn" data-ind="strat_ol" onclick="applyPreset('strat_ol')" title="Scan all stocks & indices for Bullish Open=Low setups">🟢 Bullish O=L</button>
+      <button class="small-strat-btn" data-ind="strat_oh" onclick="applyPreset('strat_oh')" title="Scan all stocks & indices for Bearish Open=High setups">🔴 Bearish O=H</button>
+    </div>
+
+    <div class="rx-section-label">Breakout</div>
+    <div class="indicator-btn-row">
+      <button class="small-strat-btn quantum-btn" data-ind="quantum" onclick="runIndicatorScan('quantum')" title="Scan all stocks & indices with Quantum Matrix Strategy">🌌 Quantum Matrix</button>
+      <button class="small-strat-btn orb-btn" data-ind="orb15" onclick="runIndicatorScan('orb15')" title="Scan all stocks & indices with 15m ORB Breakout">🚀 15m ORB</button>
+    </div>
+
+    <div class="rx-section-label">Volume / OI</div>
+    <div class="indicator-btn-row">
+      <button class="small-strat-btn vol-btn" data-ind="volume_oi" onclick="runIndicatorScan('volume_oi')" title="Scan all stocks & indices with Volume & OI Surge">📊 Volume &amp; OI</button>
+    </div>
+
+    <div class="rx-section-label">Strategy Setups</div>
+    <div class="indicator-btn-row">
+      <button class="small-strat-btn alpha-btn" data-ind="alphascan" onclick="runIndicatorScan('alphascan')" title="Scan all stocks & indices with AlphaScan Option Matrix">📊 AlphaScan Matrix</button>
+      <button class="small-strat-btn target-btn" data-ind="target_proj" onclick="runIndicatorScan('target_proj')" title="Scan all stocks & indices with Option Target Projections">🎯 Target Proj</button>
       <button class="small-strat-btn" data-ind="strat1" onclick="runIndicatorScan('strat1')" title="Scan all stocks & indices with Strategy 1">1️⃣ Low Range</button>
       <button class="small-strat-btn" data-ind="strat2" onclick="runIndicatorScan('strat2')" title="Scan all stocks & indices with Strategy 2">2️⃣ OH/OL + VIX</button>
       <button class="small-strat-btn" data-ind="strat3" onclick="runIndicatorScan('strat3')" title="Scan all stocks & indices with Strategy 3">3️⃣ ÷8 &amp; ÷6.5</button>
-      <button class="small-strat-btn" data-ind="strat_ol" onclick="applyPreset('strat_ol')" title="Scan all stocks & indices for Bullish Open=Low setups">🟢 Bullish O=L</button>
-      <button class="small-strat-btn" data-ind="strat_oh" onclick="applyPreset('strat_oh')" title="Scan all stocks & indices for Bearish Open=High setups">🔴 Bearish O=H</button>
     </div>
   </div>
 
@@ -5300,10 +5328,6 @@ plotshape(inFormula and inRange, title = "Strategy 3 Match", text = "S3 MATCH", 
   }
 };
 
-function getStudiesForIndicator(key) {
-  return [];
-}
-
 /* ============================================================
    HELPER UTILITIES
 ============================================================ */
@@ -5822,12 +5846,14 @@ function evaluateContract(contract, activeScan, explain = false) {
     }
   }
 
-  // 8. Candlestick Action (Open=Low / Open=High)
+  // 8. Candlestick Action (Open=Low / Open=High) -- trust the server's own
+  // isOL/isOH (nse_service.scan() computes this with the exact same
+  // tolerance, since `tol` is sent as part of the scan payload) instead of
+  // re-deriving it client-side with a second, easy-to-drift-out-of-sync
+  // formula.
   if (rules.candlestick && rules.candlestick.enabled) {
-    const tol = rules.candlestick.tol || 0.0;
-    const hasActivity = ((contract.vol || 0) > 0 || (contract.close || 0) > 0);
-    const isOL = hasActivity && contract.open > 0 && contract.low > 0 && Math.abs(contract.open - contract.low) <= tol;
-    const isOH = hasActivity && contract.open > 0 && contract.high > 0 && Math.abs(contract.open - contract.high) <= tol;
+    const isOL = !!contract.isOL;
+    const isOH = !!contract.isOH;
 
     if (rules.candlestick.mode === "OL") {
       if (!isOL) return explain ? { passed: false, failedRule: "candlestick", reason: "Not Open = Low" } : false;
@@ -5838,11 +5864,14 @@ function evaluateContract(contract, activeScan, explain = false) {
     }
   }
 
-  // 9. UT Bot Signal
+  // 9. UT Bot Signal -- trust the server's isOL/isOH (see the matching
+  // comment on the candlestick rule above) instead of a second recomputation
+  // with its own hardcoded tolerance, independent of whatever the user
+  // actually configured.
   if (rules.utBot && rules.utBot.enabled) {
     const sig = contract.utBot || "";
-    const isOL = contract.isOL || (contract.open > 0 && contract.low > 0 && Math.abs(contract.open - contract.low) <= 0.05);
-    const isOH = contract.isOH || (contract.open > 0 && contract.high > 0 && Math.abs(contract.open - contract.high) <= 0.05);
+    const isOL = !!contract.isOL;
+    const isOH = !!contract.isOH;
     const prev = contract.prevCloseUsed !== undefined ? contract.prevCloseUsed : (contract.prevClose || 0);
 
     const isBuy = sig.includes("BUY") || isOL || (contract.close > contract.open && contract.close >= prev);
@@ -5886,9 +5915,7 @@ function evaluateContract(contract, activeScan, explain = false) {
     if (ind === "strat1") {
       // Handled by dayLow & previousClose
     } else if (ind === "strat2") {
-      const isOL = contract.isOL || (contract.open > 0 && contract.low > 0 && Math.abs(contract.open - contract.low) <= 0.05);
-      const isOH = contract.isOH || (contract.open > 0 && contract.high > 0 && Math.abs(contract.open - contract.high) <= 0.05);
-      if (!isOL && !isOH) {
+      if (!contract.isOL && !contract.isOH) {
         return explain ? { passed: false, failedRule: "indicator", reason: "Strat 2 requires Open=Low or Open=High" } : false;
       }
     } else if (ind === "strat3") {
@@ -8184,11 +8211,6 @@ function drawOptionChart(c) {
     ctx.fillStyle = trailColor;
     ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
     ctx.fillText(sigText + ' @ ₹' + fmtNum(c.close), w * 0.35 + 25, sigY);
-  } else if (indKey === 'quantum') {
-    drawLine(div8, '#38bdf8', '🌌 Quantum ÷8 Level', false, 2);
-    drawLine(div65, '#a855f7', '🌌 Quantum ÷6.5 Level', false, 2);
-    drawLine(tgt9, '#10b981', 'Target (+9%)');
-    drawLine(c.low, '#eab308', 'Day Low (Anchor)');
   } else if (indKey === 'supertrend') {
     const isBull = c.close >= c.open;
     const stLine = isBull ? (c.low * 0.96) : (c.high * 1.04);
