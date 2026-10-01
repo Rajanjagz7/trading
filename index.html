@@ -9539,11 +9539,47 @@ function disableScanRule(ruleKey) {
     clearAllScreenerFilters();
     return;
   }
-  if (window.activeScan.rules[ruleKey]) {
+  if (ruleKey === 'segment') {
+    const seg = document.getElementById('ruleSegment');
+    if (seg) seg.value = 'FO';
+    const i1 = document.getElementById('instIdx'); if (i1) i1.checked = true;
+    const i2 = document.getElementById('instStk'); if (i2) i2.checked = true;
+    window.activeScan.rules.instrument = { enabled: true, index: true, stock: true };
+    stocksOnlyLock = false;
+    syncStocksOnlyButtons();
+  } else if (ruleKey === 'dayLow') {
+    window.activeScan.rules.dayLow.enabled = false;
+    const c = document.getElementById('ruleLowOn'); if (c) c.checked = false;
+  } else if (ruleKey === 'previousClose') {
+    window.activeScan.rules.previousClose.enabled = false;
+    const c = document.getElementById('rulePrevOn'); if (c) c.checked = false;
+  } else if (ruleKey === 'candlestick') {
+    window.activeScan.rules.candlestick.enabled = false;
+    const c = document.getElementById('ruleCandleOn'); if (c) c.checked = false;
+  } else if (ruleKey === 'utBot') {
+    window.activeScan.rules.utBot.enabled = false;
+    const c = document.getElementById('ruleUtOn'); if (c) c.checked = false;
+  } else if (ruleKey === 'expiry') {
+    window.activeScan.rules.expiry.enabled = false;
+    window.activeScan.rules.expiry.mode = 'all';
+    const c = document.getElementById('ruleExpiry'); if (c) c.value = 'all';
+  } else if (ruleKey === 'optionType') {
+    window.activeScan.rules.optionType.enabled = false;
+    window.activeScan.rules.optionType.type = 'BOTH';
+    const c = document.getElementById('ruleOptType'); if (c) c.value = 'BOTH';
+  } else if (ruleKey === 'minOi') {
+    window.activeScan.rules.minOi.enabled = false;
+    window.activeScan.rules.minOi.value = 0;
+    const c = document.getElementById('ruleMinOi'); if (c) c.value = '0';
+  } else if (ruleKey === 'excludeUntraded') {
+    window.activeScan.rules.excludeUntraded.enabled = false;
+    const c = document.getElementById('ruleExcludeUntraded'); if (c) c.checked = false;
+  } else if (window.activeScan.rules[ruleKey]) {
     window.activeScan.rules[ruleKey].enabled = false;
   }
   syncActiveScanToUI();
   updateActiveFilterChips();
+  filterAndRender();
   executeActiveScan();
   showToast(`✕ Disabled rule: ${ruleKey}`, 'info');
 }
@@ -9575,6 +9611,21 @@ function updateActiveFilterChips() {
 
   if (scan && scan.rules) {
     const r = scan.rules;
+
+    // Segment Chip
+    if (r.instrument && r.instrument.enabled) {
+      if (r.instrument.index && !r.instrument.stock) {
+        chips.push({
+          label: '🏛️ Segment: Indices Only',
+          remove: "disableScanRule('segment')"
+        });
+      } else if (!r.instrument.index && r.instrument.stock) {
+        chips.push({
+          label: '📦 Segment: Stocks Only',
+          remove: "disableScanRule('segment')"
+        });
+      }
+    }
 
     // 3. Day Low
     if (r.dayLow && r.dayLow.enabled) {
@@ -9652,7 +9703,7 @@ function updateActiveFilterChips() {
     // 12. Exclude Untraded
     if (r.excludeUntraded && r.excludeUntraded.enabled) {
       chips.push({
-        label: `🚫 Traded Only (Vol > 0)`,
+        label: `🚫 Traded Only (>₹0.05)`,
         remove: "disableScanRule('excludeUntraded')"
       });
     }
@@ -9681,84 +9732,117 @@ function updateActiveFilterChips() {
 }
 
 function initRuleEventListeners() {
+  let ruleDebounceTimer = null;
+
+  function onRuleInputChange(autoCheckElId) {
+    if (autoCheckElId) {
+      const chk = document.getElementById(autoCheckElId);
+      if (chk && !chk.checked) chk.checked = true;
+    }
+    syncUIToActiveScan('chartink');
+    updateActiveFilterChips();
+    filterAndRender();
+    clearTimeout(ruleDebounceTimer);
+    ruleDebounceTimer = setTimeout(() => {
+      executeActiveScan();
+    }, 350);
+  }
+
+  function onRuleSelectChange(autoCheckElId) {
+    if (autoCheckElId) {
+      const chk = document.getElementById(autoCheckElId);
+      if (chk && !chk.checked) chk.checked = true;
+    }
+    syncUIToActiveScan('chartink');
+    updateActiveFilterChips();
+    filterAndRender();
+    executeActiveScan();
+  }
+
+  // Checkbox triggers
   const rLowOn = document.getElementById('ruleLowOn');
   if (rLowOn) {
-    rLowOn.addEventListener('change', function() {
-      if (!window.activeScan) syncUIToActiveScan('chartink');
-      window.activeScan.rules.dayLow.enabled = this.checked;
-      const f = parseFloat(document.getElementById('ruleLowFrom')?.value);
-      const t = parseFloat(document.getElementById('ruleLowTo')?.value);
-      if (!isNaN(f)) window.activeScan.rules.dayLow.min = f;
-      if (!isNaN(t)) window.activeScan.rules.dayLow.max = t;
-      syncActiveScanToUI();
-      updateActiveFilterChips();
-      executeActiveScan();
-    });
+    rLowOn.addEventListener('change', () => onRuleSelectChange(null));
   }
   const rPrevOn = document.getElementById('rulePrevOn');
   if (rPrevOn) {
-    rPrevOn.addEventListener('change', function() {
-      if (!window.activeScan) syncUIToActiveScan('chartink');
-      window.activeScan.rules.previousClose.enabled = this.checked;
-      const f = parseFloat(document.getElementById('rulePrevFrom')?.value);
-      const t = parseFloat(document.getElementById('rulePrevTo')?.value);
-      if (!isNaN(f)) window.activeScan.rules.previousClose.min = f;
-      if (!isNaN(t)) window.activeScan.rules.previousClose.max = t;
-      syncActiveScanToUI();
-      updateActiveFilterChips();
-      executeActiveScan();
-    });
+    rPrevOn.addEventListener('change', () => onRuleSelectChange(null));
   }
   const rCandleOn = document.getElementById('ruleCandleOn');
   if (rCandleOn) {
-    rCandleOn.addEventListener('change', function() {
-      if (!window.activeScan) syncUIToActiveScan('chartink');
-      window.activeScan.rules.candlestick.enabled = this.checked;
-      window.activeScan.rules.candlestick.mode = document.getElementById('ruleCandleMode')?.value || 'ALL';
-      window.activeScan.rules.candlestick.tol = parseFloat(document.getElementById('ruleTol')?.value) || 0.0;
-      syncActiveScanToUI();
-      updateActiveFilterChips();
-      executeActiveScan();
-    });
+    rCandleOn.addEventListener('change', () => onRuleSelectChange(null));
   }
   const rUtOn = document.getElementById('ruleUtOn');
   if (rUtOn) {
-    rUtOn.addEventListener('change', function() {
-      if (!window.activeScan) syncUIToActiveScan('chartink');
-      window.activeScan.rules.utBot.enabled = this.checked;
-      window.activeScan.rules.utBot.signal = document.getElementById('ruleUtAction')?.value || 'ALL';
-      syncActiveScanToUI();
-      updateActiveFilterChips();
-      executeActiveScan();
-    });
+    rUtOn.addEventListener('change', () => onRuleSelectChange(null));
   }
   const rParamsOn = document.getElementById('ruleParamsOn');
   if (rParamsOn) {
-    rParamsOn.addEventListener('change', function() {
-      if (!window.activeScan) syncUIToActiveScan('chartink');
-      const optType = document.getElementById('ruleOptType')?.value || 'BOTH';
-      const exp = document.getElementById('ruleExpiry')?.value || 'all';
-      const oi = parseFloat(document.getElementById('ruleMinOi')?.value) || 0;
-      window.activeScan.rules.expiry.enabled = this.checked && (exp !== 'all');
-      window.activeScan.rules.expiry.mode = exp;
-      window.activeScan.rules.optionType.enabled = this.checked && (optType !== 'BOTH');
-      window.activeScan.rules.optionType.type = optType;
-      window.activeScan.rules.minOi.enabled = this.checked && (oi > 0);
-      window.activeScan.rules.minOi.value = oi;
-      syncActiveScanToUI();
-      updateActiveFilterChips();
-      executeActiveScan();
-    });
+    rParamsOn.addEventListener('change', () => onRuleSelectChange(null));
   }
   const rUn = document.getElementById('ruleExcludeUntraded');
   if (rUn) {
-    rUn.addEventListener('change', function() {
-      if (!window.activeScan) syncUIToActiveScan('chartink');
-      window.activeScan.rules.excludeUntraded.enabled = this.checked;
-      syncActiveScanToUI();
-      updateActiveFilterChips();
-      executeActiveScan();
-    });
+    rUn.addEventListener('change', () => onRuleSelectChange(null));
+  }
+
+  // Number and text input triggers
+  ['ruleLowFrom', 'ruleLowTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => onRuleInputChange('ruleLowOn'));
+      el.addEventListener('change', () => onRuleInputChange('ruleLowOn'));
+    }
+  });
+
+  ['rulePrevFrom', 'rulePrevTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => onRuleInputChange('rulePrevOn'));
+      el.addEventListener('change', () => onRuleInputChange('rulePrevOn'));
+    }
+  });
+
+  const rCandleMode = document.getElementById('ruleCandleMode');
+  if (rCandleMode) {
+    rCandleMode.addEventListener('change', () => onRuleSelectChange('ruleCandleOn'));
+  }
+  const rTol = document.getElementById('ruleTol');
+  if (rTol) {
+    rTol.addEventListener('input', () => onRuleInputChange('ruleCandleOn'));
+    rTol.addEventListener('change', () => onRuleInputChange('ruleCandleOn'));
+  }
+
+  const rUtAction = document.getElementById('ruleUtAction');
+  if (rUtAction) {
+    rUtAction.addEventListener('change', () => onRuleSelectChange('ruleUtOn'));
+  }
+  const rUtSens = document.getElementById('ruleUtSens');
+  if (rUtSens) {
+    rUtSens.addEventListener('input', () => onRuleInputChange('ruleUtOn'));
+    rUtSens.addEventListener('change', () => onRuleInputChange('ruleUtOn'));
+  }
+
+  const rExp = document.getElementById('ruleExpiry');
+  if (rExp) {
+    rExp.addEventListener('change', () => onRuleSelectChange('ruleParamsOn'));
+  }
+  const rOptType = document.getElementById('ruleOptType');
+  if (rOptType) {
+    rOptType.addEventListener('change', () => onRuleSelectChange('ruleParamsOn'));
+  }
+  const rMinOi = document.getElementById('ruleMinOi');
+  if (rMinOi) {
+    rMinOi.addEventListener('input', () => onRuleInputChange('ruleParamsOn'));
+    rMinOi.addEventListener('change', () => onRuleInputChange('ruleParamsOn'));
+  }
+
+  const rSeg = document.getElementById('ruleSegment');
+  if (rSeg) {
+    rSeg.addEventListener('change', () => onRuleSelectChange(null));
+  }
+  const rLogic = document.getElementById('ruleLogic');
+  if (rLogic) {
+    rLogic.addEventListener('change', () => onRuleSelectChange(null));
   }
 }
 

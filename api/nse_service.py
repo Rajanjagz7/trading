@@ -649,7 +649,7 @@ class NSEService:
                 continue
             if exp_select == "nearest" and r["expiry"] != nearest_map.get(r["symbol"]):
                 continue
-            if not include_untraded and r["vol"] <= 0 and r["close"] <= 0:
+            if not include_untraded and (r["vol"] <= 0 or r["close"] <= 0.05 or r["low"] <= 0.05):
                 continue
             if r["oi"] < min_oi:
                 continue
@@ -663,7 +663,7 @@ class NSEService:
             if prev_oi_used and prev_oi_used > 0:
                 oi_pct = ((r["oi"] - prev_oi_used) / prev_oi_used) * 100.0
 
-            has_activity = r["vol"] > 0 or r["close"] > 0
+            has_activity = r["vol"] > 0 and r["close"] > 0.05 and r["low"] > 0.05
             is_ol = has_activity and (abs(r["open"] - r["low"]) <= tol) if r["open"] > 0 and r["low"] > 0 else False
             is_oh = has_activity and (abs(r["open"] - r["high"]) <= tol) if r["open"] > 0 and r["high"] > 0 else False
 
