@@ -724,9 +724,19 @@ class NSEService:
 
         indicator = filters.get("indicator")
 
+        # Expiry-safety guard: an expired contract must never be shown as
+        # active (spec Business Rule, section 4). Bhavcopy can lag behind
+        # the real wall-clock date (e.g. a stale cached file), so this
+        # compares each contract's own expiry against TODAY'S REAL date,
+        # not whatever date the settlement data happens to be dated for --
+        # a contract that already expired stays excluded even from stale data.
+        today_iso = datetime.now(IST).date().isoformat()
+
         nearest_map = {}
         if exp_select == "nearest":
             for r in options_list:
+                if r["expiry"] < today_iso:
+                    continue
                 s = r["symbol"]
                 if s not in nearest_map or r["expiry"] < nearest_map[s]:
                     nearest_map[s] = r["expiry"]
@@ -734,6 +744,8 @@ class NSEService:
         processed = []
         has_instr_filter = (inst_idx and not inst_stk) or (inst_stk and not inst_idx)
         for r in options_list:
+            if r["expiry"] < today_iso:
+                continue
             if sym != "__ALL__" and r["symbol"] != sym:
                 continue
             if has_instr_filter:
@@ -935,11 +947,13 @@ class NSEService:
             sym = "FINNIFTY"
 
         candidates = []
+        chain_data_status = "unavailable"
         if upstox_service.is_configured():
             try:
                 up_res = upstox_service.fetch_option_chain(symbol=sym, expiry=expiry)
                 if up_res and up_res.get("rows"):
                     candidates = up_res["rows"]
+                    chain_data_status = "live"
             except Exception as e:
                 print(f"[Upstox] get_option_chain_for_symbol error for {sym}: {e}")
 
@@ -948,6 +962,8 @@ class NSEService:
             if not candidates:
                 # Fallback search
                 candidates = [r for r in self.today_rows if r["symbol"].startswith(sym)]
+            if candidates:
+                chain_data_status = "delayed"
 
         if not candidates:
             available_symbols = sorted(list({r["symbol"] for r in self.today_rows}))[:50]
@@ -955,6 +971,19 @@ class NSEService:
                 "symbol": sym,
                 "error": f"No data found for symbol {sym}",
                 "availableSymbols": available_symbols
+            }
+
+        # Expiry-safety guard: never list or show an already-expired contract
+        # as active (spec Business Rule, section 4) -- relevant mainly to the
+        # bhavcopy fallback path, which can lag behind the real wall-clock
+        # date; Upstox's own live chain wouldn't list a dead contract anyway.
+        today_iso = datetime.now(IST).date().isoformat()
+        candidates = [r for r in candidates if r["expiry"] >= today_iso]
+        if not candidates:
+            return {
+                "symbol": sym,
+                "error": f"No active (non-expired) contracts found for symbol {sym}",
+                "availableSymbols": []
             }
 
         expiries = sorted(list({r["expiry"] for r in candidates}))
@@ -1158,7 +1187,9 @@ class NSEService:
             "matchedPutsCount": matched_puts,
             "buySignalsCount": buy_signals,
             "sellSignalsCount": sell_signals,
-            "strikes": strikes_data
+            "strikes": strikes_data,
+            "dataStatus": chain_data_status,
+            "timestamp": now_ist_iso()
         }
 
     def clear_cached_data(self):
