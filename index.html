@@ -7373,7 +7373,42 @@ async function runServerScan() {
 }
 
 async function runLiveScan() {
-  return executeActiveScan();
+  const result = await executeActiveScan();
+  if (currentMode === 'live') {
+    const t = document.getElementById('liveLastTime');
+    if (t) t.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  }
+  return result;
+}
+
+/* ============================================================
+   PHASE 5 — Manual CSV Upload (real wiring to /api/upload)
+   fileToday/filePrev previously had no JS attached at all; selecting a
+   file silently did nothing. This posts the file to the existing
+   working backend endpoint and refreshes symbols/results from it.
+============================================================ */
+async function uploadSettlementCsv(file, isToday) {
+  const label = isToday ? "Today's Settlement Sheet" : 'Previous Session Settlement Sheet';
+  const detailEl = document.getElementById(isToday ? 'todayDetail' : 'prevDetail');
+  const dropEl = document.getElementById(isToday ? 'dropToday' : 'dropPrev');
+  if (detailEl) detailEl.textContent = `Uploading ${file.name}…`;
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('isToday', isToday ? 'true' : 'false');
+    const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.detail || 'Upload failed');
+    if (detailEl) detailEl.textContent = `${file.name} — ${data.contractsLoaded.toLocaleString()} contracts loaded`;
+    if (dropEl) dropEl.style.borderColor = '#10b981';
+    showToast(`✔ ${label} loaded: ${data.contractsLoaded.toLocaleString()} contracts`, 'success');
+    await loadSymbols();
+    if (currentMode === 'manual') executeActiveScan();
+  } catch (err) {
+    if (detailEl) detailEl.textContent = `Upload failed — ${err.message || 'try again'}`;
+    if (dropEl) dropEl.style.borderColor = '#ef4444';
+    showToast(`⚠️ Could not load ${label.toLowerCase()}: ${err.message || 'upload error'}`, 'error');
+  }
 }
 
 /* ============================================================
@@ -8432,6 +8467,30 @@ document.getElementById('scanBtn').addEventListener('click', () => {
   else runServerScan();
 });
 
+// Live Market Scanner: "Fetch Live Chain" button had no click handler at all
+document.getElementById('liveScanBtn').addEventListener('click', () => runLiveScan());
+
+// "Auto-refresh (15s)" checkbox was decorative (liveTimer declared, never used) —
+// this makes it drive a real poll, which is also what lets price alerts
+// (checkPriceAlerts, called from renderTable) evaluate against fresh data
+// without the user manually re-triggering a scan.
+document.getElementById('liveAutoRefresh').addEventListener('change', function() {
+  if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+  if (this.checked && currentMode === 'live') {
+    liveTimer = setInterval(() => { if (currentMode === 'live') runLiveScan(); }, 15000);
+  }
+});
+
+// Manual CSV Upload — fileToday/filePrev had zero JS wiring before Phase 5
+document.getElementById('fileToday').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) uploadSettlementCsv(file, true);
+});
+document.getElementById('filePrev').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) uploadSettlementCsv(file, false);
+});
+
 // Segmented Option Type Buttons in Sidebar
 document.querySelectorAll('#optTypeSeg button').forEach(btn => {
   btn.addEventListener('click', function() {
@@ -8447,6 +8506,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     currentMode = btn.dataset.tab;
     applyModeVisibility();
+
+    if (currentMode !== 'live' && liveTimer) {
+      clearInterval(liveTimer);
+      liveTimer = null;
+      const cb = document.getElementById('liveAutoRefresh');
+      if (cb) cb.checked = false;
+    }
 
     if (currentMode === 'live') runLiveScan();
     else if (currentMode === 'auto') runServerScan();
