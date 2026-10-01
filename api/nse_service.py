@@ -532,6 +532,48 @@ class NSEService:
                 "chgPct": round(((puts_sorted[0]["close"] - puts_sorted[0]["prevClose"]) / puts_sorted[0]["prevClose"]) * 100.0, 1) if puts_sorted[0]["prevClose"] > 0 else 0.0
             } if puts_sorted else None
 
+            # "Recommendation for the Day" -- a documented, deterministic rule,
+            # not a separate guess: direction comes straight from the same
+            # Call/Put volume-share verdict already computed above (>=55%
+            # one-sided = a signal, otherwise NO SIGNAL), and Entry/Target/SL
+            # reuse the exact +9% / +18% / -5% formulas already shown
+            # elsewhere in this app (tgt9/tgt18/sl5), applied to the real LTP
+            # of whichever contract (topCall or topPut) that verdict points
+            # at. No signal is produced at all when the required contract or
+            # a real data status isn't available.
+            recommendation = None
+            if data_status != "unavailable":
+                direction = None
+                basis = None
+                if "BUY" in verdict and top_call:
+                    direction, basis = ("BUY CALL", top_call)
+                elif "SELL" in verdict and top_put:
+                    direction, basis = ("BUY PUT", top_put)
+
+                if direction and basis and basis.get("close", 0) > 0:
+                    entry = basis["close"]
+                    recommendation = {
+                        "instrument": sym,
+                        "contract": f"{sym} {basis['strike']} {'CE' if direction == 'BUY CALL' else 'PE'}",
+                        "signal": direction,
+                        "entry": round(entry, 2),
+                        "target1": round(entry * 1.09, 2),
+                        "target2": round(entry * 1.18, 2),
+                        "stopLoss": round(entry * 0.95, 2),
+                        "changePct": basis.get("chgPct", 0.0),
+                        "basedOnVerdict": verdict,
+                        "dataStatus": data_status,
+                        "timestamp": now_ist_iso(),
+                    }
+                else:
+                    recommendation = {
+                        "instrument": sym,
+                        "signal": "NO SIGNAL",
+                        "reason": "Call/Put flow is balanced (rangebound) -- no one-sided signal to act on" if not direction else "Required option contract data is missing or stale",
+                        "dataStatus": data_status,
+                        "timestamp": now_ist_iso(),
+                    }
+
             summary[sym] = {
                 "symbol": sym,
                 "spot": spot,
@@ -556,6 +598,7 @@ class NSEService:
                 "verdict": verdict,
                 "topCall": top_call,
                 "topPut": top_put,
+                "recommendation": recommendation,
                 "matchesCount": matches_count,
                 "totalContracts": len(chain_rows)
             }

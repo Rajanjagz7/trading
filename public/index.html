@@ -3099,6 +3099,42 @@
     </div>
   </div>
 
+  <!-- Recommendation for the Day -- a deterministic rule (Call/Put volume-
+       share verdict >=55% one-sided = a signal, else NO SIGNAL), not a
+       guaranteed-outcome claim. See the "basedOnVerdict" field per row and
+       api/nse_service.py's get_indices_pulse() for the exact documented rule. -->
+  <div class="pulse-header" style="margin-top:14px;">
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <span class="pulse-title">📋 Recommendation for the Day</span>
+      <span class="pulse-badge" id="recoTimeBadge">Loading…</span>
+    </div>
+    <span style="font-size:11px; color:#94a3b8;" class="pulse-sub-text">Deterministic Call/Put flow rule — not a guaranteed outcome. NO SIGNAL shown honestly when flow is balanced.</span>
+  </div>
+  <div style="overflow-x:auto; background:#0f1520; border:1px solid var(--line); border-radius:8px;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px; white-space:nowrap;">
+      <thead>
+        <tr style="background:#131c2c; color:#94a3b8; text-align:left;">
+          <th style="padding:8px 12px;">Instrument</th>
+          <th style="padding:8px 12px;">Open</th>
+          <th style="padding:8px 12px;">High</th>
+          <th style="padding:8px 12px;">Low</th>
+          <th style="padding:8px 12px;">LTP</th>
+          <th style="padding:8px 12px;">Chg%</th>
+          <th style="padding:8px 12px;">Signal</th>
+          <th style="padding:8px 12px;">Contract</th>
+          <th style="padding:8px 12px;">Entry</th>
+          <th style="padding:8px 12px;">Target</th>
+          <th style="padding:8px 12px;">Stop Loss</th>
+          <th style="padding:8px 12px;">Status</th>
+          <th style="padding:8px 12px;">Timestamp (IST)</th>
+        </tr>
+      </thead>
+      <tbody id="recoTableBody">
+        <tr><td colspan="13" style="padding:16px; text-align:center; color:#94a3b8;">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <!-- Phase 1 (BRD redesign): clean Dashboard landing view (FR-01) -->
   <div class="rx-dashboard" id="rxDashboard" style="display:none;">
     <div class="rx-dashboard-issue" id="rxDashboardIssue" style="display:none;">
@@ -7210,10 +7246,67 @@ async function fetchIndexPulse() {
     }
 
     container.innerHTML = html || '<div style="grid-column:1/-1; padding:12px; text-align:center; color:#94a3b8;">No live index flow data available.</div>';
+    renderRecommendationTable(data, indices);
   } catch (err) {
     console.warn('Index pulse fetch error:', err);
     if (badge) badge.textContent = 'Syncing...';
     showDashboardIssue('Live index option flow is temporarily unavailable. Retrying automatically.');
+  }
+}
+
+// Renders the "Recommendation for the Day" table from the real
+// `recommendation` object each index already carries in /api/indices/pulse
+// (see get_indices_pulse() in nse_service.py for the documented rule this
+// reflects verbatim -- nothing is recomputed or guessed client-side).
+function renderRecommendationTable(data, indices) {
+  const tbody = document.getElementById('recoTableBody');
+  const badge = document.getElementById('recoTimeBadge');
+  if (!tbody) return;
+
+  const rows = indices.map(sym => {
+    const item = data[sym];
+    if (!item) return '';
+    const rec = item.recommendation;
+    const chgColor = item.changePct >= 0 ? '#10b981' : '#ef4444';
+    const statusColor = item.dataStatus === 'live' ? '#10b981' : (item.dataStatus === 'delayed' ? '#eab308' : '#ef4444');
+    const ts = rec && rec.timestamp ? new Date(rec.timestamp).toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' }) : '–';
+
+    if (!rec || rec.signal === 'NO SIGNAL') {
+      return `<tr style="border-top:1px solid #1a2333;">
+        <td style="padding:7px 12px; font-weight:700; color:#f1f5f9;">${sym}</td>
+        <td style="padding:7px 12px;">${fmtNum(item.open)}</td>
+        <td style="padding:7px 12px;">${fmtNum(item.high)}</td>
+        <td style="padding:7px 12px;">${fmtNum(item.low)}</td>
+        <td style="padding:7px 12px; font-weight:700;">${fmtNum(item.spot)}</td>
+        <td style="padding:7px 12px; color:${chgColor};">${fmtPct(item.changePct)}</td>
+        <td style="padding:7px 12px;" colspan="4"><span class="ut-badge wait">NO SIGNAL</span> <span style="color:#64748b; font-size:11px;">${rec ? rec.reason : 'Data unavailable'}</span></td>
+        <td style="padding:7px 12px; color:${statusColor}; font-weight:700;">${(item.dataStatus || 'unavailable').toUpperCase()}</td>
+        <td style="padding:7px 12px; color:#64748b; font-family:'IBM Plex Mono',monospace;">${ts}</td>
+      </tr>`;
+    }
+
+    const isBuy = rec.signal === 'BUY CALL';
+    return `<tr style="border-top:1px solid #1a2333;">
+      <td style="padding:7px 12px; font-weight:700; color:#f1f5f9;">${sym}</td>
+      <td style="padding:7px 12px;">${fmtNum(item.open)}</td>
+      <td style="padding:7px 12px;">${fmtNum(item.high)}</td>
+      <td style="padding:7px 12px;">${fmtNum(item.low)}</td>
+      <td style="padding:7px 12px; font-weight:700;">${fmtNum(item.spot)}</td>
+      <td style="padding:7px 12px; color:${chgColor};">${fmtPct(item.changePct)}</td>
+      <td style="padding:7px 12px;"><span class="${isBuy ? 'signal-badge-buy' : 'signal-badge-sell'}">${isBuy ? '🟢' : '🔴'} ${rec.signal}</span></td>
+      <td style="padding:7px 12px; cursor:pointer; color:#60a5fa;" onclick="openOptionChartModal('${sym}', '', ${rec.contract.split(' ')[1]}, '${isBuy ? 'CE' : 'PE'}')" title="Open chart">${rec.contract} 📈</td>
+      <td style="padding:7px 12px; font-family:'IBM Plex Mono',monospace;">₹${fmtNum(rec.entry)}</td>
+      <td style="padding:7px 12px; font-family:'IBM Plex Mono',monospace; color:#34d399;">₹${fmtNum(rec.target1)}</td>
+      <td style="padding:7px 12px; font-family:'IBM Plex Mono',monospace; color:#f87171;">₹${fmtNum(rec.stopLoss)}</td>
+      <td style="padding:7px 12px; color:${statusColor}; font-weight:700;">${(item.dataStatus || 'unavailable').toUpperCase()}</td>
+      <td style="padding:7px 12px; color:#64748b; font-family:'IBM Plex Mono',monospace;">${ts}</td>
+    </tr>`;
+  }).filter(Boolean).join('');
+
+  tbody.innerHTML = rows || '<tr><td colspan="13" style="padding:16px; text-align:center; color:#94a3b8;">No recommendation data available.</td></tr>';
+  if (badge) {
+    const now = new Date();
+    badge.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kolkata' })} IST`;
   }
 }
 
