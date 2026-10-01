@@ -3141,6 +3141,16 @@
       <span id="rxDashboardIssueMsg"></span>
       <button onclick="initStatus(); fetchIndexPulse(); fetchGlobalMarkets();">🔄 Retry</button>
     </div>
+
+    <!-- Live Market News -- no live news provider is configured (no API key,
+         no account), so this honestly says so rather than fabricating
+         headlines or timestamps. Swap renderNewsSection()'s "unavailable"
+         branch for a real fetch once a provider (e.g. NewsAPI) is wired up. -->
+    <div class="rx-section-label" style="margin-top:0;">📰 Live Market News</div>
+    <div id="newsSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px; color:#94a3b8; font-size:12px;">Loading…</div>
+    </div>
+
     <div class="rx-section-label">Quick Actions</div>
     <div class="rx-quick-actions">
       <button class="rx-tile" onclick="navigate('/scanner')"><span class="rx-tile-icon">⚡</span><span>Run Scanner</span><small>Preset scans &amp; advanced filters</small></button>
@@ -7157,6 +7167,54 @@ function scheduleFastPoll() {
   }, delay);
 }
 
+// Live Market News (spec section 6) -- renders whatever /api/news returns.
+// No provider is configured today, so this always shows the honest
+// "unavailable" state; once a real API key is wired up server-side, real
+// headlines/source/time will render here with zero frontend changes.
+async function fetchMarketNews() {
+  const container = document.getElementById('newsSection');
+  if (!container) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/news`);
+    const data = await res.json();
+    const headlines = Array.isArray(data.headlines) ? data.headlines : [];
+
+    if (!data.available || headlines.length === 0) {
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:22px;">📡</span>
+          <div>
+            <div style="color:#fcd34d; font-weight:700; font-size:13px;">News unavailable</div>
+            <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${data.reason || 'No live news provider is configured for this app yet'} -- headlines are never fabricated here.</div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    // Dedup identical headlines (same title + source) before rendering.
+    const seen = new Set();
+    const unique = headlines.filter(h => {
+      const key = (h.headline || '') + '|' + (h.source || '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    container.innerHTML = unique.slice(0, 8).map(h => `
+      <div style="display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid #1a2333;">
+        <span style="color:#f1f5f9; font-size:12.5px;">${h.headline}${h.instrument ? ` <span style="color:#60a5fa; font-size:11px;">· ${h.instrument}</span>` : ''}</span>
+        <span style="color:#64748b; font-size:11px; white-space:nowrap;">${h.source || 'Unknown'} · ${h.publishedAt ? new Date(h.publishedAt).toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' }) : ''}</span>
+      </div>`).join('');
+  } catch (e) {
+    console.warn('News fetch failed:', e);
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">⚠️</span>
+        <div style="color:#94a3b8; font-size:12px;">News unavailable right now -- the trading dashboard keeps working normally regardless.</div>
+      </div>`;
+  }
+}
+
 async function fetchIndexPulse() {
   const container = document.getElementById('indexPulseGrid');
   const badge = document.getElementById('pulseTimeBadge');
@@ -10646,6 +10704,8 @@ setInterval(fetchIndexPulse, 30000);
 fetchGlobalMarkets();
 setInterval(fetchGlobalMarkets, 20000);
 scheduleFastPoll();
+fetchMarketNews();
+setInterval(fetchMarketNews, 60000);
 
 // BRD FR-03: advanced filters collapsed by default on every viewport, not just mobile.
 (function collapseAdvancedFiltersByDefault() {

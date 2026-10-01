@@ -35,7 +35,7 @@ def _load_env_file():
 
 _load_env_file()
 
-from .nse_service import nse_service
+from .nse_service import nse_service, now_ist_iso
 from .upstox_service import upstox_service
 
 @asynccontextmanager
@@ -88,6 +88,22 @@ def get_status():
 def get_upstox_status():
     """Authenticated Upstox REST integration status."""
     return upstox_service.health()
+
+@app.get("/api/news")
+def get_market_news():
+    """
+    Live Market News (spec section 6). No news provider is configured for
+    this app (no API key/account) -- this honestly reports that instead of
+    fabricating headlines or timestamps. Swap in a real provider (e.g.
+    NewsAPI) here when one is configured; the frontend already renders
+    whatever `headlines` contains and falls back to "unavailable" when empty.
+    """
+    return {
+        "available": False,
+        "reason": "No live news provider is configured for this app yet",
+        "headlines": [],
+        "timestamp": now_ist_iso(),
+    }
 
 @app.get("/api/quotes/fast")
 def get_fast_quotes():
