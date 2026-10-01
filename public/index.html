@@ -3103,7 +3103,7 @@
 
     <div class="rx-section-label" style="margin-top:8px;">Universe</div>
     <div class="indicator-btn-row">
-      <button class="small-strat-btn" data-ind="stocks_only" onclick="applyPreset('stocks_only')" title="Scan today's stock F&O contracts only — excludes NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY & SENSEX">📦 Stocks Only (No Indices)</button>
+      <button class="small-strat-btn" id="stocksOnlyToggle" onclick="toggleStocksOnly()" title="Lock every scan (including indicators below) to stock contracts only — excludes NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY & SENSEX until turned off">📦 Stocks Only (No Indices)</button>
     </div>
 
     <div class="rx-section-label">Trend</div>
@@ -4265,6 +4265,11 @@ let currentHubStratKey = 'ut';
 let currentIndKey = 'ut';
 let currentQuickFilter = 'ALL';
 let currentTableSearchQuery = '';
+// When true, every indicator/preset scan excludes index contracts (NIFTY,
+// BANKNIFTY, etc.) regardless of that preset's own default instrument rule --
+// lets "Stocks Only" combine with any indicator instead of being a one-off
+// mutually-exclusive preset.
+let stocksOnlyLock = false;
 
 /* ============================================================
    NON-INTRUSIVE DEDUPLICATED FLOATING TOAST SYSTEM
@@ -5636,24 +5641,6 @@ const STRATEGY_REGISTRY = {
       indicator: { enabled: false, id: null }, formula: { enabled: false }
     }
   },
-  stocks_only: {
-    title: "📦 Stocks Only Scanner (No Indices)",
-    desc: "Today's active stock F&O contracts only — NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY & SENSEX excluded",
-    rules: {
-      dayLow: { enabled: false, min: 5.80, max: 8.45 },
-      previousClose: { enabled: false, min: 38.00, max: 48.00 },
-      candlestick: { enabled: false, mode: 'ALL', tol: 0.00 },
-      utBot: { enabled: false, signal: 'ALL', sens: 1 },
-      expiry: { enabled: false, mode: 'all' },
-      optionType: { enabled: false, type: 'BOTH' },
-      underlying: { enabled: false, symbol: '__ALL__', search: '' },
-      instrument: { enabled: true, index: false, stock: true },
-      minOi: { enabled: false, value: 0 },
-      excludeUntraded: { enabled: true },
-      indicator: { enabled: false, id: null },
-      formula: { enabled: false }
-    }
-  },
   strat_ut: {
     title: "🤖 UT Bot BUY Signals",
     rules: {
@@ -6101,6 +6088,12 @@ function syncActiveScanToUI() {
   const stratKey = scan.strategyId;
 
   document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
+    if (btn.id === 'stocksOnlyToggle') {
+      // Not a strategy preset -- a persistent modifier, so it highlights off
+      // stocksOnlyLock instead of matching against the active strategyId.
+      btn.classList.toggle('active', stocksOnlyLock);
+      return;
+    }
     const attr = btn.getAttribute('data-ind');
     btn.classList.toggle('active', attr === stratKey || (rules.indicator && rules.indicator.enabled && attr === rules.indicator.id));
   });
@@ -6265,6 +6258,12 @@ function setActiveScanStrategy(stratKey) {
     rules: JSON.parse(JSON.stringify(preset.rules))
   };
 
+  // 2b. "Stocks Only" lock overrides whatever instrument scope this indicator/
+  // preset ships with by default, so it stays applied across indicator switches.
+  if (stocksOnlyLock) {
+    window.activeScan.rules.instrument = { enabled: true, index: false, stock: true };
+  }
+
   // 3. Clear quick table filter and search query
   currentQuickFilter = 'ALL';
   currentTableSearchQuery = '';
@@ -6290,6 +6289,36 @@ function applyPreset(presetKey) {
 
 function runIndicatorScan(indKey) {
   setActiveScanStrategy(indKey);
+}
+
+// Persistent "Stocks Only" lock -- unlike the other quick-scan buttons this
+// isn't a one-off preset, it's a modifier that stays applied across whichever
+// indicator/strategy is currently selected (see setActiveScanStrategy's
+// stocksOnlyLock check), so it can be combined with any of them.
+function toggleStocksOnly() {
+  stocksOnlyLock = !stocksOnlyLock;
+  // Button highlight is handled by syncActiveScanToUI() below (single
+  // source of truth for all .indicator-btn-row button highlighting).
+  showToast(
+    stocksOnlyLock
+      ? '📦 Stocks Only locked — every scan now excludes NIFTY, BANKNIFTY & other indices'
+      : '📦 Stocks Only unlocked — indices included again',
+    'info'
+  );
+
+  // Apply to whatever is currently active (manual filters, a running
+  // indicator, or the bootstrap default) rather than forcing a jump to a
+  // specific indicator -- picking a different indicator afterwards keeps
+  // the lock via setActiveScanStrategy's own check above.
+  if (!window.activeScan || !window.activeScan.rules) {
+    syncUIToActiveScan('manual');
+  }
+  window.activeScan.rules.instrument = stocksOnlyLock
+    ? { enabled: true, index: false, stock: true }
+    : { enabled: true, index: true, stock: true };
+  syncActiveScanToUI();
+  updateActiveFilterChips();
+  executeActiveScan();
 }
 
 function clearIndicatorScan() {
@@ -8956,6 +8985,9 @@ function clearAllScreenerFilters() {
   if (instIdx) instIdx.checked = true;
   const instStk = document.getElementById('instStk');
   if (instStk) instStk.checked = true;
+  stocksOnlyLock = false;
+  const stocksOnlyBtn = document.getElementById('stocksOnlyToggle');
+  if (stocksOnlyBtn) stocksOnlyBtn.classList.remove('active');
 
   // 3. Option type
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
@@ -9247,6 +9279,11 @@ function resetInstrGroup() {
     window.activeScan.rules.instrument.index = true;
     window.activeScan.rules.instrument.stock = true;
   }
+  // Keep the "Stocks Only" toggle in sync -- otherwise the next indicator
+  // click would silently re-exclude indices via setActiveScanStrategy's lock.
+  stocksOnlyLock = false;
+  const stocksOnlyBtn = document.getElementById('stocksOnlyToggle');
+  if (stocksOnlyBtn) stocksOnlyBtn.classList.remove('active');
   showToast('↺ Instrument type reset to Both (Indices + Stocks)', 'info');
   updateActiveFilterChips();
   executeActiveScan();
