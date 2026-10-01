@@ -301,6 +301,13 @@
     background: #94a3b8;
   }
   .status-dot.live { background: #10b981; box-shadow: 0 0 8px #10b981; }
+  /* Price-change flash (spec section 7): a brief background tint on the
+     value itself, never a layout-shifting change (no size/margin change),
+     so rapid updates never jump or flicker the surrounding row. */
+  @keyframes priceFlashUp { 0% { background-color: rgba(16,185,129,0.35); } 100% { background-color: transparent; } }
+  @keyframes priceFlashDown { 0% { background-color: rgba(239,68,68,0.35); } 100% { background-color: transparent; } }
+  .price-flash-up { animation: priceFlashUp 280ms ease-out; border-radius: 3px; }
+  .price-flash-down { animation: priceFlashDown 280ms ease-out; border-radius: 3px; }
   .status-dot.delayed { background: #eab308; box-shadow: 0 0 8px #eab308; }
   .status-dot.reconnecting { background: #f59e0b; animation: dotPulse 1s ease-in-out infinite; }
   .status-dot.unavailable { background: #ef4444; }
@@ -7115,6 +7122,18 @@ let fastPollFailureCount = 0;
 let fastPollInFlight = false;
 let marketIsOpenCached = false;
 
+// Brief, non-blocking flash on a value that actually changed -- never
+// retriggers while already animating (no flicker on rapid updates), and
+// never touches layout (just a background tint via CSS animation).
+function flashPriceChange(el, isUp) {
+  if (!el) return;
+  el.classList.remove('price-flash-up', 'price-flash-down');
+  void el.offsetWidth; // restart the animation even if the same class is reapplied quickly
+  const cls = isUp ? 'price-flash-up' : 'price-flash-down';
+  el.classList.add(cls);
+  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+}
+
 function setDataConnStatus(status, label) {
   dataConnStatus = status;
   const dot = document.getElementById('dataConnDot');
@@ -7145,7 +7164,15 @@ async function fastQuotePoll() {
       const q = data.quotes[sym];
       if (!q) return;
       const valEl = document.getElementById(prefix + 'Val');
-      if (valEl) valEl.textContent = fmtNum(q.last);
+      if (valEl) {
+        const prevText = valEl.textContent;
+        const newText = fmtNum(q.last);
+        if (prevText && prevText !== '–' && prevText !== newText) {
+          const prevNum = parseFloat(prevText.replace(/,/g, ''));
+          if (!isNaN(prevNum)) flashPriceChange(valEl, q.last >= prevNum);
+        }
+        valEl.textContent = newText;
+      }
       renderTickerChange(prefix + 'Chg', q.change, q.pct);
       if (sym !== 'VIX') pushSpotSpark(sym, q.last);
     });
