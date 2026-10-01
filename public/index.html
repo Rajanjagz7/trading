@@ -2844,7 +2844,7 @@
     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
         <span class="cron-badge" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
-        <span class="ist-clock-badge" id="tvApiBadge" title="TradingView API (@mathieuc/tradingview) active with live technical analysis & quotes" style="background:#0f172a; border-color:#2563eb; color:#60a5fa; cursor:pointer;" onclick="checkTvApiStatus()">📊 TV API: Live</span>
+        <span class="ist-clock-badge" id="tvApiBadge" title="TradingView API (@mathieuc/tradingview) active with live technical analysis & quotes" style="display:none; background:#0f172a; border-color:#2563eb; color:#60a5fa; cursor:pointer;" onclick="checkTvApiStatus()">📊 TV API: Live</span>
         <span class="ist-clock-badge" id="liveClockIst">--:--:-- IST</span>
         <div class="status-badge" id="marketBadge">
           <span class="status-dot" id="statusDot"></span>
@@ -3151,7 +3151,7 @@
       <span id="autoBannerMsg">Daily NSE F&amp;O Settlement &amp; Contract Archive automatically synced.</span>
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="action-btn" onclick="openSelectedStockTradingView()" style="border-color:#2563eb; color:#60a5fa;" title="Open currently searched or selected stock in TradingView with Rajan Indicators">📈 TradingView Stock Chart</button>
+      <button class="action-btn" onclick="openSelectedStockTradingView()" style="display:none; border-color:#2563eb; color:#60a5fa;" title="Open currently searched or selected stock in TradingView with Rajan Indicators">📈 TradingView Stock Chart</button>
       <button class="action-btn" id="openAlertsBtn" onclick="openAlertsModal()" style="border-color:#f59e0b; color:#fbbf24;">🔔 Price Alerts <span class="alert-count-pill" id="alertsActiveBadge" style="display:none;">0</span></button>
       <button class="action-btn" id="openTutorialBtn" onclick="openTutorialModal()" style="border-color:#8b5cf6; color:#a78bfa;" title="Full walkthrough: how to use the scanner, every indicator, and how to open charts">📖 Tutorial &amp; How-To Guide</button>
       <button class="action-btn" id="startTourBtn" onclick="startGuidedTour()" style="border-color:#7c3aed; color:#c4b5fd;" title="Interactive step-by-step walkthrough highlighting the real buttons on this page">🎬 Watch Walkthrough</button>
@@ -3231,7 +3231,7 @@
           <select id="symSelect" style="flex:1;"><option value="__ALL__">All symbols</option></select>
           <button type="button" class="quick-clear-btn" onclick="clearSymSelect()" title="Reset dropdown to All symbols">↺ All</button>
         </div>
-        <button type="button" class="rajan-tv-btn" onclick="openSelectedStockTradingView()" title="Open searched or selected stock in TradingView with Rajan Indicators">
+        <button type="button" class="rajan-tv-btn" onclick="openSelectedStockTradingView()" title="Open searched or selected stock in TradingView with Rajan Indicators" style="display:none;">
           <span>📈</span> <b>Open in TradingView (Stock Chart ↗)</b>
         </button>
         <div id="stockTvSignalBadge" class="stock-tv-signal-badge" style="display:none;">
@@ -3667,7 +3667,7 @@
         <div id="optTvTaBadge" class="opt-tv-ta-badge" style="display:none;" title="Live Technical Analysis rating from TradingView API">
           <span>📶 TV Signal:</span> <span id="optTvTaSignal">...</span>
         </div>
-        <a id="optTvExternalBtn" href="#" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="background:#131722; border-color:#2962ff; color:#60a5fa; text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; font-size:12px;" title="Open this stock / contract directly in TradingView">
+        <a id="optTvExternalBtn" href="#" target="_blank" rel="noopener noreferrer" class="query-run-btn" style="display:none; background:#131722; border-color:#2962ff; color:#60a5fa; text-decoration:none; align-items:center; gap:6px; padding:6px 14px; font-size:12px;" title="Open this stock / contract directly in TradingView">
           📈 Open in TradingView ↗
         </a>
         <button class="query-run-btn" style="padding:6px 14px; font-size:12px;" onclick="runIndicatorScan(currentHubStratKey); closeAllModals();">
@@ -4094,7 +4094,6 @@
           <li><b>Any scan result row</b> — click a row (or its 📈 chart icon) in the results table to open that exact option contract's chart, fully live and lag-free.</li>
           <li><b>📊 Indicator Option Chain &amp; Scripts</b> button — opens the full indicator hub: a live, indicator-fitted option chain for any index/stock plus the raw Pine Script v6 code for that indicator (copy it straight into TradingView).</li>
           <li><b>📊 View Option Chain</b> button — a plain live option chain viewer for the currently selected symbol.</li>
-          <li><b>📈 TradingView Stock Chart</b> button — opens the searched/selected stock directly on TradingView with the same indicators applied.</li>
         </ul>
         <h3 style="margin:0 0 10px 0; font-size:15px; color:#a78bfa;">Setting alerts</h3>
         <p style="font-size:12.5px; color:#cbd5e1; line-height:1.7; margin:0 0 16px 0;">
@@ -7980,8 +7979,6 @@ function renderOptionModalContract(contract) {
     tvExternalBtn.href = optTvUrl;
     tvExternalBtn.title = `Open ${optTicker} in TradingView`;
   }
-  updateModalTvSignal(contract.symbol);
-
   const spot = contract.spot || (currentChainData ? currentChainData.spot : 0);
   const moneynessBadge = document.getElementById('optBadgeMoneyness');
   if (!isOption) {
@@ -8600,24 +8597,12 @@ if (symSearchEl) {
       const match = !q || opt.text.toUpperCase().includes(q);
       opt.style.display = match ? '' : 'none';
     }
-    if (q && q.length >= 3) {
-      updateStockTvSignal(q);
-    } else if (!q) {
-      updateStockTvSignal(sel.value);
-    }
   });
   symSearchEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       const q = (this.value || '').trim().toUpperCase();
       if (q) openOptionChartModal(q, '', 0, '');
     }
-  });
-}
-
-const symSelectEl = document.getElementById('symSelect');
-if (symSelectEl) {
-  symSelectEl.addEventListener('change', function() {
-    updateStockTvSignal(this.value);
   });
 }
 
