@@ -469,6 +469,27 @@ class NSEService:
                 sentiment = "⚖️ Balanced Volume (Rangebound / Straddle Zone)"
                 verdict = "WAIT / RANGE"
 
+            # Per-strike OI distribution (for the OI-by-strike dashboard chart) --
+            # these totals were already being accumulated above but never sent
+            # to the frontend; add the breakdown now rather than a second pass.
+            oi_by_strike = {}
+            for r in calls:
+                k = r["strike"]
+                oi_by_strike.setdefault(k, {"strike": k, "callOi": 0.0, "putOi": 0.0})
+                oi_by_strike[k]["callOi"] += r.get("oi", 0.0)
+            for r in puts:
+                k = r["strike"]
+                oi_by_strike.setdefault(k, {"strike": k, "callOi": 0.0, "putOi": 0.0})
+                oi_by_strike[k]["putOi"] += r.get("oi", 0.0)
+
+            sorted_strikes = sorted(oi_by_strike.keys())
+            oi_distribution = []
+            if sorted_strikes:
+                atm_idx = min(range(len(sorted_strikes)), key=lambda i: abs(sorted_strikes[i] - atm_strike))
+                start = max(0, min(atm_idx - 3, len(sorted_strikes) - 7))
+                end = min(len(sorted_strikes), start + 7)
+                oi_distribution = [oi_by_strike[s] for s in sorted_strikes[start:end]]
+
             calls_sorted = sorted(calls, key=lambda x: x.get("vol", 0.0), reverse=True)
             puts_sorted = sorted(puts, key=lambda x: x.get("vol", 0.0), reverse=True)
 
@@ -499,6 +520,9 @@ class NSEService:
                 "putVol": put_vol,
                 "callVolPct": call_vol_pct,
                 "putVolPct": put_vol_pct,
+                "callOi": call_oi,
+                "putOi": put_oi,
+                "oiDistribution": oi_distribution,
                 "sentiment": sentiment,
                 "verdict": verdict,
                 "topCall": top_call,

@@ -89,6 +89,31 @@ def get_upstox_status():
     """Authenticated Upstox REST integration status."""
     return upstox_service.health()
 
+@app.get("/api/candles")
+def get_candles(symbol: str = "NIFTY", instrumentKey: Optional[str] = None, timeframe: str = "5minute"):
+    """
+    Real OHLCV candle series from Upstox -- no synthetic/estimated points.
+    Pass instrumentKey directly for a specific option contract (the scanner/
+    chain already returns it per-row); omit it to chart the underlying
+    index/stock itself, resolved from `symbol`.
+    """
+    if not upstox_service.is_configured():
+        raise HTTPException(status_code=503, detail="Upstox is not configured -- no real historical data source available")
+    try:
+        key = instrumentKey
+        if not key:
+            key, _ = upstox_service._resolve_underlying(symbol.upper().strip())
+        candles = upstox_service.get_candles(key, timeframe)
+        return {
+            "symbol": symbol,
+            "instrumentKey": key,
+            "timeframe": timeframe,
+            "candles": candles,
+            "count": len(candles),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Candle fetch error: {str(e)}")
+
 @app.get("/api/indices/pulse")
 def get_indices_pulse():
     """

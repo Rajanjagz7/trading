@@ -3542,6 +3542,7 @@
               <th data-k="high">High</th>
               <th data-k="low">Low</th>
               <th data-k="close">LTP</th>
+              <th style="width:70px;" title="Today's Open to current LTP -- real two-point trend, not a fabricated multi-point line">Trend</th>
               <th data-k="tgt9">Target (+9%)</th>
               <th data-k="tgt18">Target (+18%)</th>
               <th data-k="sl5">SL (−5%)</th>
@@ -3597,6 +3598,18 @@
       <div style="color:#93c5fd; font-size:11.5px; display:flex; align-items:center; gap:4px;">
         <span>💡</span> <b>Click any Option Premium (LTP) to view Chart with Selected Indicator</b>
       </div>
+    </div>
+
+    <!-- OI Skew Chart -->
+    <div id="chainOiSkewWrap" style="padding:10px 18px; background:#0f1520; border-bottom:1px solid var(--line);">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="color:#94a3b8; font-size:11.5px; font-weight:700;">OPEN INTEREST SKEW (strikes near ATM)</span>
+        <div style="display:flex; gap:14px;">
+          <span style="display:flex; align-items:center; gap:5px; color:#94a3b8; font-size:10.5px;"><span style="width:9px; height:9px; border-radius:2px; background:#10b981; display:inline-block;"></span> Call OI</span>
+          <span style="display:flex; align-items:center; gap:5px; color:#94a3b8; font-size:10.5px;"><span style="width:9px; height:9px; border-radius:2px; background:#ef4444; display:inline-block;"></span> Put OI</span>
+        </div>
+      </div>
+      <canvas id="chainOiSkewCanvas" style="width:100%; height:170px; display:block;"></canvas>
     </div>
 
     <!-- Option Chain Table -->
@@ -4259,6 +4272,11 @@ let currentChainSymbol = 'NIFTY';
 let currentChainExpiry = '';
 let currentChainData = null;
 let currentSelectedContract = null;
+// Real intraday candle series for the currently open chart contract, fetched
+// from /api/candles (real Upstox data). Empty until the fetch resolves, or
+// permanently empty when no real historical source is available -- the chart
+// falls back to an honest single-bar view rather than fabricating a series.
+let currentChartCandles = [];
 // Populated from /api/status once it resolves — lets the option-chain "no
 // data" messages for indices with a real quote but no F&O chain (SENSEX)
 // still show the real close instead of a bare "no data" message.
@@ -6811,6 +6829,22 @@ function renderMobileCards(shown) {
   cardsWrap.innerHTML = html;
 }
 
+// Honest 2-point trend line: today's real Open to the current real LTP.
+// No per-contract intraday history exists for scan results (each scan is a
+// one-off snapshot across many symbols, not a repeatedly-polled single
+// contract), so this deliberately stays a plain 2-point line rather than
+// faking a smooth multi-point series.
+function renderOpenToLtpTrend(open, close) {
+  if (!open || !close || open <= 0) return '<span style="color:#475569; font-size:10.5px;">–</span>';
+  const up = close >= open;
+  const color = up ? '#10b981' : '#ef4444';
+  const min = Math.min(open, close), max = Math.max(open, close);
+  const range = (max - min) || 1;
+  const y1 = 18 - ((open - min) / range) * 14 - 2;
+  const y2 = 18 - ((close - min) / range) * 14 - 2;
+  return `<svg viewBox="0 0 60 20" width="60" height="20"><line x1="4" y1="${y1.toFixed(1)}" x2="56" y2="${y2.toFixed(1)}" stroke="${color}" stroke-width="2" stroke-linecap="round"/><circle cx="4" cy="${y1.toFixed(1)}" r="1.8" fill="#64748b"/><circle cx="56" cy="${y2.toFixed(1)}" r="2.2" fill="${color}"/></svg>`;
+}
+
 function renderTable(rows) {
   const table = document.getElementById('resultsTable');
   const empty = document.getElementById('emptyMsg');
@@ -6882,6 +6916,7 @@ function renderTable(rows) {
       '<td>' + fmtNum(r.high) + '</td>' +
       '<td class="' + (r.isMatch ? 'yellow' : '') + '" style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Rajan Indicators Chart">' + fmtNum(r.low) + '</td>' +
       '<td style="cursor:pointer;" onclick="openOptionChartModal(\'' + r.symbol + '\', \'' + r.expiry + '\', ' + r.strike + ', \'' + r.type + '\')" title="Click for Rajan Indicators Chart"><button class="prem-chip ' + (r.type === 'CE' ? 'ce' : 'pe') + '">📈 ' + fmtNum(r.close) + '</button></td>' +
+      '<td style="text-align:center;">' + renderOpenToLtpTrend(r.open, r.close) + '</td>' +
       '<td class="tgt-cell">' + fmtNum(r.tgt9) + '</td>' +
       '<td class="tgt-cell">' + fmtNum(r.tgt18) + '</td>' +
       '<td class="sl-cell">' + fmtNum(r.sl5) + '</td>' +
@@ -6899,6 +6934,71 @@ function renderTable(rows) {
    LIVE INDEX ALGO & OPTION FLOW PULSE ENGINE
    Calculates volume split, ATM strike, & smart money flow
 ============================================================ */
+// Tiny per-strike OI bars (real oiDistribution from /api/indices/pulse,
+// already computed server-side -- was being dropped before reaching the
+// response; now surfaced here as a compact visual).
+function renderMiniOiBars(oiDist) {
+  if (!oiDist || !oiDist.length) return '';
+  const maxOi = Math.max(1, ...oiDist.map(d => Math.max(d.callOi || 0, d.putOi || 0)));
+  const n = oiDist.length;
+  const barW = 100 / n;
+  const bars = oiDist.map((d, i) => {
+    const ceH = ((d.callOi || 0) / maxOi) * 22;
+    const peH = ((d.putOi || 0) / maxOi) * 22;
+    const x = i * barW;
+    return `<rect x="${(x + barW * 0.12).toFixed(2)}%" y="${(24 - ceH).toFixed(1)}" width="${(barW * 0.32).toFixed(2)}%" height="${ceH.toFixed(1)}" fill="#10b981"/>` +
+           `<rect x="${(x + barW * 0.52).toFixed(2)}%" y="${(24 - peH).toFixed(1)}" width="${(barW * 0.32).toFixed(2)}%" height="${peH.toFixed(1)}" fill="#ef4444"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 100 26" width="100%" height="26" preserveAspectRatio="none" style="margin-top:2px; display:block;">${bars}</svg>`;
+}
+
+// Real, session-accumulating spot-price history per index, fed by this
+// function's own 30s poll -- no backend history endpoint exists (see the
+// chart-design investigation), so this is the honest way to show a trend:
+// starts with one point and fills in for real as the session continues,
+// rather than fabricating earlier history.
+const spotSparkHistory = {};
+function pushSpotSpark(sym, value) {
+  if (!value || value <= 0) return;
+  if (!spotSparkHistory[sym]) spotSparkHistory[sym] = [];
+  const arr = spotSparkHistory[sym];
+  arr.push(value);
+  if (arr.length > 24) arr.shift();
+}
+function renderSpotSparkline(sym) {
+  const arr = spotSparkHistory[sym];
+  if (!arr || arr.length < 2) {
+    return '<span style="font-size:9.5px; color:#475569;">Trend warming up…</span>';
+  }
+  const min = Math.min(...arr), max = Math.max(...arr);
+  const range = (max - min) || 1;
+  const w = 100, h = 24;
+  const stepX = w / (arr.length - 1);
+  const pts = arr.map((v, i) => `${(i * stepX).toFixed(1)},${(h - ((v - min) / range) * h).toFixed(1)}`).join(' ');
+  const up = arr[arr.length - 1] >= arr[0];
+  const color = up ? '#10b981' : '#ef4444';
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// Semi-circle sentiment gauge, needle driven by real Call Volume % (same
+// figure already shown as text) -- Bearish (red) to Bullish (green).
+function renderSentimentGauge(callPct) {
+  const pct = Math.max(0, Math.min(100, callPct));
+  const angle = -90 + (pct / 100) * 180;
+  const rad = (angle * Math.PI) / 180;
+  const cx = 20, cy = 20, r = 15;
+  const x2 = (cx + r * Math.sin(rad)).toFixed(1);
+  const y2 = (cy - r * Math.cos(rad)).toFixed(1);
+  const color = pct >= 55 ? '#10b981' : (pct <= 45 ? '#ef4444' : '#eab308');
+  return `<svg viewBox="0 0 40 24" width="34" height="20" style="flex-shrink:0;">
+    <path d="M 4 20 A 16 16 0 0 1 36 20" fill="none" stroke="#1e293b" stroke-width="3.5"/>
+    <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="1.8" fill="${color}"/>
+  </svg>`;
+}
+
 async function fetchIndexPulse() {
   const container = document.getElementById('indexPulseGrid');
   const badge = document.getElementById('pulseTimeBadge');
@@ -6935,6 +7035,7 @@ async function fetchIndexPulse() {
     for (const sym of indices) {
       const item = data[sym];
       if (!item) continue;
+      pushSpotSpark(sym, item.spot);
 
       const callPct = item.callVolPct || 50;
       const putPct = item.putVolPct || 50;
@@ -6958,10 +7059,11 @@ async function fetchIndexPulse() {
             </div>
             <div class="pulse-atm-badge">ATM ${fmtNum(item.atmStrike)}</div>
           </div>
+          <div style="margin:2px 0 4px 0;">${renderSpotSparkline(sym)}</div>
           <div class="pulse-verdict-row">
-            <div>
-              <span style="color:#94a3b8; font-size:10.5px;">Verdict:</span>
-              <span class="${verdictCls}" style="font-size:10.5px; padding:2px 7px; margin-left:4px;">${item.verdict}</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              ${renderSentimentGauge(callPct)}
+              <span class="${verdictCls}" style="font-size:10.5px; padding:2px 7px;">${item.verdict}</span>
             </div>
             <div style="font-size:10.5px; color:#cbd5e1; font-weight:600;">
               <span style="color:#10b981;">CE ${callPct}%</span> / <span style="color:#ef4444;">PE ${putPct}%</span>
@@ -6975,6 +7077,7 @@ async function fetchIndexPulse() {
             <div>🟢 <b>Top CE:</b> ${topCallStr}</div>
             <div style="margin-top:2px;">🔴 <b>Top PE:</b> ${topPutStr}</div>
           </div>
+          ${renderMiniOiBars(item.oiDistribution)}
           <div class="pulse-actions">
             <button class="pulse-action-btn" onclick="openOptionChartModal('${sym}', '', 0, '')" title="View fitted index chart">📈 Chart</button>
             <button class="pulse-action-btn" onclick="openChainModal('${sym}', '')" title="View option chain">📊 Chain</button>
@@ -8171,7 +8274,18 @@ function renderOptionModalContract(contract) {
   // guessed setTimeout to fix it up.
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  currentChartCandles = [];
   applyHubStrat(currentHubStratKey || 'ut');
+
+  // Fetch the real candle series in the background and redraw once it
+  // lands -- the single-bar chart above is already a correct, honest view,
+  // this just upgrades it to the full real intraday chart when available.
+  fetchContractCandles(contract).then(candles => {
+    if (currentSelectedContract === contract) {
+      currentChartCandles = candles;
+      if (candles.length >= 5) drawOptionChart(contract);
+    }
+  });
 }
 
 // Symbols with no NSE F&O chain at all — /api/chain would just 404/error for
@@ -8260,9 +8374,269 @@ async function openOptionChartModal(symbol, expiry, strike, type) {
 }
 
 /* ============================================================
+   REAL INTRADAY CANDLES + GENUINE INDICATOR MATH
+   Replaces the old single-bar chart's fabricated "200 EMA"/"ATR"/"VWAP"/
+   "Supertrend" lines (arbitrary multipliers on one day's OHLC, presented as
+   if they were the real indicators) with actual calculations run over a
+   real multi-point candle series from /api/candles. When no real series is
+   available (Upstox not configured, or this contract has no instrumentKey),
+   the chart honestly falls back to a single real OHLC bar with only the
+   already-correct percentage-based target/stop lines -- never a guess
+   standing in for a named technical indicator.
+============================================================ */
+async function fetchContractCandles(contract) {
+  try {
+    const params = new URLSearchParams({ symbol: contract.symbol, timeframe: '5minute' });
+    if (contract.instrumentKey) params.set('instrumentKey', contract.instrumentKey);
+    const res = await fetch(`${API_BASE}/api/candles?${params.toString()}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.candles) ? data.candles : [];
+  } catch (e) {
+    console.warn('Candle fetch failed:', e);
+    return [];
+  }
+}
+
+function calcEMA(values, period) {
+  if (!values.length) return [];
+  const k = 2 / (period + 1);
+  const out = [values[0]];
+  for (let i = 1; i < values.length; i++) out.push(values[i] * k + out[i - 1] * (1 - k));
+  return out;
+}
+
+// Wilder's smoothed ATR -- the standard definition real ATR-based indicators
+// (UT Bot, Supertrend) are built on, computed from the real H/L/C series.
+function calcATR(candles, period) {
+  if (candles.length < 2) return candles.map(c => Math.max(0.01, c.high - c.low));
+  const trs = [candles[0].high - candles[0].low];
+  for (let i = 1; i < candles.length; i++) {
+    const c = candles[i], prevClose = candles[i - 1].close;
+    trs.push(Math.max(c.high - c.low, Math.abs(c.high - prevClose), Math.abs(c.low - prevClose)));
+  }
+  const seed = trs.slice(0, Math.min(period, trs.length)).reduce((a, b) => a + b, 0) / Math.min(period, trs.length);
+  const out = [seed];
+  for (let i = 1; i < trs.length; i++) out.push((out[i - 1] * (period - 1) + trs[i]) / period);
+  return out;
+}
+
+function calcSessionVWAP(candles) {
+  let cumPV = 0, cumVol = 0;
+  return candles.map(c => {
+    const typical = (c.high + c.low + c.close) / 3;
+    cumPV += typical * (c.volume || 0);
+    cumVol += (c.volume || 0);
+    return cumVol > 0 ? cumPV / cumVol : typical;
+  });
+}
+
+// The real UT Bot Alerts trailing-stop formula (matches the Pine Script
+// shown in the Indicator Hub: nLoss = keyValue * ATR, stop ratchets toward
+// price and only ever moves in the trend's favor).
+function calcUTBotTrailingStop(candles, atrArr, keyValue = 1) {
+  const stops = [];
+  let stop = candles[0].close - (atrArr[0] || 0) * keyValue;
+  stops.push(stop);
+  for (let i = 1; i < candles.length; i++) {
+    const src = candles[i].close, prevSrc = candles[i - 1].close;
+    const nLoss = (atrArr[i] || 0) * keyValue;
+    const prevStop = stop;
+    if (src > prevStop && prevSrc > prevStop) stop = Math.max(prevStop, src - nLoss);
+    else if (src < prevStop && prevSrc < prevStop) stop = Math.min(prevStop, src + nLoss);
+    else stop = src > prevStop ? src - nLoss : src + nLoss;
+    stops.push(stop);
+  }
+  return stops;
+}
+
+// Standard Supertrend(period, multiplier): basic bands off the HL2 midpoint
+// +/- multiplier*ATR, finalized with the usual ratchet rule, trend flips when
+// price closes through the opposite band.
+function calcSupertrend(candles, atrArr, multiplier = 3) {
+  const mid = candles.map(c => (c.high + c.low) / 2);
+  let trend = 1;
+  let finalUpper = mid[0] + multiplier * (atrArr[0] || 0);
+  let finalLower = mid[0] - multiplier * (atrArr[0] || 0);
+  const out = [{ value: finalLower, trend }];
+  for (let i = 1; i < candles.length; i++) {
+    const basicUpper = mid[i] + multiplier * (atrArr[i] || 0);
+    const basicLower = mid[i] - multiplier * (atrArr[i] || 0);
+    finalUpper = (basicUpper < finalUpper || candles[i - 1].close > finalUpper) ? basicUpper : finalUpper;
+    finalLower = (basicLower > finalLower || candles[i - 1].close < finalLower) ? basicLower : finalLower;
+    if (trend === 1 && candles[i].close < finalLower) trend = -1;
+    else if (trend === -1 && candles[i].close > finalUpper) trend = 1;
+    out.push({ value: trend === 1 ? finalLower : finalUpper, trend });
+  }
+  return out;
+}
+
+/* ============================================================
    DYNAMIC OPTION CANVAS CHART WITH FITTED INDICATORS
 ============================================================ */
 function drawOptionChart(c) {
+  const canvas = document.getElementById('optChartCanvas');
+  if (!canvas || !c) return;
+  if (currentChartCandles && currentChartCandles.length >= 5) {
+    drawRealCandleChart(c, currentChartCandles);
+  } else {
+    drawSingleBarChart(c);
+  }
+}
+
+function drawRealCandleChart(c, candles) {
+  const canvas = document.getElementById('optChartCanvas');
+  if (!canvas) return;
+  const container = document.getElementById('optCanvasContainer') || canvas.parentElement;
+  const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const w = rect.width > 0 ? rect.width : (window.innerWidth < 768 ? window.innerWidth - 32 : 800);
+  const h = rect.height > 0 ? rect.height : (window.innerWidth < 768 ? 260 : 340);
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const indKey = currentHubStratKey || 'ut';
+  const indData = PINE_SCRIPTS[indKey] || PINE_SCRIPTS.ut;
+
+  const closes = candles.map(cd => cd.close);
+  const atr = calcATR(candles, 14);
+  const ema20 = calcEMA(closes, 20);
+
+  const volTop = h - 20;
+  const volH = Math.min(50, h * 0.14);
+  const priceBottom = volTop - volH - 14;
+  const priceTop = 30;
+  const leftPad = 10, rightPad = 56;
+  const plotW = w - leftPad - rightPad;
+
+  let maxVal = Math.max(...candles.map(cd => cd.high));
+  let minVal = Math.min(...candles.map(cd => cd.low));
+  const pad = (maxVal - minVal) * 0.08 || maxVal * 0.02 || 1;
+  maxVal += pad; minVal = Math.max(0.01, minVal - pad);
+  const range = maxVal - minVal;
+  const getY = (val) => priceTop + (1 - (val - minVal) / range) * (priceBottom - priceTop);
+
+  const colW = plotW / candles.length;
+  const bodyW = Math.max(2, Math.min(14, colW * 0.6));
+  const xAt = (i) => leftPad + i * colW + colW / 2;
+
+  // Price gridlines + labels
+  ctx.strokeStyle = '#1a2333';
+  ctx.fillStyle = '#64748b';
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const val = minVal + (range * g) / 4;
+    const y = getY(val);
+    ctx.beginPath();
+    ctx.moveTo(leftPad, y);
+    ctx.lineTo(w - rightPad, y);
+    ctx.stroke();
+    ctx.fillText('₹' + fmtNum(val), w - rightPad + 6, y + 3);
+  }
+
+  // Header tag
+  ctx.fillStyle = '#2563eb';
+  ctx.fillRect(leftPad, 6, 10, 16);
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+  ctx.fillText(`⚡ FITTED: ${indData.title} · ${candles.length} real 5m candles`, leftPad + 16, 18);
+
+  // Real indicator overlay, chosen by the fitted indicator
+  let overlayPoints = null, overlayColor = '#a78bfa', overlayLabel = '';
+  if (indKey === 'ut') {
+    overlayPoints = calcUTBotTrailingStop(candles, atr, 1);
+    overlayColor = closes[closes.length - 1] >= overlayPoints[overlayPoints.length - 1] ? '#10b981' : '#ef4444';
+    overlayLabel = '⚡ UT Bot Trailing Stop (real ATR)';
+  } else if (indKey === 'trade_pred') {
+    overlayPoints = ema20;
+    overlayColor = '#f97316';
+    overlayLabel = 'EMA(20) — real';
+  } else if (indKey === 'supertrend') {
+    const st = calcSupertrend(candles, atr, 3);
+    overlayPoints = st.map(p => p.value);
+    overlayColor = st[st.length - 1].trend === 1 ? '#10b981' : '#ef4444';
+    overlayLabel = `📈 Supertrend(10,3) — ${st[st.length - 1].trend === 1 ? 'Bullish' : 'Bearish'}`;
+  } else if (indKey === 'vwap_rsi') {
+    overlayPoints = calcSessionVWAP(candles);
+    overlayColor = '#eab308';
+    overlayLabel = '🌊 Session VWAP — real';
+  }
+
+  if (overlayPoints) {
+    ctx.beginPath();
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = overlayColor;
+    ctx.lineWidth = 2;
+    overlayPoints.forEach((v, i) => {
+      const x = xAt(i), y = getY(v);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = overlayColor;
+    ctx.font = 'bold 11px "IBM Plex Sans", sans-serif';
+    ctx.fillText(overlayLabel, leftPad + 16, priceTop + 14);
+  }
+
+  // Honest formula-based reference lines (real % of real current-day OHLC --
+  // unchanged from before, just drawn over the real multi-candle backdrop)
+  const tgt9 = c.tgt9 || (c.low * 1.09);
+  const tgt18 = c.tgt18 || (c.low * 1.18);
+  const sl5 = c.sl5 || (c.low * 0.95);
+  if (indKey !== 'ut' && indKey !== 'supertrend') {
+    [[tgt18, '#06b6d4', 'Target 2 (+18%)'], [tgt9, '#34d399', 'Target 1 (+9%)'], [sl5, '#f87171', 'SL (-5%)']].forEach(([val, color, label]) => {
+      if (val < minVal || val > maxVal) return;
+      const y = getY(val);
+      ctx.beginPath();
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.moveTo(leftPad, y);
+      ctx.lineTo(w - rightPad, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+  }
+
+  // Candles
+  candles.forEach((cd, i) => {
+    const x = xAt(i);
+    const up = cd.close >= cd.open;
+    const color = up ? '#10b981' : '#ef4444';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(x, getY(cd.high));
+    ctx.lineTo(x, getY(cd.low));
+    ctx.stroke();
+    const bodyTop = getY(Math.max(cd.open, cd.close));
+    const bodyH = Math.max(1.5, Math.abs(getY(cd.open) - getY(cd.close)));
+    ctx.fillStyle = color;
+    ctx.fillRect(x - bodyW / 2, bodyTop, bodyW, bodyH);
+  });
+
+  // Volume subplot
+  const maxVol = Math.max(1, ...candles.map(cd => cd.volume || 0));
+  candles.forEach((cd, i) => {
+    const x = xAt(i);
+    const vh = ((cd.volume || 0) / maxVol) * volH;
+    ctx.fillStyle = cd.close >= cd.open ? 'rgba(16,185,129,0.55)' : 'rgba(239,68,68,0.55)';
+    ctx.fillRect(x - bodyW / 2, volTop - vh, bodyW, vh);
+  });
+
+  // LTP marker on the last candle
+  const lastX = xAt(candles.length - 1);
+  const lastY = getY(closes[closes.length - 1]);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+  ctx.fillText('LTP ₹' + fmtNum(closes[closes.length - 1]), Math.min(lastX + 10, w - 120), lastY + 4);
+}
+
+function drawSingleBarChart(c) {
   const canvas = document.getElementById('optChartCanvas');
   if (!canvas || !c) return;
   const container = document.getElementById('optCanvasContainer') || canvas.parentElement;
@@ -8351,19 +8725,19 @@ function drawOptionChart(c) {
     ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
     ctx.fillText(match ? '⭐ ALPHASCAN MATCH (Day Low ' + fmtNum(c.low) + ' in Zone)' : 'AlphaScan Matrix Monitoring (÷8 / ÷6.5)', w * 0.35 + 25, getY(c.low) + 24);
   } else if (indKey === 'trade_pred') {
-    const atrEst = Math.max((c.high - c.low) * 0.8, c.close * 0.035);
-    const ema200 = c.close >= c.open ? c.close * 0.97 : c.close * 1.03;
-    const isBull = c.close > ema200;
-    const trail = isBull ? Math.max(c.low, c.close - atrEst * 1.5) : Math.min(c.high, c.close + atrEst * 1.5);
-    const entryTP = isBull ? c.close + atrEst * 2.0 : c.close - atrEst * 2.0;
-    const entrySL = isBull ? c.close - atrEst * 1.5 : c.close + atrEst * 1.5;
-    drawLine(ema200, '#f97316', '200 EMA Trend Line', false, 2);
-    drawLine(trail, isBull ? '#10b981' : '#ef4444', 'UT Bot Trail Stop', true, 2);
-    drawLine(entryTP, '#34d399', 'Active Take Profit (2.0x ATR)', false, 2);
-    drawLine(entrySL, '#ef4444', 'Active Stop Loss (1.5x ATR)', false, 2);
+    // EMA/ATR need a real multi-candle series (see drawRealCandleChart) --
+    // this single-bar fallback no longer guesses them from one day's OHLC.
+    // Only the real, directly-observed open-to-close direction is shown.
+    const isBull = c.close >= c.open;
+    drawLine(tgt9, '#34d399', 'Target 1 (+9%)');
+    drawLine(tgt18, '#06b6d4', 'Target 2 (+18%)');
+    drawLine(sl5, '#f87171', 'Stop Loss (-5%)');
     ctx.fillStyle = isBull ? '#10b981' : '#ef4444';
     ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
-    ctx.fillText(isBull ? '🟢 BUY (Above 200 EMA Trend)' : '🔴 SELL (Below 200 EMA Trend)', w * 0.35 + 25, isBull ? getY(c.low) + 24 : getY(c.high) - 12);
+    ctx.fillText(isBull ? '🟢 Open→Close Up' : '🔴 Open→Close Down', w * 0.35 + 25, isBull ? getY(c.low) + 24 : getY(c.high) - 12);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10.5px "IBM Plex Sans", sans-serif';
+    ctx.fillText('EMA/ATR trail needs intraday history — unavailable for this contract', w * 0.35 + 25, (isBull ? getY(c.low) + 40 : getY(c.high) + 4));
   } else if (indKey === 'quantum') {
     const atrEst = Math.max((c.high - c.low) * 0.7, c.close * 0.03);
     const sup = c.low;
@@ -8398,29 +8772,29 @@ function drawOptionChart(c) {
     ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
     ctx.fillText('🎯 Target Range Zone (÷8.0 - ÷6.5)', w * 0.35 + 25, (yUpper + yLower) / 2);
   } else if (indKey === 'ut') {
+    // Real ATR trailing stop needs the multi-candle series (drawRealCandleChart
+    // handles that case); here we only have one bar, so no estimate is drawn.
     const isBull = c.close >= c.open;
-    const atrEst = Math.max((c.high - c.low) * 0.8, c.close * 0.035);
-    const trailStop = isBull ? Math.max(c.low, c.close - atrEst) : Math.min(c.high, c.close + atrEst);
     const trailColor = isBull ? '#10b981' : '#ef4444';
-
-    drawLine(trailStop, trailColor, '⚡ UT Bot Trailing Stop', true, 2);
     drawLine(tgt9, '#34d399', 'Target 1 (+9%)');
     drawLine(tgt18, '#06b6d4', 'Target 2 (+18%)');
     drawLine(sl5, '#f87171', 'Stop Loss (-5%)');
-
-    // Draw Signal Label
     const sigText = isBull ? '🟢 UT BUY' : '🔴 UT SELL';
     const sigY = isBull ? getY(c.low) + 24 : getY(c.high) - 12;
     ctx.fillStyle = trailColor;
     ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
     ctx.fillText(sigText + ' @ ₹' + fmtNum(c.close), w * 0.35 + 25, sigY);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10.5px "IBM Plex Sans", sans-serif';
+    ctx.fillText('Real ATR trailing stop needs intraday history — unavailable for this contract', w * 0.35 + 25, sigY + 16);
   } else if (indKey === 'supertrend') {
-    const isBull = c.close >= c.open;
-    const stLine = isBull ? (c.low * 0.96) : (c.high * 1.04);
-    const stColor = isBull ? '#10b981' : '#ef4444';
-    drawLine(stLine, stColor, '📈 Supertrend (10, 3)', false, 2.5);
+    // Real Supertrend needs the multi-candle series (drawRealCandleChart);
+    // no single-bar estimate is drawn here.
     drawLine(tgt9, '#34d399', 'Target 1 (+9%)');
     drawLine(tgt18, '#06b6d4', 'Target 2 (+18%)');
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10.5px "IBM Plex Sans", sans-serif';
+    ctx.fillText('📈 Supertrend needs intraday history — unavailable for this contract', w * 0.35 + 25, getY(c.low) + 24);
   } else if (indKey === 'orb15') {
     drawLine(c.high, '#10b981', '🚀 15m ORB High', false, 2);
     drawLine(c.low, '#ef4444', '🚀 15m ORB Low', false, 2);
@@ -8428,11 +8802,13 @@ function drawOptionChart(c) {
     drawLine(c.high + orbRange * 0.5, '#38bdf8', 'ORB Tgt (+50%)');
     drawLine(c.high + orbRange, '#06b6d4', 'ORB Tgt (+100%)');
   } else if (indKey === 'vwap_rsi') {
-    const vwapEst = (c.open + c.high + c.low + c.close) / 4;
-    const devEst = (c.high - c.low) * 0.5;
-    drawLine(vwapEst, '#eab308', '🌊 VWAP', false, 2);
-    drawLine(vwapEst + devEst, '#ef4444', 'VWAP Upper Band (+1.5σ)');
-    drawLine(vwapEst - devEst, '#10b981', 'VWAP Lower Band (-1.5σ)');
+    // Real volume-weighted VWAP needs the intraday candle series
+    // (drawRealCandleChart); no single-bar estimate is drawn here.
+    drawLine(c.high, '#64748b', 'Day High (Reference)', true, 1);
+    drawLine(c.low, '#64748b', 'Day Low (Reference)', true, 1);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10.5px "IBM Plex Sans", sans-serif';
+    ctx.fillText('🌊 Real VWAP needs intraday history — unavailable for this contract', w * 0.35 + 25, getY(c.low) + 24);
   } else if (indKey === 'strat3') {
     drawLine(div8, '#38bdf8', '💎 Formula A (÷8.0)', false, 2);
     drawLine(div65, '#a855f7', '💎 Formula B (÷6.5)', false, 2);
@@ -8548,6 +8924,7 @@ async function loadChainData() {
     }
 
     renderChainTable(data.strikes || [], atmVal);
+    drawOiSkewChart(data.strikes || [], atmVal);
   } catch (err) {
     console.error('Error loading chain data:', err);
   }
@@ -8589,6 +8966,68 @@ function renderChainTable(strikes, atm) {
   }).join('');
 
   tbody.innerHTML = rows;
+}
+
+// Classic "tornado" OI skew: Call OI bars growing left from center, Put OI
+// bars growing right, centered on ATM -- real per-strike CE.oi/PE.oi, the
+// same figures already shown in the table's OI columns, just visualized.
+function drawOiSkewChart(strikes, atm) {
+  const canvas = document.getElementById('chainOiSkewCanvas');
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const w = rect.width > 0 ? rect.width : 900;
+  const h = 170;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  if (!strikes || !strikes.length) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '12px "IBM Plex Sans", sans-serif';
+    ctx.fillText('No OI data for this expiry.', 20, h / 2);
+    return;
+  }
+
+  const atmIdx = strikes.reduce((best, s, i) => Math.abs(s.strike - atm) < Math.abs(strikes[best].strike - atm) ? i : best, 0);
+  const half = 6;
+  const start = Math.max(0, Math.min(atmIdx - half, strikes.length - (half * 2 + 1)));
+  const visible = strikes.slice(Math.max(0, start), start + half * 2 + 1).filter(Boolean);
+  if (!visible.length) return;
+
+  const maxOi = Math.max(1, ...visible.map(s => Math.max((s.CE && s.CE.oi) || 0, (s.PE && s.PE.oi) || 0)));
+  const rowH = h / visible.length;
+  const centerX = w / 2;
+  const maxBarW = (w / 2) - 90;
+
+  ctx.font = '10.5px "IBM Plex Mono", monospace';
+  visible.forEach((s, i) => {
+    const y = i * rowH + rowH / 2;
+    const isAtm = s.strike === atm;
+    const ceOi = (s.CE && s.CE.oi) || 0;
+    const peOi = (s.PE && s.PE.oi) || 0;
+    const ceW = (ceOi / maxOi) * maxBarW;
+    const peW = (peOi / maxOi) * maxBarW;
+
+    ctx.fillStyle = isAtm ? '#eab308' : '#10b981';
+    ctx.fillRect(centerX - 36 - ceW, y - 6, ceW, 12);
+    ctx.fillStyle = isAtm ? '#eab308' : '#ef4444';
+    ctx.fillRect(centerX + 36, y - 6, peW, 12);
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtOI(ceOi), centerX - 40 - ceW, y + 4);
+    ctx.textAlign = 'left';
+    ctx.fillText(fmtOI(peOi), centerX + 40 + peW, y + 4);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = isAtm ? '#eab308' : '#f1f5f9';
+    ctx.font = isAtm ? 'bold 11px "IBM Plex Mono", monospace' : '11px "IBM Plex Mono", monospace';
+    ctx.fillText(String(s.strike), centerX, y + 4);
+    ctx.font = '10.5px "IBM Plex Mono", monospace';
+  });
 }
 
 /* ============================================================

@@ -1,7 +1,7 @@
 import os
 import math
 import time
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from urllib.parse import quote
 from curl_cffi import requests
 
@@ -316,6 +316,74 @@ class UpstoxService:
         }
         self.cache[cache_key] = (now, result)
         return result
+
+    def _parse_candles(self, payload):
+        """Upstox returns candles most-recent-first as
+        [timestamp, open, high, low, close, volume, oi]; normalize to
+        chronological order with named fields. No fabricated values --
+        anything not returned by the API is simply absent here."""
+        raw = (payload.get("data") or {}).get("candles") or []
+        out = []
+        for c in raw:
+            out.append({
+                "time": c[0],
+                "open": self._num(c[1]),
+                "high": self._num(c[2]),
+                "low": self._num(c[3]),
+                "close": self._num(c[4]),
+                "volume": self._num(c[5]) if len(c) > 5 else 0.0,
+                "oi": self._num(c[6]) if len(c) > 6 else 0.0,
+            })
+        out.reverse()
+        return out
+
+    def fetch_intraday_candles(self, instrument_key, unit="minutes", interval="5"):
+        """Today's real intraday candles from Upstox's V3 intraday endpoint."""
+        encoded_key = quote(instrument_key, safe="")
+        url = f"{self.BASE_V3}/historical-candle/intraday/{encoded_key}/{unit}/{interval}"
+        return self._parse_candles(self._get(url))
+
+    def fetch_historical_candles(self, instrument_key, unit="minutes", interval="30", to_date=None, from_date=None):
+        """Real OHLCV candles over a date range from Upstox's V3 historical-candle endpoint."""
+        encoded_key = quote(instrument_key, safe="")
+        url = f"{self.BASE_V3}/historical-candle/{encoded_key}/{unit}/{interval}/{to_date}/{from_date}"
+        return self._parse_candles(self._get(url))
+
+    def get_candles(self, instrument_key, timeframe="5minute"):
+        """
+        Real candle series for a chart -- no synthetic/estimated points.
+        timeframe: "1minute" | "5minute" | "15minute" | "30minute" | "day"
+        Intraday timeframes try today's live intraday candles first, then
+        fall back to the most recent trading day's historical candles
+        (markets closed / weekend) so the chart still shows something real
+        rather than going blank.
+        """
+        unit_map = {
+            "1minute": ("minutes", "1"), "5minute": ("minutes", "5"),
+            "15minute": ("minutes", "15"), "30minute": ("minutes", "30"),
+            "day": ("days", "1"),
+        }
+        unit, interval = unit_map.get(timeframe, ("minutes", "5"))
+
+        if timeframe == "day":
+            to_d = date.today().isoformat()
+            from_d = (date.today() - timedelta(days=90)).isoformat()
+            return self.fetch_historical_candles(instrument_key, unit, interval, to_d, from_d)
+
+        try:
+            candles = self.fetch_intraday_candles(instrument_key, unit, interval)
+            if candles:
+                return candles
+        except Exception as e:
+            print(f"[Upstox] intraday candle fetch failed for {instrument_key}: {e}")
+
+        try:
+            to_d = date.today().isoformat()
+            from_d = (date.today() - timedelta(days=7)).isoformat()
+            return self.fetch_historical_candles(instrument_key, unit, interval, to_d, from_d)
+        except Exception as e:
+            print(f"[Upstox] historical candle fallback failed for {instrument_key}: {e}")
+            return []
 
     def get_all_indices_quotes(self):
         """
