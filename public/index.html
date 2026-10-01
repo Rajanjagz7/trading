@@ -9249,6 +9249,26 @@ if (symSearchEl) {
   });
 }
 
+// Picking a specific symbol silently inherited whatever Day Low / Prev Close
+// range was left checked (defaults to Strategy 1's 5.80-8.45 / 38-48) --
+// real stock premiums almost never fall in that narrow band, so searching a
+// stock and scanning it would return zero results with no indication why.
+// Searching for one stock should show that stock's options, not a filtered-
+// to-nothing result, so picking a real symbol clears those two range filters.
+const symSelectForAutoClear = document.getElementById('symSelect');
+if (symSelectForAutoClear) {
+  symSelectForAutoClear.addEventListener('change', function() {
+    if (this.value === '__ALL__') return;
+    const lowOn = document.getElementById('lowOn');
+    const prevOn = document.getElementById('prevOn');
+    if ((lowOn && lowOn.checked) || (prevOn && prevOn.checked)) {
+      if (lowOn) lowOn.checked = false;
+      if (prevOn) prevOn.checked = false;
+      showToast(`Cleared Day Low / Prev Close range filters so ${this.value}'s own options show up`, 'info');
+    }
+  });
+}
+
 // Global Escape Key and Backdrop Click Listeners
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' || e.keyCode === 27) {
