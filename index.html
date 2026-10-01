@@ -8491,7 +8491,9 @@ function renderOptionModalContract(contract) {
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   currentChartCandles = [];
+  chartHoverIndex = null;
   renderTimeframeButtons();
+  setupChartCrosshairEvents();
   applyHubStrat(currentHubStratKey || 'ut');
 
   // Fetch the real candle series in the background and redraw once it
@@ -8882,6 +8884,87 @@ function drawRealCandleChart(c, candles) {
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
   ctx.fillText('LTP ₹' + fmtNum(closes[closes.length - 1]), Math.min(lastX + 10, w - 120), lastY + 4);
+
+  // Cache the layout so the mousemove handler can hit-test without
+  // recomputing scales, and draw the crosshair + tooltip if hovering.
+  chartLayoutCache = { candles, xAt, getY, colW, leftPad, priceTop, priceBottom, w, h };
+  if (chartHoverIndex !== null && chartHoverIndex >= 0 && chartHoverIndex < candles.length) {
+    drawChartCrosshair(ctx, chartLayoutCache, chartHoverIndex);
+  }
+}
+
+// Real-time crosshair + tooltip (spec section 5): shows the exact OHLCV and
+// timestamp of the candle under the cursor, not an approximation.
+let chartHoverIndex = null;
+let chartLayoutCache = null;
+
+function drawChartCrosshair(ctx, layout, idx) {
+  const { candles, xAt, getY, leftPad, priceTop, priceBottom, w } = layout;
+  const cd = candles[idx];
+  const x = xAt(idx);
+  const y = getY(cd.close);
+
+  ctx.save();
+  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = 'rgba(148,163,184,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, priceTop);
+  ctx.lineTo(x, priceBottom);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(leftPad, y);
+  ctx.lineTo(w - 56, y);
+  ctx.stroke();
+  ctx.restore();
+
+  const up = cd.close >= cd.open;
+  const color = up ? '#10b981' : '#ef4444';
+  const time = new Date(cd.time).toLocaleString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const lines = [
+    time,
+    `O ${fmtNum(cd.open)}  H ${fmtNum(cd.high)}  L ${fmtNum(cd.low)}  C ${fmtNum(cd.close)}`,
+    `Vol ${fmtOI(cd.volume || 0)}${cd.oi ? '  OI ' + fmtOI(cd.oi) : ''}`
+  ];
+  ctx.font = '11px "IBM Plex Mono", monospace';
+  const boxW = Math.max(...lines.map(l => ctx.measureText(l).width)) + 16;
+  const boxH = lines.length * 15 + 10;
+  let boxX = x + 10;
+  if (boxX + boxW > w) boxX = x - boxW - 10;
+  const boxY = 32;
+
+  ctx.fillStyle = 'rgba(15,21,32,0.95)';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.fillRect(boxX, boxY, boxW, boxH);
+  ctx.strokeRect(boxX, boxY, boxW, boxH);
+  ctx.fillStyle = '#f1f5f9';
+  lines.forEach((l, i) => ctx.fillText(l, boxX + 8, boxY + 16 + i * 15));
+}
+
+function setupChartCrosshairEvents() {
+  const canvas = document.getElementById('optChartCanvas');
+  if (!canvas || canvas._crosshairWired) return;
+  canvas._crosshairWired = true;
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (!chartLayoutCache || !currentChartCandles.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const { candles, colW, leftPad } = chartLayoutCache;
+    let idx = Math.round((mouseX - leftPad - colW / 2) / colW);
+    idx = Math.max(0, Math.min(candles.length - 1, idx));
+    if (idx !== chartHoverIndex) {
+      chartHoverIndex = idx;
+      if (currentSelectedContract) drawOptionChart(currentSelectedContract);
+    }
+  });
+  canvas.addEventListener('mouseleave', () => {
+    if (chartHoverIndex !== null) {
+      chartHoverIndex = null;
+      if (currentSelectedContract) drawOptionChart(currentSelectedContract);
+    }
+  });
 }
 
 function drawSingleBarChart(c) {
