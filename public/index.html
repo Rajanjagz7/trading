@@ -2858,6 +2858,7 @@
   <!-- Phase 1 (BRD redesign): persistent primary navigation -->
   <nav class="rx-nav" id="rxNav">
     <button class="rx-nav-btn active" data-route="/" onclick="navigate('/')">🏠 Dashboard</button>
+    <button class="rx-nav-btn" id="stocksOnlyToggleNav" onclick="toggleStocksOnly()" title="Lock every scan (including indicators) to stock contracts only — excludes NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY & SENSEX until turned off">📦 Stocks Only</button>
     <button class="rx-nav-btn" data-route="/scanner" onclick="navigate('/scanner')">🔍 Scanner</button>
     <button class="rx-nav-btn" data-route="/indicators" onclick="navigate('/indicators')">⚡ Indicators</button>
     <button class="rx-nav-btn" data-route="/chain" onclick="navigate('/chain')">📊 Option Chain</button>
@@ -4230,6 +4231,7 @@ function updateNavActiveState() {
   const path = (location.hash || '').replace(/^#/, '') || '/';
   const topPath = '/' + (path.split('/').filter(Boolean)[0] || '');
   document.querySelectorAll('.rx-nav-btn').forEach(btn => {
+    if (btn.id === 'stocksOnlyToggleNav') return; // persistent toggle, not a route
     btn.classList.toggle('active', btn.dataset.route === topPath || (topPath === '/' && btn.dataset.route === '/'));
   });
 }
@@ -6087,13 +6089,9 @@ function syncActiveScanToUI() {
   // 8. Buttons & Pills Visual Highlight
   const stratKey = scan.strategyId;
 
+  syncStocksOnlyButtons();
   document.querySelectorAll('.indicator-btn-row .small-strat-btn').forEach(btn => {
-    if (btn.id === 'stocksOnlyToggle') {
-      // Not a strategy preset -- a persistent modifier, so it highlights off
-      // stocksOnlyLock instead of matching against the active strategyId.
-      btn.classList.toggle('active', stocksOnlyLock);
-      return;
-    }
+    if (btn.id === 'stocksOnlyToggle') return; // handled by syncStocksOnlyButtons() above
     const attr = btn.getAttribute('data-ind');
     btn.classList.toggle('active', attr === stratKey || (rules.indicator && rules.indicator.enabled && attr === rules.indicator.id));
   });
@@ -6291,14 +6289,22 @@ function runIndicatorScan(indKey) {
   setActiveScanStrategy(indKey);
 }
 
+// Keeps both entry points for the lock (the nav bar shortcut and the
+// Scanner page's own button) showing the same on/off state.
+function syncStocksOnlyButtons() {
+  const navBtn = document.getElementById('stocksOnlyToggleNav');
+  if (navBtn) navBtn.classList.toggle('active', stocksOnlyLock);
+  const scannerBtn = document.getElementById('stocksOnlyToggle');
+  if (scannerBtn) scannerBtn.classList.toggle('active', stocksOnlyLock);
+}
+
 // Persistent "Stocks Only" lock -- unlike the other quick-scan buttons this
 // isn't a one-off preset, it's a modifier that stays applied across whichever
 // indicator/strategy is currently selected (see setActiveScanStrategy's
 // stocksOnlyLock check), so it can be combined with any of them.
 function toggleStocksOnly() {
   stocksOnlyLock = !stocksOnlyLock;
-  // Button highlight is handled by syncActiveScanToUI() below (single
-  // source of truth for all .indicator-btn-row button highlighting).
+  syncStocksOnlyButtons();
   showToast(
     stocksOnlyLock
       ? '📦 Stocks Only locked — every scan now excludes NIFTY, BANKNIFTY & other indices'
@@ -8986,8 +8992,7 @@ function clearAllScreenerFilters() {
   const instStk = document.getElementById('instStk');
   if (instStk) instStk.checked = true;
   stocksOnlyLock = false;
-  const stocksOnlyBtn = document.getElementById('stocksOnlyToggle');
-  if (stocksOnlyBtn) stocksOnlyBtn.classList.remove('active');
+  syncStocksOnlyButtons();
 
   // 3. Option type
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
@@ -9282,8 +9287,7 @@ function resetInstrGroup() {
   // Keep the "Stocks Only" toggle in sync -- otherwise the next indicator
   // click would silently re-exclude indices via setActiveScanStrategy's lock.
   stocksOnlyLock = false;
-  const stocksOnlyBtn = document.getElementById('stocksOnlyToggle');
-  if (stocksOnlyBtn) stocksOnlyBtn.classList.remove('active');
+  syncStocksOnlyButtons();
   showToast('↺ Instrument type reset to Both (Indices + Stocks)', 'info');
   updateActiveFilterChips();
   executeActiveScan();
