@@ -3101,7 +3101,12 @@
       <button class="small-strat-btn" style="background:#2563eb; color:#fff; border-color:#3b82f6; font-weight:700; margin-left:10px;" onclick="openIndicatorModal('ut')" title="Open Indicator Suite with live Option Chain and algorithm code">📊 Browse All Indicators &amp; Scripts</button>
     </div>
 
-    <div class="rx-section-label" style="margin-top:8px;">Trend</div>
+    <div class="rx-section-label" style="margin-top:8px;">Universe</div>
+    <div class="indicator-btn-row">
+      <button class="small-strat-btn" data-ind="stocks_only" onclick="applyPreset('stocks_only')" title="Scan today's stock F&O contracts only — excludes NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY & SENSEX">📦 Stocks Only (No Indices)</button>
+    </div>
+
+    <div class="rx-section-label">Trend</div>
     <div class="indicator-btn-row">
       <button class="small-strat-btn ut-btn" data-ind="ut" onclick="runIndicatorScan('ut')" title="Scan all stocks & indices with UT Bot Alerts">⚡ UT Bot</button>
       <button class="small-strat-btn pred-btn" data-ind="trade_pred" onclick="runIndicatorScan('trade_pred')" title="Scan all stocks & indices with Trade Predictor">🔮 Trade Predictor</button>
@@ -5631,6 +5636,24 @@ const STRATEGY_REGISTRY = {
       indicator: { enabled: false, id: null }, formula: { enabled: false }
     }
   },
+  stocks_only: {
+    title: "📦 Stocks Only Scanner (No Indices)",
+    desc: "Today's active stock F&O contracts only — NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY & SENSEX excluded",
+    rules: {
+      dayLow: { enabled: false, min: 5.80, max: 8.45 },
+      previousClose: { enabled: false, min: 38.00, max: 48.00 },
+      candlestick: { enabled: false, mode: 'ALL', tol: 0.00 },
+      utBot: { enabled: false, signal: 'ALL', sens: 1 },
+      expiry: { enabled: false, mode: 'all' },
+      optionType: { enabled: false, type: 'BOTH' },
+      underlying: { enabled: false, symbol: '__ALL__', search: '' },
+      instrument: { enabled: true, index: false, stock: true },
+      minOi: { enabled: false, value: 0 },
+      excludeUntraded: { enabled: true },
+      indicator: { enabled: false, id: null },
+      formula: { enabled: false }
+    }
+  },
   strat_ut: {
     title: "🤖 UT Bot BUY Signals",
     rules: {
@@ -6048,6 +6071,15 @@ function syncActiveScanToUI() {
 
   const sExp = document.getElementById('expSelect');
   if (sExp) sExp.value = (rules.expiry && rules.expiry.enabled) ? rules.expiry.mode : 'all';
+
+  // Instrument type (Index vs Stock) -- was only ever read from these
+  // checkboxes into activeScan, never written back, so a preset like
+  // "Stocks Only" that sets instrument.index=false left the drawer's
+  // checkboxes showing both checked even while indices were excluded.
+  const sInstIdx = document.getElementById('instIdx');
+  const sInstStk = document.getElementById('instStk');
+  if (sInstIdx) sInstIdx.checked = !(rules.instrument && rules.instrument.enabled) || !!rules.instrument.index;
+  if (sInstStk) sInstStk.checked = !(rules.instrument && rules.instrument.enabled) || !!rules.instrument.stock;
 
   const sTypeVal = (rules.optionType && rules.optionType.enabled) ? rules.optionType.type : 'BOTH';
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
