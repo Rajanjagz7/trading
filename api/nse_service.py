@@ -17,6 +17,77 @@ IST = timezone(timedelta(hours=5, minutes=30))
 def now_ist_iso():
     return datetime.now(IST).isoformat()
 
+
+def validate_ohlc(open_, high, low, close):
+    """
+    Spec section 10: basic OHLC consistency validation.
+    Returns (is_valid, violations) -- violations is a list of human-readable
+    rule names that failed, empty when all pass. Pure function, no I/O, so
+    it's directly unit-testable and reusable anywhere a contract/candle's
+    OHLC needs a sanity check before being trusted.
+    """
+    violations = []
+    if high < open_:
+        violations.append("High < Open")
+    if high < close:
+        violations.append("High < Close")
+    if high < low:
+        violations.append("High < Low")
+    if low > open_:
+        violations.append("Low > Open")
+    if low > close:
+        violations.append("Low > Close")
+    return (len(violations) == 0, violations)
+
+
+def compute_recommendation(sym, verdict, top_call, top_put, data_status):
+    """
+    "Recommendation for the Day" -- a documented, deterministic, reproducible
+    rule, not a separate guess: direction comes straight from the same
+    Call/Put volume-share verdict already computed in get_indices_pulse()
+    (>=55% one-sided = a signal, otherwise NO SIGNAL), and Entry/Target/SL
+    reuse the exact +9% / +18% / -5% formulas already shown elsewhere in
+    this app, applied to the real LTP of whichever contract (topCall or
+    topPut) that verdict points at. No signal is produced when data is
+    unavailable or the required contract is missing -- see the pytest
+    suite (tests/test_market_data.py) for the exact input/output pairs
+    this rule is pinned to.
+    """
+    if data_status == "unavailable":
+        return None
+
+    direction, basis = None, None
+    if "BUY" in verdict and top_call:
+        direction, basis = ("BUY CALL", top_call)
+    elif "SELL" in verdict and top_put:
+        direction, basis = ("BUY PUT", top_put)
+
+    if direction and basis and basis.get("close", 0) > 0:
+        entry = basis["close"]
+        return {
+            "instrument": sym,
+            "contract": f"{sym} {basis['strike']} {'CE' if direction == 'BUY CALL' else 'PE'}",
+            "signal": direction,
+            "entry": round(entry, 2),
+            "target1": round(entry * 1.09, 2),
+            "target2": round(entry * 1.18, 2),
+            "stopLoss": round(entry * 0.95, 2),
+            "changePct": basis.get("chgPct", 0.0),
+            "basedOnVerdict": verdict,
+            "dataStatus": data_status,
+            "timestamp": now_ist_iso(),
+        }
+
+    verdict_is_directional = ("BUY" in verdict) or ("SELL" in verdict)
+    return {
+        "instrument": sym,
+        "signal": "NO SIGNAL",
+        "reason": "Required option contract data is missing or stale" if verdict_is_directional
+                  else "Call/Put flow is balanced (rangebound) -- no one-sided signal to act on",
+        "dataStatus": data_status,
+        "timestamp": now_ist_iso(),
+    }
+
 # SENSEX and India VIX have no NSE bhavcopy/F&O source at all (SENSEX is a BSE
 # index, and BSE's own API hard-blocks this app's requests) — Yahoo Finance's
 # public chart API gives a plain index quote for both with no auth needed.
@@ -532,47 +603,9 @@ class NSEService:
                 "chgPct": round(((puts_sorted[0]["close"] - puts_sorted[0]["prevClose"]) / puts_sorted[0]["prevClose"]) * 100.0, 1) if puts_sorted[0]["prevClose"] > 0 else 0.0
             } if puts_sorted else None
 
-            # "Recommendation for the Day" -- a documented, deterministic rule,
-            # not a separate guess: direction comes straight from the same
-            # Call/Put volume-share verdict already computed above (>=55%
-            # one-sided = a signal, otherwise NO SIGNAL), and Entry/Target/SL
-            # reuse the exact +9% / +18% / -5% formulas already shown
-            # elsewhere in this app (tgt9/tgt18/sl5), applied to the real LTP
-            # of whichever contract (topCall or topPut) that verdict points
-            # at. No signal is produced at all when the required contract or
-            # a real data status isn't available.
-            recommendation = None
-            if data_status != "unavailable":
-                direction = None
-                basis = None
-                if "BUY" in verdict and top_call:
-                    direction, basis = ("BUY CALL", top_call)
-                elif "SELL" in verdict and top_put:
-                    direction, basis = ("BUY PUT", top_put)
-
-                if direction and basis and basis.get("close", 0) > 0:
-                    entry = basis["close"]
-                    recommendation = {
-                        "instrument": sym,
-                        "contract": f"{sym} {basis['strike']} {'CE' if direction == 'BUY CALL' else 'PE'}",
-                        "signal": direction,
-                        "entry": round(entry, 2),
-                        "target1": round(entry * 1.09, 2),
-                        "target2": round(entry * 1.18, 2),
-                        "stopLoss": round(entry * 0.95, 2),
-                        "changePct": basis.get("chgPct", 0.0),
-                        "basedOnVerdict": verdict,
-                        "dataStatus": data_status,
-                        "timestamp": now_ist_iso(),
-                    }
-                else:
-                    recommendation = {
-                        "instrument": sym,
-                        "signal": "NO SIGNAL",
-                        "reason": "Call/Put flow is balanced (rangebound) -- no one-sided signal to act on" if not direction else "Required option contract data is missing or stale",
-                        "dataStatus": data_status,
-                        "timestamp": now_ist_iso(),
-                    }
+            # See compute_recommendation() at module level for the documented
+            # rule itself (pytest-covered in tests/test_market_data.py).
+            recommendation = compute_recommendation(sym, verdict, top_call, top_put, data_status)
 
             summary[sym] = {
                 "symbol": sym,
