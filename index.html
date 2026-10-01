@@ -6316,8 +6316,15 @@ function toggleStocksOnly() {
   // indicator, or the bootstrap default) rather than forcing a jump to a
   // specific indicator -- picking a different indicator afterwards keeps
   // the lock via setActiveScanStrategy's own check above.
+  //
+  // In manual/custom-query mode the sidebar widgets are the real source of
+  // truth and the user may have clicked CE/PE, a Day Low range, etc. without
+  // pressing "Run Screener Scan" yet -- re-read them here, otherwise this
+  // toggle would silently re-run the OLD rules and drop those picks.
   if (!window.activeScan || !window.activeScan.rules) {
     syncUIToActiveScan('manual');
+  } else if (window.activeScan.source === 'manual' || window.activeScan.source === 'chartink') {
+    syncUIToActiveScan(window.activeScan.source);
   }
   window.activeScan.rules.instrument = stocksOnlyLock
     ? { enabled: true, index: false, stock: true }
