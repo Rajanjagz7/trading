@@ -7446,6 +7446,14 @@ async function runServerScan() {
 }
 
 async function runLiveScan() {
+  // Unlike runServerScan(), this never re-read the sidebar's CE/PE, Day Low,
+  // Prev Close, etc. before scanning -- clicking those widgets then "Fetch
+  // Live Chain" silently kept using whatever rules were already loaded.
+  // Only resync when in manual/custom mode; an active indicator/strategy
+  // keeps its own isolated rules untouched (same as runServerScan's pattern).
+  if (!window.activeScan || !window.activeScan.rules || window.activeScan.source === 'manual' || window.activeScan.source === 'chartink') {
+    syncUIToActiveScan(window.activeScan && window.activeScan.source === 'chartink' ? 'chartink' : 'manual');
+  }
   const result = await executeActiveScan();
   if (currentMode === 'live') {
     const t = document.getElementById('liveLastTime');

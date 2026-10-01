@@ -5792,11 +5792,18 @@ function evaluateContract(contract, activeScan, explain = false) {
   const rules = activeScan ? activeScan.rules : {};
   if (!rules) return explain ? { passed: true, failedRule: null, reason: "No rules" } : true;
 
-  // 1. Exclude Untraded Contracts (Volume > 0)
-  if (rules.excludeUntraded && rules.excludeUntraded.enabled) {
-    const v = contract.vol !== undefined ? contract.vol : (contract.volume !== undefined ? contract.volume : 0);
+  // 1. Exclude Untraded & Dead Penny Strikes (Volume > 0 & Price > ₹0.05)
+  const isTradedOnly = (rules.excludeUntraded !== undefined && rules.excludeUntraded !== null) ? !!rules.excludeUntraded.enabled : true;
+  const v = contract.vol !== undefined ? contract.vol : (contract.volume !== undefined ? contract.volume : 0);
+  const closeP = contract.close !== undefined ? contract.close : 0;
+  const lowP = contract.low !== undefined ? contract.low : 0;
+
+  if (isTradedOnly) {
     if (v <= 0) {
       return explain ? { passed: false, failedRule: "excludeUntraded", reason: `Volume ${v} <= 0` } : false;
+    }
+    if (closeP <= 0.05 || lowP <= 0.05) {
+      return explain ? { passed: false, failedRule: "excludeUntraded", reason: `Penny/untraded strike: close=${closeP}, low=${lowP}` } : false;
     }
   }
 
@@ -5846,99 +5853,133 @@ function evaluateContract(contract, activeScan, explain = false) {
     }
   }
 
-  // 6. Day Low
+  // Strategy / Query Condition Clauses
+  const isAnyLogic = (rules.ruleLogic === "ANY");
+  let anyMatched = false;
+  let hasAnyCondition = false;
+
+  // Clause: Day Low
+  let dayLowPass = true;
   if (rules.dayLow && rules.dayLow.enabled) {
+    hasAnyCondition = true;
     const low = contract.low;
     if (low === null || low === undefined || isNaN(low) || low < rules.dayLow.min || low > rules.dayLow.max) {
+      dayLowPass = false;
+    } else {
+      anyMatched = true;
+    }
+    if (!isAnyLogic && !dayLowPass) {
       return explain ? { passed: false, failedRule: "dayLow", reason: `Day Low ₹${low} outside [₹${rules.dayLow.min}, ₹${rules.dayLow.max}]` } : false;
     }
   }
 
-  // 7. Previous Close
+  // Clause: Previous Close
+  let prevClosePass = true;
   if (rules.previousClose && rules.previousClose.enabled) {
+    hasAnyCondition = true;
     const prev = contract.prevCloseUsed !== undefined ? contract.prevCloseUsed : (contract.prevClose || 0);
     if (prev === null || prev === undefined || isNaN(prev) || prev < rules.previousClose.min || prev > rules.previousClose.max) {
+      prevClosePass = false;
+    } else {
+      anyMatched = true;
+    }
+    if (!isAnyLogic && !prevClosePass) {
       return explain ? { passed: false, failedRule: "previousClose", reason: `Prev Close ₹${prev} outside [₹${rules.previousClose.min}, ₹${rules.previousClose.max}]` } : false;
     }
   }
 
-  // 8. Candlestick Action (Open=Low / Open=High) -- trust the server's own
-  // isOL/isOH (nse_service.scan() computes this with the exact same
-  // tolerance, since `tol` is sent as part of the scan payload) instead of
-  // re-deriving it client-side with a second, easy-to-drift-out-of-sync
-  // formula.
+  // Clause: Candlestick Action
+  let candlePass = true;
   if (rules.candlestick && rules.candlestick.enabled) {
+    hasAnyCondition = true;
     const isOL = !!contract.isOL;
     const isOH = !!contract.isOH;
+    if (rules.candlestick.mode === "OL") candlePass = isOL;
+    else if (rules.candlestick.mode === "OH") candlePass = isOH;
+    else if (rules.candlestick.mode === "OL_OH" || rules.candlestick.mode === "ALL") candlePass = (isOL || isOH);
 
-    if (rules.candlestick.mode === "OL") {
-      if (!isOL) return explain ? { passed: false, failedRule: "candlestick", reason: "Not Open = Low" } : false;
-    } else if (rules.candlestick.mode === "OH") {
-      if (!isOH) return explain ? { passed: false, failedRule: "candlestick", reason: "Not Open = High" } : false;
-    } else if (rules.candlestick.mode === "OL_OH" || rules.candlestick.mode === "ALL") {
-      if (!isOL && !isOH) return explain ? { passed: false, failedRule: "candlestick", reason: "Neither Open=Low nor Open=High" } : false;
+    if (candlePass) anyMatched = true;
+    if (!isAnyLogic && !candlePass) {
+      return explain ? { passed: false, failedRule: "candlestick", reason: `Candlestick mode ${rules.candlestick.mode} not matched` } : false;
     }
   }
 
-  // 9. UT Bot Signal -- trust the server's isOL/isOH (see the matching
-  // comment on the candlestick rule above) instead of a second recomputation
-  // with its own hardcoded tolerance, independent of whatever the user
-  // actually configured.
+  // Clause: UT Bot Signal
+  let utPass = true;
   if (rules.utBot && rules.utBot.enabled) {
+    hasAnyCondition = true;
     const sig = contract.utBot || "";
     const isOL = !!contract.isOL;
     const isOH = !!contract.isOH;
     const prev = contract.prevCloseUsed !== undefined ? contract.prevCloseUsed : (contract.prevClose || 0);
-
     const isBuy = sig.includes("BUY") || isOL || (contract.close > contract.open && contract.close >= prev);
     const isSell = sig.includes("SELL") || isOH || (contract.close < contract.open && contract.close <= prev);
 
-    if (rules.utBot.signal === "BUY" && !isBuy) {
-      return explain ? { passed: false, failedRule: "utBot", reason: "Not UT Bot BUY signal" } : false;
-    }
-    if (rules.utBot.signal === "SELL" && !isSell) {
-      return explain ? { passed: false, failedRule: "utBot", reason: "Not UT Bot SELL signal" } : false;
+    if (rules.utBot.signal === "BUY") utPass = isBuy;
+    else if (rules.utBot.signal === "SELL") utPass = isSell;
+    else utPass = (isBuy || isSell || sig.includes("WAIT"));
+
+    if (utPass) anyMatched = true;
+    if (!isAnyLogic && !utPass) {
+      return explain ? { passed: false, failedRule: "utBot", reason: `UT Bot signal ${rules.utBot.signal} not matched` } : false;
     }
   }
 
-  // 10. Min OI
+  // Clause: Min OI
+  let oiPass = true;
   if (rules.minOi && rules.minOi.enabled && rules.minOi.value > 0) {
+    hasAnyCondition = true;
     const oi = contract.oi || 0;
-    if (oi < rules.minOi.value) {
+    if (oi >= rules.minOi.value) {
+      anyMatched = true;
+    } else {
+      oiPass = false;
+    }
+    if (!isAnyLogic && !oiPass) {
       return explain ? { passed: false, failedRule: "minOi", reason: `OI ${oi} < ${rules.minOi.value}` } : false;
     }
   }
 
-  // 11. Formula S3 (Premium ÷8 & ÷6.5)
+  // Clause: Formula S3
+  let formPass = true;
   if (rules.formula && rules.formula.enabled) {
+    hasAnyCondition = true;
     const prev = contract.prevCloseUsed !== undefined ? contract.prevCloseUsed : (contract.prevClose || 0);
     const low = contract.low || 0;
     const div8 = prev > 0 ? prev / 8.0 : 0;
     const div65 = prev > 0 ? prev / 6.5 : 0;
-
     const inPrem = prev >= rules.formula.premMin && prev <= rules.formula.premMax;
     const inLow = low >= rules.formula.lowMin && low <= rules.formula.lowMax;
     const inDiv = rules.formula.useDivisors && div8 > 0 && low >= div8 && low <= div65;
-
-    if (!(inPrem && (inLow || inDiv))) {
-      return explain ? { passed: false, failedRule: "formula", reason: `Formula S3 mismatch: prev=${prev}, low=${low}, div8=${div8.toFixed(1)}, div65=${div65.toFixed(1)}` } : false;
+    formPass = (inPrem && (inLow || inDiv));
+    if (formPass) anyMatched = true;
+    if (!isAnyLogic && !formPass) {
+      return explain ? { passed: false, failedRule: "formula", reason: `Formula S3 mismatch` } : false;
     }
   }
 
-  // 12. Indicator Specific
+  // Clause: Indicator Specific
+  let indPass = true;
   if (rules.indicator && rules.indicator.enabled && rules.indicator.id) {
+    hasAnyCondition = true;
     const ind = rules.indicator.id;
     if (ind === "strat1") {
-      // Handled by dayLow & previousClose
+      indPass = dayLowPass && prevClosePass;
     } else if (ind === "strat2") {
-      if (!contract.isOL && !contract.isOH) {
-        return explain ? { passed: false, failedRule: "indicator", reason: "Strat 2 requires Open=Low or Open=High" } : false;
-      }
+      indPass = (contract.isOL || contract.isOH);
     } else if (ind === "strat3") {
-      // Handled by formula
-    } else if (contract.indicatorMatch !== undefined && !contract.indicatorMatch) {
+      indPass = formPass;
+    } else if (contract.indicatorMatch !== undefined) {
+      indPass = !!contract.indicatorMatch;
+    }
+    if (indPass) anyMatched = true;
+    if (!isAnyLogic && !indPass) {
       return explain ? { passed: false, failedRule: "indicator", reason: `Did not match indicator ${ind}` } : false;
     }
+  }
+
+  if (isAnyLogic && hasAnyCondition && !anyMatched) {
+    return explain ? { passed: false, failedRule: "logicAny", reason: "None of the ANY conditions matched" } : false;
   }
 
   return explain ? { passed: true, failedRule: null, reason: "PASS" } : true;
@@ -6070,6 +6111,18 @@ function syncActiveScanToUI() {
   if (sInstIdx) sInstIdx.checked = !(rules.instrument && rules.instrument.enabled) || !!rules.instrument.index;
   if (sInstStk) sInstStk.checked = !(rules.instrument && rules.instrument.enabled) || !!rules.instrument.stock;
 
+  // Sync Query Builder Segment and Logic
+  const rSeg = document.getElementById('ruleSegment');
+  if (rSeg && rules.instrument) {
+    if (rules.instrument.index && !rules.instrument.stock) rSeg.value = 'INDEX';
+    else if (!rules.instrument.index && rules.instrument.stock) rSeg.value = 'STOCK';
+    else rSeg.value = 'FO';
+  }
+  const rLogic = document.getElementById('ruleLogic');
+  if (rLogic && rules.ruleLogic) {
+    rLogic.value = rules.ruleLogic;
+  }
+
   const sTypeVal = (rules.optionType && rules.optionType.enabled) ? rules.optionType.type : 'BOTH';
   document.querySelectorAll('#optTypeSeg button').forEach(b => {
     b.classList.toggle('active', b.dataset.v === sTypeVal);
@@ -6108,52 +6161,76 @@ function syncUIToActiveScan(source = 'chartink') {
     const rUtOn = document.getElementById('ruleUtOn');
     const rParamsOn = document.getElementById('ruleParamsOn');
     const rUn = document.getElementById('ruleExcludeUntraded');
+    const rSeg = document.getElementById('ruleSegment')?.value || 'FO';
+    const rLogic = document.getElementById('ruleLogic')?.value || 'ALL';
+
+    const lowMinVal = parseFloat(document.getElementById('ruleLowFrom')?.value);
+    const lowMaxVal = parseFloat(document.getElementById('ruleLowTo')?.value);
+    const prevMinVal = parseFloat(document.getElementById('rulePrevFrom')?.value);
+    const prevMaxVal = parseFloat(document.getElementById('rulePrevTo')?.value);
+    const candleMode = document.getElementById('ruleCandleMode')?.value || 'ALL';
+    const tolVal = parseFloat(document.getElementById('ruleTol')?.value);
+    const utAction = document.getElementById('ruleUtAction')?.value || 'ALL';
+    const utSensVal = parseFloat(document.getElementById('ruleUtSens')?.value);
+    const expMode = document.getElementById('ruleExpiry')?.value || 'all';
+    const optType = document.getElementById('ruleOptType')?.value || 'BOTH';
+    const minOiVal = parseFloat(document.getElementById('ruleMinOi')?.value);
+
+    const isIdx = (rSeg === 'INDEX' || rSeg === 'FO');
+    const isStk = (rSeg === 'STOCK' || rSeg === 'FO');
+
+    // Keep sidebar instrument checkboxes in sync with query segment
+    const sInstIdx = document.getElementById('instIdx');
+    if (sInstIdx) sInstIdx.checked = isIdx;
+    const sInstStk = document.getElementById('instStk');
+    if (sInstStk) sInstStk.checked = isStk;
 
     window.activeScan = {
       source: 'chartink',
       strategyId: 'custom',
       rules: {
+        ruleLogic: rLogic,
         dayLow: {
           enabled: !!(rLowOn && rLowOn.checked),
-          min: parseFloat(document.getElementById('ruleLowFrom').value) || 5.80,
-          max: parseFloat(document.getElementById('ruleLowTo').value) || 8.45
+          min: !isNaN(lowMinVal) ? lowMinVal : 5.80,
+          max: !isNaN(lowMaxVal) ? lowMaxVal : 8.45
         },
         previousClose: {
           enabled: !!(rPrevOn && rPrevOn.checked),
-          min: parseFloat(document.getElementById('rulePrevFrom').value) || 38.00,
-          max: parseFloat(document.getElementById('rulePrevTo').value) || 48.00
+          min: !isNaN(prevMinVal) ? prevMinVal : 38.00,
+          max: !isNaN(prevMaxVal) ? prevMaxVal : 48.00
         },
         candlestick: {
           enabled: !!(rCandleOn && rCandleOn.checked),
-          mode: document.getElementById('ruleCandleMode').value || 'ALL',
-          tol: parseFloat(document.getElementById('ruleTol').value) || 0.00
+          mode: candleMode,
+          tol: !isNaN(tolVal) ? tolVal : 0.00
         },
         utBot: {
-          enabled: !!(rUtOn && rUtOn.checked),
-          signal: document.getElementById('ruleUtAction').value || 'ALL',
-          sens: parseFloat(document.getElementById('ruleUtSens').value) || 1
+          enabled: !!(rUtOn && rUtOn.checked && utAction !== 'ALL'),
+          signal: utAction,
+          sens: !isNaN(utSensVal) ? utSensVal : 1
         },
         expiry: {
-          enabled: !!(rParamsOn && rParamsOn.checked),
-          mode: document.getElementById('ruleExpiry').value || 'all'
+          enabled: !!(rParamsOn && rParamsOn.checked && expMode !== 'all'),
+          mode: expMode
         },
         optionType: {
-          enabled: !!(rParamsOn && rParamsOn.checked && document.getElementById('ruleOptType').value !== 'BOTH'),
-          type: document.getElementById('ruleOptType').value || 'BOTH'
+          enabled: !!(rParamsOn && rParamsOn.checked && optType !== 'BOTH'),
+          type: optType
         },
         underlying: {
-          enabled: document.getElementById('symSelect').value !== '__ALL__',
-          symbol: document.getElementById('symSelect').value || '__ALL__',
-          search: (document.getElementById('symSearch').value || '').trim()
+          enabled: document.getElementById('symSelect')?.value !== '__ALL__',
+          symbol: document.getElementById('symSelect')?.value || '__ALL__',
+          search: (document.getElementById('symSearch')?.value || '').trim()
         },
         instrument: {
           enabled: true,
-          index: document.getElementById('instIdx') ? document.getElementById('instIdx').checked : true,
-          stock: document.getElementById('instStk') ? document.getElementById('instStk').checked : true
+          index: isIdx,
+          stock: isStk
         },
         minOi: {
-          enabled: !!(rParamsOn && rParamsOn.checked && parseFloat(document.getElementById('ruleMinOi').value) > 0),
-          value: parseFloat(document.getElementById('ruleMinOi').value) || 0
+          enabled: !!(rParamsOn && rParamsOn.checked && !isNaN(minOiVal) && minOiVal > 0),
+          value: !isNaN(minOiVal) ? minOiVal : 0
         },
         excludeUntraded: {
           enabled: !!(rUn && rUn.checked)
@@ -6411,10 +6488,13 @@ function renderSearchSuggestions(val) {
     return;
   }
 
-  // Find up to 8 top matches from lastResults
+  // Find up to 8 top matches from lastResults that match the active scan
   let matches = [];
   if (lastResults && lastResults.length) {
+    const activeScan = window.activeScan || DEFAULT_SCAN_CONFIG;
     matches = lastResults.filter(r => {
+      if (!evaluateContract(r, activeScan)) return false;
+      if (r.close <= 0.05 || r.low <= 0.05) return false;
       const sym = (r.symbol || '').toUpperCase();
       const strk = String(r.strike || '');
       const exp = (r.expiry || '').toUpperCase();
@@ -6501,24 +6581,9 @@ function handleTableSearchKeydown(event) {
 function filterAndRender() {
   let rows = lastResults.slice();
 
-  // 1. Chartink Query Candle Pattern Filter (only when Rule 3 is checked on)
-  const candleOn = document.getElementById('ruleCandleOn').checked;
-  const candleMode = document.getElementById('ruleCandleMode').value;
-  const tol = parseFloat(document.getElementById('ruleTol').value) || 0;
-  if (candleOn && candleMode === 'OL') {
-    rows = rows.filter(r => r.isOL || Math.abs(r.open - r.low) <= tol);
-  } else if (candleOn && candleMode === 'OH') {
-    rows = rows.filter(r => r.isOH || Math.abs(r.open - r.high) <= tol);
-  }
-
-  // 2. Chartink Query UT Bot Filter (only when Rule 4 is checked on)
-  const utOn = document.getElementById('ruleUtOn').checked;
-  const utMode = document.getElementById('ruleUtAction').value;
-  if (utOn && utMode === 'BUY') {
-    rows = rows.filter(r => r.utBot === '🟢 BUY' || r.isOL || (r.close > r.open && r.close >= r.prevCloseUsed));
-  } else if (utOn && utMode === 'SELL') {
-    rows = rows.filter(r => r.utBot === '🔴 SELL' || r.isOH || (r.close < r.open && r.close <= r.prevCloseUsed));
-  }
+  // 1. Authoritative Evaluation: enforce activeScan rules and strictly exclude 0.05/untraded contracts
+  const activeScan = window.activeScan || DEFAULT_SCAN_CONFIG;
+  rows = rows.filter(r => evaluateContract(r, activeScan));
 
   // Update Counters for Quick Pills
   let totalCnt = rows.length;
@@ -6540,14 +6605,14 @@ function filterAndRender() {
   setEl('cntBUY', buyCnt);
   setEl('queryMatchCount', totalCnt);
 
-  // 3. Quick Table Filter Pills
+  // 2. Quick Table Filter Pills
   if (currentQuickFilter === 'CE') rows = rows.filter(r => r.type === 'CE');
   else if (currentQuickFilter === 'PE') rows = rows.filter(r => r.type === 'PE');
   else if (currentQuickFilter === 'OL') rows = rows.filter(r => r.isOL || (r.sig && r.sig.includes('O=L')));
   else if (currentQuickFilter === 'OH') rows = rows.filter(r => r.isOH || (r.sig && r.sig.includes('O=H')));
   else if (currentQuickFilter === 'BUY') rows = rows.filter(r => r.utBot === '🟢 BUY' || r.isOL);
 
-  // 4. Search Filter
+  // 3. Search Filter
   if (currentTableSearchQuery) {
     rows = rows.filter(r => {
       const sym = (r.symbol || '').toUpperCase();
@@ -7446,6 +7511,14 @@ async function runServerScan() {
 }
 
 async function runLiveScan() {
+  // Unlike runServerScan(), this never re-read the sidebar's CE/PE, Day Low,
+  // Prev Close, etc. before scanning -- clicking those widgets then "Fetch
+  // Live Chain" silently kept using whatever rules were already loaded.
+  // Only resync when in manual/custom mode; an active indicator/strategy
+  // keeps its own isolated rules untouched (same as runServerScan's pattern).
+  if (!window.activeScan || !window.activeScan.rules || window.activeScan.source === 'manual' || window.activeScan.source === 'chartink') {
+    syncUIToActiveScan(window.activeScan && window.activeScan.source === 'chartink' ? 'chartink' : 'manual');
+  }
   const result = await executeActiveScan();
   if (currentMode === 'live') {
     const t = document.getElementById('liveLastTime');
