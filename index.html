@@ -3680,6 +3680,11 @@
     <div class="opt-chart-body" style="padding: 12px 16px;">
       <div id="optCanvasContainer" style="width:100%; height:340px; position:relative; background:#0b0e14; border-radius:8px; border:1px solid var(--line); overflow:hidden;">
         <canvas id="optChartCanvas" width="1140" height="340" style="width:100%; height:100%; display:block;"></canvas>
+        <div id="optChartUnavailable" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; color:#94a3b8; text-align:center; padding:0 20px;">
+          <span style="font-size:28px;">📡</span>
+          <b style="color:#fcd34d; font-size:13.5px;">Chart unavailable right now</b>
+          <span id="optChartUnavailableMsg" style="font-size:12px; max-width:340px;"></span>
+        </div>
       </div>
     </div>
 
@@ -7877,35 +7882,6 @@ function findLocalContract(symbol, expiry, strike, type) {
   return null;
 }
 
-function syntheticFallbackContract(symbol, expiry, strike, type) {
-  let defaultPrice = 100.0;
-  const symUpper = (symbol || 'NIFTY').toUpperCase();
-  if (symUpper.includes('BANK')) defaultPrice = 51785.0;
-  else if (symUpper.includes('SENSEX')) defaultPrice = 81424.0;
-  else if (symUpper.includes('MIDCAP')) defaultPrice = 13105.0;
-  else if (symUpper.includes('VIX')) defaultPrice = 12.82;
-  else if (symUpper.includes('GOLD')) defaultPrice = 75840.0;
-  else if (symUpper.includes('CRUDE')) defaultPrice = 6120.0;
-  else if (symUpper.includes('BTC') || symUpper.includes('BITCOIN')) defaultPrice = 8081600.0;
-  else if (symUpper.includes('DOW')) defaultPrice = 42850.0;
-  else if (symUpper.includes('SP500')) defaultPrice = 5860.0;
-  else if (symUpper.includes('NASDAQ')) defaultPrice = 20450.0;
-  else if (symUpper.includes('GIFT')) defaultPrice = 24920.0;
-  else if (symUpper.includes('NIFTY')) defaultPrice = 24852.0;
-  else if (symUpper.includes('RELIANCE')) defaultPrice = 2980.0;
-  else if (symUpper.includes('TCS')) defaultPrice = 4250.0;
-  else if (symUpper.includes('INFY')) defaultPrice = 1890.0;
-
-  return {
-    symbol: symbol || 'NIFTY', expiry: expiry || '', strike: strike || 0, type: type || '',
-    open: defaultPrice, high: defaultPrice * 1.008, low: defaultPrice * 0.994, close: defaultPrice, prevClose: defaultPrice * 0.996,
-    spot: defaultPrice, vol: 1500000, oi: 25000000,
-    tgt9: defaultPrice * 1.09, tgt18: defaultPrice * 1.18, sl5: defaultPrice * 0.95, sl9: defaultPrice * 0.91,
-    div8: defaultPrice / 8, div65: defaultPrice / 6.5,
-    isEstimate: true
-  };
-}
-
 // Fetches the real option chain for this symbol when the contract isn't already
 // loaded in memory, instead of immediately falling back to a fabricated price —
 // so clicking any strike (not just ones already on screen) opens the real thing.
@@ -7941,6 +7917,13 @@ async function fetchLiveContract(symbol, expiry, strike, type) {
 function renderOptionModalContract(contract) {
   currentSelectedContract = contract;
 
+  // Restore the canvas / hide the "unavailable" state in case the previous
+  // contract opened in this same modal hit renderUnavailableContract().
+  const canvasEl = document.getElementById('optChartCanvas');
+  const unavailableEl = document.getElementById('optChartUnavailable');
+  if (canvasEl) canvasEl.style.display = 'block';
+  if (unavailableEl) unavailableEl.style.display = 'none';
+
   const modal = document.getElementById('optionChartModal');
   const typeBadge = document.getElementById('optBadgeType');
   const isOption = contract.strike > 0 && contract.type;
@@ -7966,9 +7949,7 @@ function renderOptionModalContract(contract) {
 
   const spot = contract.spot || (currentChainData ? currentChainData.spot : 0);
   const moneynessBadge = document.getElementById('optBadgeMoneyness');
-  if (contract.isEstimate) {
-    moneynessBadge.textContent = '⚠️ Estimated (no live data source for this symbol)';
-  } else if (!isOption) {
+  if (!isOption) {
     moneynessBadge.textContent = spot > 0 ? ('Live Spot ₹' + fmtNum(spot)) : 'Underlying Chart';
   } else if (spot > 0) {
     const isCE = contract.type === 'CE';
@@ -8019,6 +8000,45 @@ function renderOptionModalContract(contract) {
 // synthetic snapshot instead of waiting on a request that can only fail.
 const NON_NSE_CHAIN_SYMBOLS = new Set(['INDIA VIX', 'SENSEX', 'GOLD', 'CRUDEOIL', 'BTC', 'BITCOIN', 'DOW', 'SP500', 'NASDAQ']);
 
+// Phase 4 (BRD redesign): replaces showing a fabricated price
+// (syntheticFallbackContract, kept below only as dead history until its last
+// caller is confirmed removed) when no real data source exists for this
+// contract. The BRD explicitly rules out presenting placeholder values as
+// live market data -- so instead of drawing a chart and stats against made-up
+// numbers, this shows an honest "unavailable" state in the same modal shell.
+function renderUnavailableContract(symbol, expiry, strike, type) {
+  const modal = document.getElementById('optionChartModal');
+  const isOption = strike > 0 && type;
+  const label = isOption ? `${symbol} ${strike} ${type}${expiry ? ' (' + expiry + ')' : ''}` : symbol;
+
+  document.getElementById('optModalTitle').textContent = label;
+  const typeBadge = document.getElementById('optBadgeType');
+  if (isOption) {
+    typeBadge.textContent = type;
+    typeBadge.className = 'prem-chip ' + (type === 'CE' ? 'ce' : 'pe');
+  } else {
+    typeBadge.textContent = 'SPOT';
+    typeBadge.className = 'stat';
+  }
+  document.getElementById('optBadgeMoneyness').textContent = '⚠️ Live data unavailable right now';
+
+  ['optStatLtp', 'optStatChg', 'optStatRange', 'optStatOpenPc', 'optStatTgt', 'optStatSl', 'optStatDiv', 'optStatVolOi'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '–';
+  });
+
+  const canvas = document.getElementById('optChartCanvas');
+  const unavailable = document.getElementById('optChartUnavailable');
+  const unavailableMsg = document.getElementById('optChartUnavailableMsg');
+  if (canvas) canvas.style.display = 'none';
+  if (unavailableMsg) unavailableMsg.textContent = `No live or cached data source for ${label} at the moment. We don't show an estimated price here, since that could be mistaken for a real one.`;
+  if (unavailable) unavailable.style.display = 'flex';
+
+  currentSelectedContract = null;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
 function contractFromKnownQuote(symbol, quote) {
   return {
     symbol, expiry: '', strike: 0, type: '',
@@ -8046,14 +8066,18 @@ async function openOptionChartModal(symbol, expiry, strike, type) {
     return;
   }
   if (NON_NSE_CHAIN_SYMBOLS.has(symUpper)) {
-    renderOptionModalContract(syntheticFallbackContract(symbol, expiry, strike, type));
+    renderUnavailableContract(symbol, expiry, strike, type);
     return;
   }
   // Not already loaded — fetch the real chain instead of showing a fabricated
   // price. This only adds a network round-trip for strikes/symbols the app
   // hasn't already scanned; anything already on screen still opens instantly.
   const live = await fetchLiveContract(symbol, expiry, strike, type);
-  renderOptionModalContract(live || syntheticFallbackContract(symbol, expiry, strike, type));
+  if (live) {
+    renderOptionModalContract(live);
+  } else {
+    renderUnavailableContract(symbol, expiry, strike, type);
+  }
 }
 
 /* ============================================================
