@@ -2969,31 +2969,31 @@
     <div class="global-ticker-card gold" onclick="openOptionChartModal('GOLD', '', 0, '')" style="cursor:pointer;" title="Click to view MCX Gold chart with fitted indicators">
       <div class="index-ticker-left">
         <span class="index-ticker-name" style="color:#facc15;">GOLD 24K (MCX) 🪙</span>
-        <span class="global-sub-label" id="goldUsdSub">$2,680.0/oz</span>
+        <span class="global-sub-label" id="goldUsdSub">Loading…</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="goldMcxVal">₹75,840</span>
-        <span class="index-ticker-chg pos" id="goldMcxChg">▲ +0.54%</span>
+        <span class="index-ticker-val" id="goldMcxVal">–</span>
+        <span class="index-ticker-chg" id="goldMcxChg"></span>
       </div>
     </div>
     <div class="global-ticker-card crude" onclick="openOptionChartModal('CRUDEOIL', '', 0, '')" style="cursor:pointer;" title="Click to view MCX Crude Oil chart with fitted indicators">
       <div class="index-ticker-left">
         <span class="index-ticker-name" style="color:#38bdf8;">CRUDE OIL (MCX) 🛢️</span>
-        <span class="global-sub-label" id="crudeUsdSub">$72.50/bbl</span>
+        <span class="global-sub-label" id="crudeUsdSub">Loading…</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="crudeMcxVal">₹6,120</span>
-        <span class="index-ticker-chg neg" id="crudeMcxChg">▼ -2.33%</span>
+        <span class="index-ticker-val" id="crudeMcxVal">–</span>
+        <span class="index-ticker-chg" id="crudeMcxChg"></span>
       </div>
     </div>
     <div class="global-ticker-card crypto" onclick="openOptionChartModal('BTC', '', 0, '')" style="cursor:pointer;" title="Click to view Bitcoin chart with fitted indicators">
       <div class="index-ticker-left">
         <span class="index-ticker-name" style="color:#fbbf24;">BITCOIN (BTC/INR) ₿</span>
-        <span class="global-sub-label" id="btcUsdSub">$67,500</span>
+        <span class="global-sub-label" id="btcUsdSub">Loading…</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="btcInrVal">₹72,40,000</span>
-        <span class="index-ticker-chg pos" id="btcInrChg">▲ +1.15%</span>
+        <span class="index-ticker-val" id="btcInrVal">–</span>
+        <span class="index-ticker-chg" id="btcInrChg"></span>
       </div>
     </div>
     <div class="global-ticker-card" style="cursor:default;" title="Live USD to INR Exchange Rate">
@@ -3002,52 +3002,70 @@
         <span class="global-sub-label">FOREX BENCHMARK</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="usdInrVal">₹85.20</span>
-        <span class="index-ticker-chg neg" id="usdInrChg">▼ -0.05%</span>
+        <span class="index-ticker-val" id="usdInrVal">–</span>
+        <span class="index-ticker-chg" id="usdInrChg"></span>
+      </div>
+    </div>
+    <div class="global-ticker-card" style="cursor:default; opacity:0.75;" title="No live US equity data source is configured for this app">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#94a3b8;">US STOCKS 🇺🇸</span>
+        <span class="global-sub-label">No data source configured</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" style="color:#64748b;">Unavailable</span>
+      </div>
+    </div>
+    <div class="global-ticker-card" style="cursor:default; opacity:0.75;" title="Only BTC/INR is available via the current data source">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#94a3b8;">OTHER CRYPTO</span>
+        <span class="global-sub-label">Only BTC/INR available</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" style="color:#64748b;">Unavailable</span>
       </div>
     </div>
   </div>
 
   <!-- 📈 3. US & Indian Market Monthly Futures Ticker Rail -->
   <div class="global-markets-bar" id="globalFuturesBar">
-    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view GIFT NIFTY Futures chart with fitted indicators">
+    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real NIFTY spot + an assumed fixed premium, not a live quote from NSE IX">
       <div class="index-ticker-left">
-        <span class="index-ticker-name" style="color:#38bdf8;">GIFT NIFTY FUT 🇮🇳</span>
-        <span class="global-sub-label" id="giftNiftyBasis">Basis: +68.0</span>
+        <span class="index-ticker-name" style="color:#38bdf8;">GIFT NIFTY FUT (Est.) 🇮🇳</span>
+        <span class="global-sub-label" id="giftNiftyBasis">Basis: +68.0 (estimated)</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="giftNiftyVal">24,920.15</span>
-        <span class="index-ticker-chg pos" id="giftNiftyChg">▲ +0.48%</span>
+        <span class="index-ticker-val" id="giftNiftyVal">–</span>
+        <span class="index-ticker-chg" id="giftNiftyChg"></span>
       </div>
     </div>
-    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view NIFTY Monthly Futures chart">
+    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real NIFTY spot + an assumed fixed premium, not a live futures-exchange quote">
       <div class="index-ticker-left">
-        <span class="index-ticker-name">NIFTY NEAR FUT 📅</span>
-        <span class="global-sub-label" id="niftyNearBasis">Prem: +45.0</span>
+        <span class="index-ticker-name">NIFTY NEAR FUT (Est.) 📅</span>
+        <span class="global-sub-label" id="niftyNearBasis">Prem: +45.0 (estimated)</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="niftyNearVal">24,897.15</span>
-        <span class="index-ticker-chg pos" id="niftyNearChg">▲ +0.42%</span>
+        <span class="index-ticker-val" id="niftyNearVal">–</span>
+        <span class="index-ticker-chg" id="niftyNearChg"></span>
       </div>
     </div>
-    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view NIFTY Next Month Futures chart">
+    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real NIFTY spot + an assumed fixed premium, not a live futures-exchange quote">
       <div class="index-ticker-left">
-        <span class="index-ticker-name">NIFTY NEXT FUT 📅</span>
-        <span class="global-sub-label" id="niftyNextBasis">Roll Spread: +83.0</span>
+        <span class="index-ticker-name">NIFTY NEXT FUT (Est.) 📅</span>
+        <span class="global-sub-label" id="niftyNextBasis">Roll Spread: +83.0 (estimated)</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="niftyNextVal">24,980.15</span>
-        <span class="index-ticker-chg pos" id="niftyNextChg">▲ +0.44%</span>
+        <span class="index-ticker-val" id="niftyNextVal">–</span>
+        <span class="index-ticker-chg" id="niftyNextChg"></span>
       </div>
     </div>
-    <div class="global-ticker-card" onclick="openOptionChartModal('BANKNIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view BANKNIFTY Monthly Futures chart">
+    <div class="global-ticker-card" onclick="openOptionChartModal('BANKNIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real BANKNIFTY spot + an assumed fixed premium, not a live futures-exchange quote">
       <div class="index-ticker-left">
-        <span class="index-ticker-name">BANK NIFTY FUT 📅</span>
-        <span class="global-sub-label" id="bankNearBasis">Prem: +165.0</span>
+        <span class="index-ticker-name">BANK NIFTY FUT (Est.) 📅</span>
+        <span class="global-sub-label" id="bankNearBasis">Prem: +165.0 (estimated)</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="bankNearVal">51,950.40</span>
-        <span class="index-ticker-chg pos" id="bankNearChg">▲ +0.46%</span>
+        <span class="index-ticker-val" id="bankNearVal">–</span>
+        <span class="index-ticker-chg" id="bankNearChg"></span>
       </div>
     </div>
     <div class="global-ticker-card" onclick="openOptionChartModal('DOW', '', 0, '')" style="cursor:pointer;" title="Click to view Dow Jones Futures chart with fitted indicators">
@@ -3056,8 +3074,8 @@
         <span class="global-sub-label">CBOT MINI (YM)</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="dowFutVal">42,850</span>
-        <span class="index-ticker-chg pos" id="dowFutChg">▲ +0.35%</span>
+        <span class="index-ticker-val" id="dowFutVal">–</span>
+        <span class="index-ticker-chg" id="dowFutChg"></span>
       </div>
     </div>
     <div class="global-ticker-card" onclick="openOptionChartModal('SP500', '', 0, '')" style="cursor:pointer;" title="Click to view S&P 500 Futures chart with fitted indicators">
@@ -3066,8 +3084,8 @@
         <span class="global-sub-label">CME MINI (ES)</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="spFutVal">5,860.00</span>
-        <span class="index-ticker-chg pos" id="spFutChg">▲ +0.28%</span>
+        <span class="index-ticker-val" id="spFutVal">–</span>
+        <span class="index-ticker-chg" id="spFutChg"></span>
       </div>
     </div>
     <div class="global-ticker-card" onclick="openOptionChartModal('NASDAQ', '', 0, '')" style="cursor:pointer;" title="Click to view Nasdaq 100 Futures chart with fitted indicators">
@@ -3076,8 +3094,8 @@
         <span class="global-sub-label">CME MINI (NQ)</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="nasdaqFutVal">20,450.00</span>
-        <span class="index-ticker-chg pos" id="nasdaqFutChg">▲ +0.42%</span>
+        <span class="index-ticker-val" id="nasdaqFutVal">–</span>
+        <span class="index-ticker-chg" id="nasdaqFutChg"></span>
       </div>
     </div>
   </div>
@@ -9716,6 +9734,25 @@ function initLiveClock() {
    INDIAN & GLOBAL COMMODITIES, CRYPTO & FUTURES ENGINE
    Gold (MCX), Crude Oil (MCX), Bitcoin (BTC/INR), & US/Indian Futures
 ============================================================ */
+// Renders one ticker card from a backend entry that may be `available:false`
+// (live fetch failed) -- shows a plain "Unavailable" state instead of a
+// broken "NaN%" when there's no real fabricated-fallback number to fall
+// back on anymore (see get_global_markets() in nse_service.py).
+function renderGlobalTicker(prefix, item) {
+  const elVal = document.getElementById(prefix + 'Val');
+  const elChg = document.getElementById(prefix + 'Chg');
+  if (!item || !item.available) {
+    if (elVal) elVal.textContent = 'Unavailable';
+    if (elChg) { elChg.textContent = ''; elChg.className = 'index-ticker-chg'; }
+    return;
+  }
+  if (elVal) elVal.textContent = item.priceFormatted;
+  if (elChg) {
+    elChg.textContent = `${item.isPos ? '▲ ' : '▼ '}${fmtPct(item.chgPct)}`;
+    elChg.className = `index-ticker-chg ${item.isPos ? 'pos' : 'neg'}`;
+  }
+}
+
 async function fetchGlobalMarkets() {
   try {
     const res = await fetch(`${API_BASE}/api/market/global`);
@@ -9724,124 +9761,41 @@ async function fetchGlobalMarkets() {
     if (!data.success) { showDashboardIssue('Global markets data is temporarily unavailable. Retrying automatically.'); return; }
     clearDashboardIssue();
 
-    // 1. Commodities (Gold, Crude, BTC)
-    if (data.commodities && data.commodities.length) {
-      data.commodities.forEach(c => {
-        if (c.id === 'gold') {
-          const elVal = document.getElementById('goldMcxVal');
-          const elChg = document.getElementById('goldMcxChg');
-          const elSub = document.getElementById('goldUsdSub');
-          if (elVal) elVal.textContent = c.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${c.isPos ? '▲ ' : '▼ '}${fmtPct(c.chgPct)}`;
-            elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
-          }
-          if (elSub && c.subLabel) elSub.textContent = c.subLabel;
-        } else if (c.id === 'crude') {
-          const elVal = document.getElementById('crudeMcxVal');
-          const elChg = document.getElementById('crudeMcxChg');
-          const elSub = document.getElementById('crudeUsdSub');
-          if (elVal) elVal.textContent = c.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${c.isPos ? '▲ ' : '▼ '}${fmtPct(c.chgPct)}`;
-            elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
-          }
-          if (elSub && c.subLabel) elSub.textContent = c.subLabel;
-        } else if (c.id === 'btc') {
-          const elVal = document.getElementById('btcInrVal');
-          const elChg = document.getElementById('btcInrChg');
-          const elSub = document.getElementById('btcUsdSub');
-          if (elVal) elVal.textContent = c.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${c.isPos ? '▲ ' : '▼ '}${fmtPct(c.chgPct)}`;
-            elChg.className = `index-ticker-chg ${c.isPos ? 'pos' : 'neg'}`;
-          }
-          if (elSub && c.subLabel) elSub.textContent = c.subLabel;
-        }
-      });
-    }
+    const byId = {};
+    (data.commodities || []).forEach(c => byId[c.id] = c);
+    (data.futures || []).forEach(f => byId[f.id] = f);
 
-    // Forex
-    if (data.inrUsd) {
+    renderGlobalTicker('goldMcx', byId.gold);
+    const goldSub = document.getElementById('goldUsdSub'); if (goldSub && byId.gold) goldSub.textContent = byId.gold.subLabel;
+    renderGlobalTicker('crudeMcx', byId.crude);
+    const crudeSub = document.getElementById('crudeUsdSub'); if (crudeSub && byId.crude) crudeSub.textContent = byId.crude.subLabel;
+    renderGlobalTicker('btcInr', byId.btc);
+    const btcSub = document.getElementById('btcUsdSub'); if (btcSub && byId.btc) btcSub.textContent = byId.btc.subLabel;
+
+    renderGlobalTicker('giftNifty', byId.gift_nifty);
+    const giftSub = document.getElementById('giftNiftyBasis'); if (giftSub && byId.gift_nifty) giftSub.textContent = byId.gift_nifty.subLabel;
+    renderGlobalTicker('niftyNear', byId.nifty_fut_near);
+    const nnSub = document.getElementById('niftyNearBasis'); if (nnSub && byId.nifty_fut_near) nnSub.textContent = byId.nifty_fut_near.subLabel;
+    renderGlobalTicker('niftyNext', byId.nifty_fut_next);
+    const nxSub = document.getElementById('niftyNextBasis'); if (nxSub && byId.nifty_fut_next) nxSub.textContent = byId.nifty_fut_next.subLabel;
+    renderGlobalTicker('bankNear', byId.bank_fut_near);
+    const bnSub = document.getElementById('bankNearBasis'); if (bnSub && byId.bank_fut_near) bnSub.textContent = byId.bank_fut_near.subLabel;
+    renderGlobalTicker('dowFut', byId.dow_fut);
+    renderGlobalTicker('spFut', byId.sp_fut);
+    renderGlobalTicker('nasdaqFut', byId.nasdaq_fut);
+
+    if (data.inrUsd != null) {
       const elVal = document.getElementById('usdInrVal');
       const elChg = document.getElementById('usdInrChg');
       if (elVal) elVal.textContent = `₹${data.inrUsd.toFixed(2)}`;
-      if (elChg) {
+      if (elChg && data.inrChgPct != null) {
         const isPos = data.inrChgPct >= 0;
         elChg.textContent = `${isPos ? '▲ ' : '▼ '}${fmtPct(data.inrChgPct)}`;
         elChg.className = `index-ticker-chg ${isPos ? 'pos' : 'neg'}`;
       }
-    }
-
-    // 2. Futures (GIFT Nifty, Nifty Near/Next, BankNifty, Dow, S&P 500, Nasdaq)
-    if (data.futures && data.futures.length) {
-      data.futures.forEach(f => {
-        if (f.id === 'gift_nifty') {
-          const elVal = document.getElementById('giftNiftyVal');
-          const elChg = document.getElementById('giftNiftyChg');
-          const elSub = document.getElementById('giftNiftyBasis');
-          if (elVal) elVal.textContent = f.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
-            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
-          }
-          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
-        } else if (f.id === 'nifty_fut_near') {
-          const elVal = document.getElementById('niftyNearVal');
-          const elChg = document.getElementById('niftyNearChg');
-          const elSub = document.getElementById('niftyNearBasis');
-          if (elVal) elVal.textContent = f.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
-            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
-          }
-          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
-        } else if (f.id === 'nifty_fut_next') {
-          const elVal = document.getElementById('niftyNextVal');
-          const elChg = document.getElementById('niftyNextChg');
-          const elSub = document.getElementById('niftyNextBasis');
-          if (elVal) elVal.textContent = f.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
-            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
-          }
-          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
-        } else if (f.id === 'bank_fut_near') {
-          const elVal = document.getElementById('bankNearVal');
-          const elChg = document.getElementById('bankNearChg');
-          const elSub = document.getElementById('bankNearBasis');
-          if (elVal) elVal.textContent = f.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
-            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
-          }
-          if (elSub && f.subLabel) elSub.textContent = f.subLabel;
-        } else if (f.id === 'dow_fut') {
-          const elVal = document.getElementById('dowFutVal');
-          const elChg = document.getElementById('dowFutChg');
-          if (elVal) elVal.textContent = f.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
-            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
-          }
-        } else if (f.id === 'sp_fut') {
-          const elVal = document.getElementById('spFutVal');
-          const elChg = document.getElementById('spFutChg');
-          if (elVal) elVal.textContent = f.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
-            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
-          }
-        } else if (f.id === 'nasdaq_fut') {
-          const elVal = document.getElementById('nasdaqFutVal');
-          const elChg = document.getElementById('nasdaqFutChg');
-          if (elVal) elVal.textContent = f.priceFormatted;
-          if (elChg) {
-            elChg.textContent = `${f.isPos ? '▲ ' : '▼ '}${fmtPct(f.chgPct)}`;
-            elChg.className = `index-ticker-chg ${f.isPos ? 'pos' : 'neg'}`;
-          }
-        }
-      });
+    } else {
+      const elVal = document.getElementById('usdInrVal');
+      if (elVal) elVal.textContent = 'Unavailable';
     }
   } catch (err) {
     console.warn('Failed to fetch global markets:', err);
