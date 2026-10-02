@@ -599,10 +599,11 @@
   .panel.filters {
     width: 320px;
     flex-shrink: 0;
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: linear-gradient(180deg, #0f1520 0%, #0a0f19 100%);
+    border: 2px solid #1e3a5f;
     border-radius: 10px;
     padding: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
   main {
     flex: 1;
@@ -665,11 +666,11 @@
   .segbtns button.active { background: #2563eb; color: #fff; }
   .scan-btn {
     width: 100%;
-    background: #10b981;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 0;
+    border: 2px solid #34d399;
+    border-radius: 8px;
+    padding: 12px 0;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
@@ -677,12 +678,19 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: 0 2px 10px rgba(16,185,129,0.3);
-    transition: all 0.15s ease;
+    box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+    transition: all 0.2s ease;
     font-family: inherit;
-    margin-top: 10px;
+    margin-top: 12px;
   }
-  .scan-btn:hover { background: #059669; }
+  .scan-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 6px 18px rgba(16,185,129,0.5);
+    transform: translateY(-2px);
+  }
+  .scan-btn:active {
+    transform: translateY(0);
+  }
 
   /* Strategy preset buttons in sidebar */
   .strat-btn {
@@ -2046,16 +2054,25 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    background: #141c2c;
-    border: 1px solid #2b394f;
-    color: #93c5fd;
-    padding: 10px 14px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 2px solid #3b82f6;
+    color: #e0f2fe;
+    padding: 12px 16px;
     border-radius: 8px;
     font-weight: 700;
-    font-size: 12.5px;
-    margin-bottom: 12px;
+    font-size: 13px;
+    margin-bottom: 14px;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+  }
+  .mobile-filter-toggle:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+  }
+  .mobile-filter-toggle:active {
+    transform: translateY(0);
   }
   .panel.filters.collapsed,
   .chartink-query-card.collapsed {
@@ -2849,6 +2866,51 @@
     .rx-nav-btn { flex: 0 0 auto; }
     .rx-quick-actions { grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* Mobile Table Responsive: Convert tables to card layout on small screens */
+  @media (max-width: 600px) {
+    table { width: 100% !important; }
+    table thead { display: none; }
+    table tbody tr { display: block; border-bottom: 1px solid #1a2333 !important; margin-bottom: 12px; padding: 12px 0; border-radius: 8px; background: #0f1520; }
+    table tbody td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px !important;
+      border: none !important;
+      text-align: right;
+    }
+    table tbody td:before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: #94a3b8;
+      text-align: left;
+      flex: 1;
+      margin-right: 8px;
+    }
+    table tbody td:first-child:before { content: none; }
+    table tbody td:first-child {
+      display: block;
+      font-weight: 700;
+      color: #f1f5f9;
+      padding: 8px 12px !important;
+      margin-bottom: 8px;
+    }
+  }
+
+  /* Unavailable data state styling — honest display without false information */
+  .unavailable-state {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.08);
+    border-left: 3px solid #ef4444;
+  }
+  .unavailable-state-icon { font-size: 18px; flex-shrink: 0; }
+  .unavailable-state-text-main { color: #fcd34d; font-weight: 700; font-size: 13px; }
+  .unavailable-state-text-sub { color: #94a3b8; font-size: 11.5px; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -3171,7 +3233,7 @@
          no account), so this honestly says so rather than fabricating
          headlines or timestamps. Swap renderNewsSection()'s "unavailable"
          branch for a real fetch once a provider (e.g. NewsAPI) is wired up. -->
-    <div class="rx-section-label" style="margin-top:0;">📰 Live Market News</div>
+    <div id="liveNewsHeading" class="rx-section-label" style="margin-top:0;">📰 Live Market News</div>
     <div id="newsSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
       <div style="display:flex; align-items:center; gap:12px; color:#94a3b8; font-size:12px;">Loading…</div>
     </div>
@@ -3179,7 +3241,7 @@
     <!-- Best Mutual Funds -- real AMFI NAV history via mfapi.in, ranked by
          real computed 5-year CAGR for a fixed universe of Direct-Growth
          equity schemes. Never an invented return figure. -->
-    <div class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
+    <div id="bestMutualFundsHeading" class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
       <span>💰 Best Mutual Funds (5-Year Returns)</span>
       <span style="display:flex; gap:6px;">
         <button class="small-strat-btn mf-filter-btn active" data-mf-filter="ALL" onclick="setMfFilter('ALL')" style="padding:3px 9px; font-size:11px;">All</button>
@@ -3195,7 +3257,7 @@
     </div>
 
     <!-- IPO Calendar -- real NSE public IPO data (upcoming / ongoing / closed). -->
-    <div class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
+    <div id="ipoCalendarHeading" class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
       <span>🚀 IPO Calendar</span>
       <span style="display:flex; gap:6px;">
         <button class="small-strat-btn ipo-tab-btn active" data-ipo-tab="ongoing" onclick="setIpoTab('ongoing')" style="padding:3px 9px; font-size:11px;">Ongoing</button>
@@ -3269,26 +3331,100 @@
     </div>
   </div>
 
-  <!-- Real Stock Buy Picks -- shown only while "Stocks Only" is locked on.
-       Real NSE equity prices from Upstox (not option premiums), classified
-       Intraday/Short-Term/Long-Term by a documented rule. -->
+  <!-- Real Stock Buy Picks — ALL Indian Stocks with bullish/bearish classification -->
   <div class="rx-legacy-tools" id="stockPicksPanel" style="display:none; background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
       <div>
         <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📈 Real Stock Buy Picks</div>
-        <div style="color:#94a3b8; font-size:11.5px; margin-top:2px; max-width:560px;">Real NSE equity prices (not option premiums), classified Intraday / Short-Term / Long-Term by a documented rule — not a guaranteed outcome.</div>
+        <div style="color:#94a3b8; font-size:11.5px; margin-top:2px; max-width:560px;">All Indian stocks (NSE+BSE) with bullish/bearish classification — Large Cap, Mid Cap, Small Cap</div>
       </div>
+      <button class="small-strat-btn" onclick="fetchIndianStocks(true)" title="Force a fresh fetch">🔄 Refresh</button>
+    </div>
+
+    <!-- Category Filters -->
+    <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
+      <button class="small-strat-btn stock-cat-btn active" data-cat="all" onclick="setStockCategory('all')">📊 All Stocks</button>
+      <button class="small-strat-btn stock-cat-btn" data-cat="large_cap" onclick="setStockCategory('large_cap')">🏢 Large Cap</button>
+      <button class="small-strat-btn stock-cat-btn" data-cat="mid_cap" onclick="setStockCategory('mid_cap')">📈 Mid Cap</button>
+      <button class="small-strat-btn stock-cat-btn" data-cat="small_cap" onclick="setStockCategory('small_cap')">📉 Small Cap</button>
+    </div>
+
+    <!-- Stocks Table with Pagination -->
+    <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:10px;">
+      <table id="stockPicksTable" style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--line); height:32px;">
+            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Symbol</th>
+            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Signal</th>
+            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Price ₹</th>
+            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Range %</th>
+            <th style="text-align:center; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Category</th>
+          </tr>
+        </thead>
+        <tbody id="stockPicksBody">
+          <tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Loading stocks…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div id="stockPicksPagination" style="display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- 📰 MARKET NEWS TICKER -->
+  <div class="rx-legacy-tools" id="newsTickerPanel" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📰 Market News Ticker</div>
+      <button class="small-strat-btn" onclick="fetchMarketNews(true)" title="Refresh news">🔄</button>
+    </div>
+    <div id="newsTickerBody" style="color:#94a3b8; font-size:12px;">Loading news...</div>
+  </div>
+
+  <!-- 🔗 BLOCK DEALS -->
+  <div class="rx-legacy-tools" id="blockDealsPanel" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="font-weight:700; font-size:14px; color:#f1f5f9;">🔗 Block Deals (NSE Daily)</div>
+      <button class="small-strat-btn" onclick="fetchBlockDeals(true)" title="Refresh deals">🔄</button>
+    </div>
+    <div id="blockDealsBody" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:11px;">
+        <thead><tr style="border-bottom:1px solid var(--line); color:#94a3b8;">
+          <th style="text-align:left; padding:6px;">Symbol</th><th style="text-align:right; padding:6px;">Qty</th>
+          <th style="text-align:right; padding:6px;">Price</th><th style="text-align:right; padding:6px;">Value</th>
+          <th style="text-align:left; padding:6px;">Client</th><th style="text-align:left; padding:6px;">Time</th>
+        </tr></thead>
+        <tbody id="blockDealsRows">
+          <tr><td colspan="6" style="text-align:center; padding:12px; color:#94a3b8;">Loading block deals...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 📊 RAJAN-PAVAN INDICATORS -->
+  <div class="rx-legacy-tools" id="indicatorsPanel" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+      <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📊 Rajan-Pavan Indicators (15 Strategies)</div>
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        <button class="small-strat-btn pick-filter-btn active" data-pick-filter="ALL" onclick="setStockPickFilter('ALL')">All</button>
-        <button class="small-strat-btn pick-filter-btn" data-pick-filter="INTRADAY" onclick="setStockPickFilter('INTRADAY')">⚡ Intraday Bullish</button>
-        <button class="small-strat-btn pick-filter-btn" data-pick-filter="SHORT" onclick="setStockPickFilter('SHORT')">📆 Short-Term Bullish</button>
-        <button class="small-strat-btn pick-filter-btn" data-pick-filter="LONG" onclick="setStockPickFilter('LONG')">🏦 Long-Term Bullish</button>
-        <button class="small-strat-btn" onclick="fetchStockPicks(true)" title="Force a fresh fetch">🔄</button>
+        <select id="indicatorSymbol" style="padding:6px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:4px; font-size:11px;">
+          <option value="NIFTY">NIFTY</option>
+          <option value="BANKNIFTY">BANKNIFTY</option>
+          <option value="FINNIFTY">FINNIFTY</option>
+          <option value="SENSEX">SENSEX</option>
+          <option value="MIDCPNIFTY">MIDCPNIFTY</option>
+        </select>
+        <select id="indicatorKey" style="padding:6px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:4px; font-size:11px;">
+          <option value="ut">⚡ UT Bot</option>
+          <option value="trade_predictor">🔮 Trade Predictor</option>
+          <option value="quantum_matrix">🌌 Quantum Matrix</option>
+          <option value="target_proj">🎯 Target Proj</option>
+          <option value="supertrend">📈 Supertrend</option>
+        </select>
+        <button class="small-strat-btn" onclick="runIndicator()">Run</button>
       </div>
     </div>
-    <div id="stockPicksBody">
-      <div style="color:#94a3b8; font-size:12.5px;">Loading real stock data…</div>
-    </div>
+    <div id="indicatorBody" style="color:#94a3b8; font-size:12px; padding:10px;">Select symbol & indicator, then click Run</div>
   </div>
 
   <!-- Mode Selector Tabs -->
@@ -3356,14 +3492,14 @@
 
   <!-- Workspace -->
   <div class="workspace rx-legacy-tools">
-    <!-- Advanced Filters toggle (BRD FR-03: hidden by default on every viewport) -->
+    <!-- Advanced Filters toggle (visible by default on every viewport) -->
     <button class="mobile-filter-toggle" id="mobileFilterToggle" onclick="toggleMobileFilters()">
       <span>⚙️ Advanced Filters &amp; Custom Query Builder</span>
-      <span id="filterToggleArrow">▼ Show Advanced Filters</span>
+      <span id="filterToggleArrow">▲ Hide Advanced Filters</span>
     </button>
 
     <!-- Sidebar Filters -->
-    <div class="panel filters collapsed" id="sidebarFiltersPanel">
+    <div class="panel filters" id="sidebarFiltersPanel">
       <!-- Prominent User-Friendly Clear All Filters Action -->
       <button type="button" class="clear-all-filters-btn" id="clearAllFiltersBtn" onclick="clearAllScreenerFilters()" title="Reset all strategy ranges, symbols, tolerance, and filters to defaults">
         <span>🧹</span> <b>Clear All Filters &amp; Reset</b>
@@ -6565,10 +6701,17 @@ function syncStocksOnlyButtons() {
 function toggleStocksOnly() {
   stocksOnlyLock = !stocksOnlyLock;
   syncStocksOnlyButtons();
+
+  // When Stocks Only is enabled, hide CE/PE filter and show all stocks
+  const optTypeGroup = document.querySelector('#optTypeSeg')?.closest('.group');
+  if (optTypeGroup) {
+    optTypeGroup.style.display = stocksOnlyLock ? 'none' : 'block';
+  }
+
   showToast(
     stocksOnlyLock
-      ? '📦 Stocks Only locked — every scan now excludes NIFTY, BANKNIFTY & other indices'
-      : '📦 Stocks Only unlocked — indices included again',
+      ? '📦 Stocks Only locked — scanning all NSE stocks, CE/PE filter disabled'
+      : '📦 Stocks Only unlocked — indices and option types included again',
     'info'
   );
 
@@ -6586,9 +6729,17 @@ function toggleStocksOnly() {
   } else if (window.activeScan.source === 'manual' || window.activeScan.source === 'chartink') {
     syncUIToActiveScan(window.activeScan.source);
   }
+
   window.activeScan.rules.instrument = stocksOnlyLock
     ? { enabled: true, index: false, stock: true }
     : { enabled: true, index: true, stock: true };
+
+  // When Stocks Only is on, disable CE/PE filtering to show all stocks
+  if (stocksOnlyLock && window.activeScan.rules.optionType) {
+    window.activeScan.rules.optionType.enabled = false;
+    window.activeScan.rules.optionType.type = 'BOTH';
+  }
+
   syncActiveScanToUI();
   updateActiveFilterChips();
   executeActiveScan();
@@ -7301,16 +7452,14 @@ async function fetchMarketNews() {
     const headlines = Array.isArray(data.headlines) ? data.headlines : [];
 
     if (!data.available || headlines.length === 0) {
-      container.innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px;">
-          <span style="font-size:22px;">📡</span>
-          <div>
-            <div style="color:#fcd34d; font-weight:700; font-size:13px;">News unavailable</div>
-            <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${data.reason || 'No live news provider is configured for this app yet'} -- headlines are never fabricated here.</div>
-          </div>
-        </div>`;
+      container.style.display = 'none';
+      const heading = container.previousElementSibling;
+      if (heading && heading.id === 'liveNewsHeading') heading.style.display = 'none';
       return;
     }
+    container.style.display = 'block';
+    const heading = container.previousElementSibling;
+    if (heading && heading.id === 'liveNewsHeading') heading.style.display = 'block';
 
     // Dedup identical headlines (same title + source) before rendering.
     const seen = new Set();
@@ -7351,90 +7500,181 @@ async function fetchMarketNews() {
 let stockPicksData = null;
 let stockPickFilter = 'ALL';
 
-async function fetchStockPicks(forceRefresh) {
+/* ─── Market News ─── */
+async function fetchMarketNews(forceRefresh) {
+  const body = document.getElementById('newsTickerBody');
+  if (!body) return;
+  try {
+    const url = `${API_BASE}/api/news/market?limit=8${forceRefresh ? '&refresh=true' : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.items && data.items.length > 0) {
+      body.innerHTML = data.items.map((item, i) => `
+        <div style="padding:8px 0; border-bottom:1px solid #1a2333; ${i === 0 ? '' : ''}">
+          <a href="${item.link}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:600;">
+            ${item.title}
+          </a>
+          <div style="color:#64748b; font-size:10px; margin-top:2px;">
+            📌 ${item.source} · ${new Date(item.pubDate).toLocaleString()}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      body.innerHTML = '<div style="color:#94a3b8; padding:10px;">No news available</div>';
+    }
+  } catch (e) {
+    body.innerHTML = `<div style="color:#ef4444; padding:10px;">Error: ${e.message}</div>`;
+  }
+}
+
+/* ─── Block Deals ─── */
+async function fetchBlockDeals(forceRefresh) {
+  const tbody = document.getElementById('blockDealsRows');
+  if (!tbody) return;
+  try {
+    const url = `${API_BASE}/api/block-deals${forceRefresh ? '?refresh=true' : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.deals && data.deals.length > 0) {
+      tbody.innerHTML = data.deals.slice(0, 10).map(deal => `
+        <tr style="border-bottom:1px solid #1a2333;">
+          <td style="padding:6px; color:#60a5fa; font-weight:600;">${deal.symbol}</td>
+          <td style="padding:6px; text-align:right; color:#e2e8f0;">${(deal.quantity/100000).toFixed(1)}L</td>
+          <td style="padding:6px; text-align:right; color:#e2e8f0;">₹${deal.price.toFixed(2)}</td>
+          <td style="padding:6px; text-align:right; color:#22c55e;">₹${(deal.value/10000000).toFixed(1)}Cr</td>
+          <td style="padding:6px; color:#94a3b8; font-size:10px;">${deal.clientName.substring(0, 15)}</td>
+          <td style="padding:6px; color:#94a3b8; font-size:10px;">${deal.time}</td>
+        </tr>
+      `).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:12px; color:#94a3b8;">No block deals today (Market closed)</td></tr>';
+    }
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:10px;">Error: ${e.message}</td></tr>`;
+  }
+}
+
+/* ─── Rajan-Pavan Indicators ─── */
+async function runIndicator() {
+  const symbol = document.getElementById('indicatorSymbol')?.value || 'NIFTY';
+  const key = document.getElementById('indicatorKey')?.value || 'ut';
+  const body = document.getElementById('indicatorBody');
+  if (!body) return;
+
+  body.innerHTML = '<div style="color:#94a3b8;">Loading indicator results...</div>';
+
+  try {
+    const url = `${API_BASE}/api/indicators/rajan-pavan?key=${key}&symbol=${symbol}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.results) {
+      const r = data.results;
+      body.innerHTML = `
+        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
+          <div style="color:#60a5fa; font-weight:700; margin-bottom:10px;">📊 ${symbol} - ${key.toUpperCase()}</div>
+          <div style="color:#e2e8f0; font-size:11px; line-height:1.8;">
+            <div>🎯 Signal: <span style="color:#22c55e; font-weight:600;">${r.signal || 'N/A'}</span></div>
+            <div>💰 Price: ₹${r.price?.toFixed(2) || 'N/A'}</div>
+            ${r.entry ? `<div>📍 Entry: ₹${r.entry.toFixed(2)}</div>` : ''}
+            ${r.target ? `<div>🎪 Target: ₹${r.target.toFixed(2)}</div>` : ''}
+            ${r.stoploss ? `<div>🛑 Stop Loss: ₹${r.stoploss.toFixed(2)}</div>` : ''}
+          </div>
+        </div>
+      `;
+    } else if (data.detail) {
+      body.innerHTML = `<div style="color:#fbbf24; padding:10px;">⚠️ ${data.detail}</div>`;
+    }
+  } catch (e) {
+    body.innerHTML = `<div style="color:#ef4444; padding:10px;">Error: ${e.message}</div>`;
+  }
+}
+
+let stocksData = null;
+let stocksCurrentCategory = 'all';
+let stocksCurrentPage = 1;
+
+async function fetchIndianStocks(forceRefresh) {
   const body = document.getElementById('stockPicksBody');
   if (!body) return;
-  if (!stockPicksData) body.innerHTML = `<div style="color:#94a3b8; font-size:12.5px;">Loading real stock data…</div>`;
   try {
-    const res = await fetch(`${API_BASE}/api/stocks/picks${forceRefresh ? '?refresh=true' : ''}`);
+    const url = `${API_BASE}/api/stocks/indian?category=${stocksCurrentCategory}&page=${stocksCurrentPage}&limit=10${forceRefresh ? '&force_refresh=true' : ''}`;
+    const res = await fetch(url);
     const data = await res.json();
-    stockPicksData = data;
-    renderStockPicks();
+    stocksData = data;
+    renderIndianStocks();
   } catch (e) {
-    console.warn('Stock picks fetch failed:', e);
-    body.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:22px;">⚠️</span>
-        <div style="color:#94a3b8; font-size:12px;">Couldn't load stock picks right now -- the rest of the dashboard keeps working normally.</div>
-      </div>`;
+    console.warn('Indian stocks fetch failed:', e);
+    body.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#ef4444;">Error loading stocks: ${e.message}</td></tr>`;
   }
 }
 
-function setStockPickFilter(filter) {
-  stockPickFilter = filter;
-  document.querySelectorAll('.pick-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.pickFilter === filter));
-  renderStockPicks();
+function setStockCategory(cat) {
+  stocksCurrentCategory = cat;
+  stocksCurrentPage = 1;
+  document.querySelectorAll('.stock-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  fetchIndianStocks();
 }
 
-function stockSignalPill(sig) {
-  const color = sig === 'Bullish' ? '#22c55e' : sig === 'Bearish' ? '#ef4444' : '#64748b';
-  return `<span style="color:${color}; font-weight:700;">${escapeHtml(sig)}</span>`;
-}
-
-function renderStockPicks() {
+function renderIndianStocks() {
   const body = document.getElementById('stockPicksBody');
-  if (!body || !stockPicksData) return;
-  const data = stockPicksData;
+  const pagination = document.getElementById('stockPicksPagination');
+  if (!body || !stocksData) return;
 
-  if (!data.available) {
-    body.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:22px;">📡</span>
-        <div>
-          <div style="color:#fcd34d; font-weight:700; font-size:13px;">Stock picks unavailable</div>
-          <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${escapeHtml(data.reason || 'No real stock price source is available right now')} -- picks are never fabricated here.</div>
-        </div>
-      </div>`;
+  if (!stocksData.available || !stocksData.stocks || stocksData.stocks.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#94a3b8;">No stocks available for this category.</td></tr>`;
+    pagination.innerHTML = '';
     return;
   }
 
-  let picks = data.picks || [];
-  if (stockPickFilter === 'INTRADAY') picks = picks.filter(p => p.intraday.signal === 'Bullish');
-  else if (stockPickFilter === 'SHORT') picks = picks.filter(p => p.shortTerm.signal === 'Bullish');
-  else if (stockPickFilter === 'LONG') picks = picks.filter(p => p.longTerm.signal === 'Bullish');
+  // Render stock rows
+  const rows = stocksData.stocks.map(stock => {
+    const signal = stock.signal || 'NEUTRAL';
+    const signalColor = signal === 'BULLISH' ? '#22c55e' : signal === 'BEARISH' ? '#ef4444' : '#64748b';
+    const categoryLabel = stock.category === 'large_cap' ? '🏢 Large' : stock.category === 'mid_cap' ? '📈 Mid' : '📉 Small';
+    return `
+      <tr style="border-bottom:1px solid #1a2333;">
+        <td style="padding:8px; font-weight:700; color:#f1f5f9;">${escapeHtml(stock.symbol)}</td>
+        <td style="padding:8px; color:${signalColor}; font-weight:600;">${signal}</td>
+        <td style="padding:8px; text-align:right; color:#e2e8f0;">₹ ${stock.price ? stock.price.toFixed(2) : 'N/A'}</td>
+        <td style="padding:8px; text-align:right; color:${stock.range_pct > 50 ? '#22c55e' : '#ef4444'};">${stock.range_pct || 0}%</td>
+        <td style="padding:8px; text-align:center; color:#94a3b8; font-size:11px;">${categoryLabel}</td>
+      </tr>`;
+  }).join('');
 
-  const asOf = data.timestamp ? new Date(data.timestamp).toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' }) : '';
-  const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.universe || '')} · as of ${asOf} IST</div>`;
+  body.innerHTML = rows;
 
-  if (!picks.length) {
-    body.innerHTML = header + `<div style="color:#94a3b8; font-size:12.5px;">No stocks currently match this filter.</div>`;
-    return;
+  // Render pagination
+  const totalPages = stocksData.pages || 1;
+  const paginationHTML = [];
+
+  if (stocksCurrentPage > 1) {
+    paginationHTML.push(`<button class="small-strat-btn" onclick="goStockPage(${stocksCurrentPage - 1})">← Previous</button>`);
   }
 
-  body.innerHTML = header + `
-    <div style="overflow-x:auto;">
-    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-      <thead><tr style="color:#64748b; text-align:left; border-bottom:1px solid #1a2333;">
-        <th style="padding:6px 8px;">Stock</th>
-        <th style="padding:6px 8px;">LTP</th>
-        <th style="padding:6px 8px;">Chg%</th>
-        <th style="padding:6px 8px;" title="Based on today's price position vs open and today's range">⚡ Intraday</th>
-        <th style="padding:6px 8px;" title="Based on LTP vs the 20-day EMA">📆 Short-Term</th>
-        <th style="padding:6px 8px;" title="Based on LTP vs the 50-day EMA">🏦 Long-Term</th>
-      </tr></thead>
-      <tbody>
-        ${picks.map(p => `
-          <tr style="border-bottom:1px solid #141b29;">
-            <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;">${escapeHtml(p.symbol)}</td>
-            <td style="padding:6px 8px; color:#e2e8f0;">${fmtNum(p.ltp)}</td>
-            <td style="padding:6px 8px; color:${p.changePct >= 0 ? '#22c55e' : '#ef4444'};">${p.changePct >= 0 ? '+' : ''}${p.changePct}%</td>
-            <td style="padding:6px 8px;" title="${escapeHtml(p.intraday.reason)}">${stockSignalPill(p.intraday.signal)}</td>
-            <td style="padding:6px 8px;" title="${escapeHtml(p.shortTerm.reason)}">${stockSignalPill(p.shortTerm.signal)}</td>
-            <td style="padding:6px 8px;" title="${escapeHtml(p.longTerm.reason)}">${stockSignalPill(p.longTerm.signal)}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
-    </div>`;
+  for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - stocksCurrentPage) <= 1) {
+      paginationHTML.push(`<button class="small-strat-btn ${i === stocksCurrentPage ? 'active' : ''}" onclick="goStockPage(${i})" style="${i === stocksCurrentPage ? 'background:linear-gradient(135deg, #3b82f6, #2563eb);' : ''}">${i}</button>`);
+    }
+  }
+
+  if (stocksCurrentPage < totalPages) {
+    paginationHTML.push(`<button class="small-strat-btn" onclick="goStockPage(${stocksCurrentPage + 1})">Next →</button>`);
+  }
+
+  pagination.innerHTML = paginationHTML.length > 0 ? paginationHTML.join('') : '';
+
+  // Add status info
+  const status = `<div style="color:#64748b; font-size:11px; text-align:center; margin-top:8px;">Page ${stocksCurrentPage} of ${totalPages} · ${stocksData.total} total stocks · ${stocksData.cached ? '(cached)' : '(live)'}</div>`;
+  pagination.innerHTML += status;
+}
+
+function goStockPage(page) {
+  if (page < 1) return;
+  stocksCurrentPage = page;
+  fetchIndianStocks();
 }
 
 /* ============================================================
@@ -7475,16 +7715,14 @@ function renderMutualFunds() {
   const data = mutualFundsData;
 
   if (!data.available) {
-    container.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:22px;">📡</span>
-        <div>
-          <div style="color:#fcd34d; font-weight:700; font-size:13px;">Mutual fund data unavailable</div>
-          <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${escapeHtml(data.reason || 'No real fund data source is available right now')} -- figures are never fabricated here.</div>
-        </div>
-      </div>`;
+    container.style.display = 'none';
+    const heading = container.previousElementSibling;
+    if (heading && heading.id === 'bestMutualFundsHeading') heading.style.display = 'none';
     return;
   }
+  container.style.display = 'block';
+  const heading = container.previousElementSibling;
+  if (heading && heading.id === 'bestMutualFundsHeading') heading.style.display = 'block';
 
   let funds = data.funds || [];
   if (mfFilter !== 'ALL') funds = funds.filter(f => f.category === mfFilter);
@@ -7560,16 +7798,14 @@ function renderIpoData() {
   const data = ipoData;
 
   if (!data.available) {
-    container.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:22px;">📡</span>
-        <div>
-          <div style="color:#fcd34d; font-weight:700; font-size:13px;">IPO data unavailable</div>
-          <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${escapeHtml(data.reason || 'NSE IPO data could not be reached')} -- listings are never fabricated here.</div>
-        </div>
-      </div>`;
+    container.style.display = 'none';
+    const heading = container.previousElementSibling;
+    if (heading && heading.id === 'ipoCalendarHeading') heading.style.display = 'none';
     return;
   }
+  container.style.display = 'block';
+  const heading = container.previousElementSibling;
+  if (heading && heading.id === 'ipoCalendarHeading') heading.style.display = 'block';
 
   const rows = data[ipoTab] || [];
   const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.dataSource || '')}</div>`;
@@ -7592,21 +7828,26 @@ function renderIpoData() {
       <thead><tr style="color:#64748b; text-align:left; border-bottom:1px solid #1a2333;">
         <th style="padding:6px 8px;">Company</th>
         <th style="padding:6px 8px;">Symbol</th>
-        <th style="padding:6px 8px;">Price Band</th>
+        <th style="padding:6px 8px;">Subscription Price Range</th>
         ${dateLabels.map(l => `<th style="padding:6px 8px;">${l}</th>`).join('')}
         <th style="padding:6px 8px;">Series</th>
       </tr></thead>
       <tbody>
         ${rows.map(r => `
           <tr style="border-bottom:1px solid #141b29;">
-            <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;">${escapeHtml(r.company)}</td>
-            <td style="padding:6px 8px; color:#94a3b8;">${escapeHtml(r.symbol || '–')}</td>
-            <td style="padding:6px 8px; color:#e2e8f0;">${escapeHtml(r.priceRange || '–')}</td>
-            ${dateCols.map(c => `<td style="padding:6px 8px; color:#e2e8f0;">${escapeHtml(r[c] || '–')}</td>`).join('')}
-            <td style="padding:6px 8px; color:#94a3b8;">${escapeHtml(r.series || '–')}</td>
+            <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;" data-label="Company">${escapeHtml(r.company)}</td>
+            <td style="padding:6px 8px; color:#94a3b8;" data-label="Symbol">${escapeHtml(r.symbol || '–')}</td>
+            <td style="padding:6px 8px; color:#e2e8f0;" data-label="Price Range">${escapeHtml(r.priceRange || '–')}</td>
+            ${dateCols.map((c, i) => `<td style="padding:6px 8px; color:#e2e8f0;" data-label="${dateLabels[i]}">${escapeHtml(r[c] || '–')}</td>`).join('')}
+            <td style="padding:6px 8px; color:#94a3b8;" data-label="Series">${escapeHtml(r.series || '–')}</td>
           </tr>`).join('')}
       </tbody>
     </table>
+    </div>
+    <div style="margin-top:12px; padding:10px; background:rgba(59,130,246,0.08); border-radius:6px; border-left:3px solid #3b82f6;">
+      <div style="color:#60a5fa; font-size:11.5px; line-height:1.5;">
+        <strong>Subscription Price Range:</strong> The price band during the IPO subscription period. For closed IPOs, check BSE/NSE listing price separately.
+      </div>
     </div>`;
 }
 
@@ -11077,6 +11318,9 @@ setInterval(fetchIpoData, 300000);
 
 initStatus().then(() => {
   setActiveScanStrategy('strat1');
+  fetchIndianStocks(); // Load stock picks on startup
+  fetchMarketNews(); // Load market news
+  fetchBlockDeals(); // Load block deals
 });
 
 renderRoute(); // Phase 0 router: resolve whatever route (or none) is in the URL on first load
