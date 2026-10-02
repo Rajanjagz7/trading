@@ -1093,19 +1093,20 @@
     background: #0f1522;
     border: 1px solid var(--line);
     border-radius: 10px;
-    overflow: auto;
-    max-height: 680px;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: none;
   }
   table#resultsTable {
     width: 100%;
     border-collapse: collapse;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
+    min-width: 100%;
   }
   table#resultsTable th, table#resultsTable td {
     padding: 8px 10px;
     border-bottom: 1px solid #1a2333;
-    white-space: nowrap;
     text-align: right;
   }
   table#resultsTable th {
@@ -2934,6 +2935,13 @@
     .segbtns button { flex: 1; min-width: 60px; }
   }
 
+  @media (max-width: 768px) {
+    .table-wrap { max-height: none !important; overflow-y: auto; }
+    table#resultsTable { font-size: 11px; }
+    table#resultsTable th, table#resultsTable td { padding: 6px 8px !important; }
+    .results-filter-toolbar { flex-wrap: wrap; }
+  }
+
   @media (max-width: 480px) {
     #recoTableBody { overflow-x: auto; display: block; }
     #recoTableBody table { min-width: 100%; font-size: 10px; }
@@ -2942,6 +2950,9 @@
     .group { margin-bottom: 6px; }
     .quick-clear-btn { padding: 2px 6px; font-size: 10px; }
     #indicatorSymbol, #indicatorKey { font-size: 10px; }
+    .table-wrap { max-height: none !important; overflow-x: auto; overflow-y: auto; }
+    table#resultsTable { font-size: 10px; }
+    table#resultsTable th, table#resultsTable td { padding: 4px 6px !important; }
   }
 
   /* Fix table overflow on all screens */
