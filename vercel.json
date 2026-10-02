@@ -24,6 +24,13 @@
       "dest": "api/index.py"
     },
     {
+      "src": "/.*\\.html$",
+      "dest": "public/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      }
+    },
+    {
       "src": "/(.*)",
       "dest": "public/$1"
     }
