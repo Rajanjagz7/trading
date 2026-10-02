@@ -195,3 +195,44 @@ class TestCriticalDashboardFlow:
         assert ("Intraday" in picks_text) or ("unavailable" in picks_text.lower()), (
             f"Stock picks panel shows neither real picks nor an honest unavailable state: {picks_text!r}"
         )
+
+    def test_09_gift_nifty_and_nse_futures_are_honest_not_fake_estimates(self, page):
+        # These used to be "real spot + a frozen constant premium" labelled
+        # "(Est.)" -- one constant didn't even match its own label. No free
+        # real-time source exists, so they must now say so honestly instead
+        # of showing fabricated precision.
+        page.goto(BASE_URL, wait_until="domcontentloaded")
+        page.wait_for_function("typeof lastResults !== 'undefined'", timeout=20000)
+        page.wait_for_function(
+            "document.getElementById('giftNiftyVal').textContent !== '–'",
+            timeout=15000,
+        )
+        gift_val = page.evaluate("document.getElementById('giftNiftyVal').textContent")
+        gift_sub = page.evaluate("document.getElementById('giftNiftyBasis').textContent")
+        assert gift_val == "Unavailable"
+        assert "No real-time GIFT NIFTY data source is available" in gift_sub
+        # US futures are real Yahoo Finance data and must be unaffected.
+        dow_val = page.evaluate("document.getElementById('dowFutVal').textContent")
+        assert dow_val not in ("–", "Unavailable", ""), f"DOW futures should show a real value, got {dow_val!r}"
+
+    def test_10_mutual_funds_and_ipo_sections_show_real_data_or_honest_unavailable(self, page):
+        page.goto(BASE_URL, wait_until="domcontentloaded")
+        page.wait_for_function("typeof lastResults !== 'undefined'", timeout=20000)
+
+        page.wait_for_function(
+            "!document.getElementById('mutualFundsSection').textContent.includes('Loading')",
+            timeout=60000,
+        )
+        mf_text = page.evaluate("document.getElementById('mutualFundsSection').textContent")
+        assert ("CAGR" in mf_text) or ("unavailable" in mf_text.lower()), (
+            f"Mutual funds section shows neither real data nor an honest unavailable state: {mf_text!r}"
+        )
+
+        page.wait_for_function(
+            "!document.getElementById('ipoSection').textContent.includes('Loading')",
+            timeout=30000,
+        )
+        ipo_text = page.evaluate("document.getElementById('ipoSection').textContent")
+        assert ("Price Band" in ipo_text) or ("No ongoing IPOs" in ipo_text) or ("unavailable" in ipo_text.lower()), (
+            f"IPO section shows neither real data nor an honest unavailable/empty state: {ipo_text!r}"
+        )

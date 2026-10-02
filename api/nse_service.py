@@ -1651,64 +1651,6 @@ class NSEService:
         nasdaq_pct = market_data.get('NQ=F', {}).get('pct')
         nasdaq_chg = market_data.get('NQ=F', {}).get('chg')
 
-        # Indian Spot reference -- prefer live Upstox quotes (same source already
-        # proven live in get_market_status/get_indices_pulse) over the bhavcopy
-        # settlement cache, which can be several days stale. This also gives a
-        # real day change % to drive the futures chg/chgPct below instead of the
-        # hardcoded constants that previously never changed.
-        nifty_spot = None
-        nifty_chg_pct = 0.0
-        bank_spot = None
-        bank_chg_pct = 0.0
-
-        up_idx_quotes = {}
-        try:
-            if upstox_service.is_configured():
-                up_idx_quotes = upstox_service.get_all_indices_quotes()
-        except Exception as e:
-            print(f"[Upstox] get_global_markets index quote error: {e}")
-
-        if up_idx_quotes.get("NIFTY", {}).get("last"):
-            nifty_spot = up_idx_quotes["NIFTY"]["last"]
-            nifty_chg_pct = up_idx_quotes["NIFTY"]["pct"]
-        elif self.today_rows:
-            for r in self.today_rows:
-                if r.get('symbol') == 'NIFTY' and r.get('spot', 0) > 0:
-                    nifty_spot = r['spot']
-                    break
-            for prow in self.prev_map.values():
-                if prow.get('symbol') == 'NIFTY' and prow.get('spot', 0) > 0 and nifty_spot > 0:
-                    nifty_chg_pct = round(((nifty_spot - prow['spot']) / prow['spot']) * 100.0, 2)
-                    break
-
-        if up_idx_quotes.get("BANKNIFTY", {}).get("last"):
-            bank_spot = up_idx_quotes["BANKNIFTY"]["last"]
-            bank_chg_pct = up_idx_quotes["BANKNIFTY"]["pct"]
-        elif self.today_rows:
-            for r in self.today_rows:
-                if r.get('symbol') == 'BANKNIFTY' and r.get('spot', 0) > 0:
-                    bank_spot = r['spot']
-                    break
-            for prow in self.prev_map.values():
-                if prow.get('symbol') == 'BANKNIFTY' and prow.get('spot', 0) > 0 and bank_spot > 0:
-                    bank_chg_pct = round(((bank_spot - prow['spot']) / prow['spot']) * 100.0, 2)
-                    break
-
-        # NOTE: these four are an ESTIMATE (real spot + a fixed assumed
-        # premium), not a real quote from NSE IX / the futures exchange --
-        # labelled "(Est.)" in the response's `label`/`subLabel` so the UI
-        # never implies this is a live futures-market tick. Real spot
-        # unavailable => the estimate is None too, not computed from a guess.
-        gift_nifty = round(nifty_spot + 68.0, 2) if nifty_spot else None
-        nifty_fut_near = round(nifty_spot + 45.0, 2) if nifty_spot else None
-        nifty_fut_next = round(nifty_spot + 128.0, 2) if nifty_spot else None
-        bank_fut_near = round(bank_spot + 165.0, 2) if bank_spot else None
-
-        gift_nifty_chg = round(gift_nifty * (nifty_chg_pct / 100.0), 2) if gift_nifty else None
-        nifty_fut_near_chg = round(nifty_fut_near * (nifty_chg_pct / 100.0), 2) if nifty_fut_near else None
-        nifty_fut_next_chg = round(nifty_fut_next * (nifty_chg_pct / 100.0), 2) if nifty_fut_next else None
-        bank_fut_near_chg = round(bank_fut_near * (bank_chg_pct / 100.0), 2) if bank_fut_near else None
-
         def _entry(id_, name, label, price, fmt, chg, pct, sub_label=None, usd_price=None, usd_fmt=None, market=""):
             """Builds one ticker entry; `available=False` with no fabricated
             numbers when the underlying live fetch didn't come through."""
@@ -1741,14 +1683,23 @@ class NSEService:
                        usd_price=btc_usd, usd_fmt="${:,.0f}", market="Crypto Spot"),
             ],
             "futures": [
-                _entry("gift_nifty", "GIFT NIFTY", "NSE IX Futures (Est.)", gift_nifty, "{:,.2f}", gift_nifty_chg, nifty_chg_pct,
-                       sub_label="Basis: +68.0 (estimated)", market="NSE IX"),
-                _entry("nifty_fut_near", "NIFTY FUT (Near)", "Monthly Futures (Est.)", nifty_fut_near, "{:,.2f}", nifty_fut_near_chg, nifty_chg_pct,
-                       sub_label="Premium: +45.0 (estimated)", market="NSE F&O"),
-                _entry("nifty_fut_next", "NIFTY FUT (Next)", "Next Month Fut (Est.)", nifty_fut_next, "{:,.2f}", nifty_fut_next_chg, nifty_chg_pct,
-                       sub_label="Roll Spread: +83.0 (estimated)", market="NSE F&O"),
-                _entry("bank_fut_near", "BANK NIFTY FUT", "Monthly Futures (Est.)", bank_fut_near, "{:,.2f}", bank_fut_near_chg, bank_chg_pct,
-                       sub_label="Premium: +165.0 (estimated)", market="NSE F&O"),
+                # GIFT NIFTY / NSE F&O monthly futures used to be shown as
+                # "real spot + a fixed constant premium" labelled "(Est.)" --
+                # one of the four constants (Roll Spread) didn't even match
+                # its own label (code added +128.0, label said +83.0), and a
+                # frozen constant is a worse estimate of a real futures
+                # premium than just saying so honestly. No free, unauthenticated
+                # real GIFT NIFTY / NSE futures data source exists (checked
+                # Yahoo Finance and others) -- marked unavailable rather than
+                # showing fabricated precision, same as US stocks/other crypto below.
+                _entry("gift_nifty", "GIFT NIFTY", "NSE IX Futures", None, "{:,.2f}", None, None,
+                       sub_label="No real-time GIFT NIFTY data source is available", market="NSE IX"),
+                _entry("nifty_fut_near", "NIFTY FUT (Near)", "Monthly Futures", None, "{:,.2f}", None, None,
+                       sub_label="No real-time NSE futures data source is available", market="NSE F&O"),
+                _entry("nifty_fut_next", "NIFTY FUT (Next)", "Next Month Fut", None, "{:,.2f}", None, None,
+                       sub_label="No real-time NSE futures data source is available", market="NSE F&O"),
+                _entry("bank_fut_near", "BANK NIFTY FUT", "Monthly Futures", None, "{:,.2f}", None, None,
+                       sub_label="No real-time NSE futures data source is available", market="NSE F&O"),
                 _entry("dow_fut", "DOW FUTURES", "US 30 (YM)", dow_fut, "{:,.0f}", dow_chg, dow_pct,
                        sub_label="CBOT Mini", market="US CBOT"),
                 _entry("sp_fut", "S&P 500 FUT", "E-mini S&P (ES)", sp_fut, "{:,.2f}", sp_chg, sp_pct,

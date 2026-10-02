@@ -19,6 +19,7 @@ from api.nse_service import (
     _classify_intraday,
     _classify_ema_trend,
 )
+from api.market_extras_service import _compute_cagr
 
 
 # ---------------------------------------------------------------------------
@@ -277,3 +278,44 @@ class TestClassifyEmaTrend:
         rec = _classify_ema_trend(ltp=100, ema_value=None, label="50-day EMA")
         assert rec["signal"] == "Neutral"
         assert "not enough" in rec["reason"].lower()
+
+
+# ---------------------------------------------------------------------------
+# Mutual Fund CAGR computation -- pure function, no network I/O.
+# ---------------------------------------------------------------------------
+
+def _mf_row(dt, nav):
+    return {"date": dt.strftime("%d-%m-%Y"), "nav": str(nav)}
+
+
+class TestComputeCagr:
+    def test_too_little_data_returns_none(self):
+        rows = [_mf_row(datetime(2026, 1, 1), 100)]
+        assert _compute_cagr(rows, years=5) is None
+
+    def test_insufficient_history_for_horizon_returns_none(self):
+        # Only 2 years of history -- can't compute a real 5-year CAGR from it.
+        latest = datetime(2026, 1, 1)
+        rows = [_mf_row(latest, 120), _mf_row(latest - timedelta(days=730), 100)]
+        assert _compute_cagr(rows, years=5) is None
+
+    def test_nav_doubling_over_5_years_gives_the_expected_cagr(self):
+        latest = datetime(2026, 1, 1)
+        old = latest - timedelta(days=365 * 5)
+        rows = [_mf_row(latest, 200.0), _mf_row(old, 100.0)]
+        cagr = _compute_cagr(rows, years=5)
+        # (2)^(1/5) - 1 = 14.87%
+        assert abs(cagr - 14.87) < 0.1
+
+    def test_flat_nav_gives_zero_cagr(self):
+        latest = datetime(2026, 1, 1)
+        old = latest - timedelta(days=365 * 5)
+        rows = [_mf_row(latest, 100.0), _mf_row(old, 100.0)]
+        assert _compute_cagr(rows, years=5) == 0.0
+
+    def test_declining_nav_gives_negative_cagr(self):
+        latest = datetime(2026, 1, 1)
+        old = latest - timedelta(days=365 * 5)
+        rows = [_mf_row(latest, 80.0), _mf_row(old, 100.0)]
+        cagr = _compute_cagr(rows, years=5)
+        assert cagr < 0

@@ -36,6 +36,7 @@ def _load_env_file():
 _load_env_file()
 
 from .nse_service import nse_service, now_ist_iso, get_market_news, get_stock_picks
+from .market_extras_service import get_mutual_fund_picks, get_ipo_data
 from .upstox_service import upstox_service
 
 @asynccontextmanager
@@ -98,6 +99,24 @@ def get_news():
     headlines or timestamps.
     """
     return get_market_news()
+
+@app.get("/api/mutual-funds/picks")
+def get_mutual_funds_picks(refresh: Optional[bool] = False):
+    """
+    Best Mutual Funds (5-Year CAGR): real AMFI NAV history via mfapi.in for a
+    fixed universe of Direct-Growth equity schemes from major AMCs, ranked by
+    real computed 5-year CAGR. The same funds are what a SIP buys into.
+    Never fabricates a return figure -- unavailable if the source can't be reached.
+    """
+    return get_mutual_fund_picks(force_refresh=bool(refresh))
+
+@app.get("/api/ipo")
+def get_ipo(refresh: Optional[bool] = False):
+    """
+    IPO Calendar: real upcoming/ongoing/recently-closed IPOs from NSE's own
+    public IPO API. Never fabricates a listing -- unavailable if NSE can't be reached.
+    """
+    return get_ipo_data(force_refresh=bool(refresh))
 
 @app.get("/api/quotes/fast")
 def get_fast_quotes():

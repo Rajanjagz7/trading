@@ -3035,43 +3035,43 @@
 
   <!-- 📈 3. US & Indian Market Monthly Futures Ticker Rail -->
   <div class="global-markets-bar" id="globalFuturesBar">
-    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real NIFTY spot + an assumed fixed premium, not a live quote from NSE IX">
+    <div class="global-ticker-card" style="cursor:default; opacity:0.75;" title="No real-time GIFT NIFTY data source is available">
       <div class="index-ticker-left">
-        <span class="index-ticker-name" style="color:#38bdf8;">GIFT NIFTY FUT (Est.) 🇮🇳</span>
-        <span class="global-sub-label" id="giftNiftyBasis">Basis: +68.0 (estimated)</span>
+        <span class="index-ticker-name" style="color:#94a3b8;">GIFT NIFTY FUT 🇮🇳</span>
+        <span class="global-sub-label" id="giftNiftyBasis">No data source configured</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="giftNiftyVal">–</span>
+        <span class="index-ticker-val" id="giftNiftyVal" style="color:#64748b;">–</span>
         <span class="index-ticker-chg" id="giftNiftyChg"></span>
       </div>
     </div>
-    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real NIFTY spot + an assumed fixed premium, not a live futures-exchange quote">
+    <div class="global-ticker-card" style="cursor:default; opacity:0.75;" title="No real-time NSE futures data source is available">
       <div class="index-ticker-left">
-        <span class="index-ticker-name">NIFTY NEAR FUT (Est.) 📅</span>
-        <span class="global-sub-label" id="niftyNearBasis">Prem: +45.0 (estimated)</span>
+        <span class="index-ticker-name" style="color:#94a3b8;">NIFTY NEAR FUT 📅</span>
+        <span class="global-sub-label" id="niftyNearBasis">No data source configured</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="niftyNearVal">–</span>
+        <span class="index-ticker-val" id="niftyNearVal" style="color:#64748b;">–</span>
         <span class="index-ticker-chg" id="niftyNearChg"></span>
       </div>
     </div>
-    <div class="global-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real NIFTY spot + an assumed fixed premium, not a live futures-exchange quote">
+    <div class="global-ticker-card" style="cursor:default; opacity:0.75;" title="No real-time NSE futures data source is available">
       <div class="index-ticker-left">
-        <span class="index-ticker-name">NIFTY NEXT FUT (Est.) 📅</span>
-        <span class="global-sub-label" id="niftyNextBasis">Roll Spread: +83.0 (estimated)</span>
+        <span class="index-ticker-name" style="color:#94a3b8;">NIFTY NEXT FUT 📅</span>
+        <span class="global-sub-label" id="niftyNextBasis">No data source configured</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="niftyNextVal">–</span>
+        <span class="index-ticker-val" id="niftyNextVal" style="color:#64748b;">–</span>
         <span class="index-ticker-chg" id="niftyNextChg"></span>
       </div>
     </div>
-    <div class="global-ticker-card" onclick="openOptionChartModal('BANKNIFTY', '', 0, '')" style="cursor:pointer;" title="Estimated: real BANKNIFTY spot + an assumed fixed premium, not a live futures-exchange quote">
+    <div class="global-ticker-card" style="cursor:default; opacity:0.75;" title="No real-time NSE futures data source is available">
       <div class="index-ticker-left">
-        <span class="index-ticker-name">BANK NIFTY FUT (Est.) 📅</span>
-        <span class="global-sub-label" id="bankNearBasis">Prem: +165.0 (estimated)</span>
+        <span class="index-ticker-name" style="color:#94a3b8;">BANK NIFTY FUT 📅</span>
+        <span class="global-sub-label" id="bankNearBasis">No data source configured</span>
       </div>
       <div class="index-ticker-right">
-        <span class="index-ticker-val" id="bankNearVal">–</span>
+        <span class="index-ticker-val" id="bankNearVal" style="color:#64748b;">–</span>
         <span class="index-ticker-chg" id="bankNearChg"></span>
       </div>
     </div>
@@ -3173,6 +3173,37 @@
          branch for a real fetch once a provider (e.g. NewsAPI) is wired up. -->
     <div class="rx-section-label" style="margin-top:0;">📰 Live Market News</div>
     <div id="newsSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px; color:#94a3b8; font-size:12px;">Loading…</div>
+    </div>
+
+    <!-- Best Mutual Funds -- real AMFI NAV history via mfapi.in, ranked by
+         real computed 5-year CAGR for a fixed universe of Direct-Growth
+         equity schemes. Never an invented return figure. -->
+    <div class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
+      <span>💰 Best Mutual Funds (5-Year Returns)</span>
+      <span style="display:flex; gap:6px;">
+        <button class="small-strat-btn mf-filter-btn active" data-mf-filter="ALL" onclick="setMfFilter('ALL')" style="padding:3px 9px; font-size:11px;">All</button>
+        <button class="small-strat-btn mf-filter-btn" data-mf-filter="Flexi Cap" onclick="setMfFilter('Flexi Cap')" style="padding:3px 9px; font-size:11px;">Flexi Cap</button>
+        <button class="small-strat-btn mf-filter-btn" data-mf-filter="Large Cap" onclick="setMfFilter('Large Cap')" style="padding:3px 9px; font-size:11px;">Large Cap</button>
+        <button class="small-strat-btn mf-filter-btn" data-mf-filter="Mid Cap" onclick="setMfFilter('Mid Cap')" style="padding:3px 9px; font-size:11px;">Mid Cap</button>
+        <button class="small-strat-btn mf-filter-btn" data-mf-filter="Small Cap" onclick="setMfFilter('Small Cap')" style="padding:3px 9px; font-size:11px;">Small Cap</button>
+        <button class="small-strat-btn mf-filter-btn" data-mf-filter="ELSS" onclick="setMfFilter('ELSS')" style="padding:3px 9px; font-size:11px;">ELSS</button>
+      </span>
+    </div>
+    <div id="mutualFundsSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px; color:#94a3b8; font-size:12px;">Loading…</div>
+    </div>
+
+    <!-- IPO Calendar -- real NSE public IPO data (upcoming / ongoing / closed). -->
+    <div class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
+      <span>🚀 IPO Calendar</span>
+      <span style="display:flex; gap:6px;">
+        <button class="small-strat-btn ipo-tab-btn active" data-ipo-tab="ongoing" onclick="setIpoTab('ongoing')" style="padding:3px 9px; font-size:11px;">Ongoing</button>
+        <button class="small-strat-btn ipo-tab-btn" data-ipo-tab="upcoming" onclick="setIpoTab('upcoming')" style="padding:3px 9px; font-size:11px;">Upcoming</button>
+        <button class="small-strat-btn ipo-tab-btn" data-ipo-tab="closed" onclick="setIpoTab('closed')" style="padding:3px 9px; font-size:11px;">Closed</button>
+      </span>
+    </div>
+    <div id="ipoSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
       <div style="display:flex; align-items:center; gap:12px; color:#94a3b8; font-size:12px;">Loading…</div>
     </div>
 
@@ -7406,6 +7437,179 @@ function renderStockPicks() {
     </div>`;
 }
 
+/* ============================================================
+   BEST MUTUAL FUNDS -- real AMFI NAV history via mfapi.in (/api/mutual-funds/picks),
+   ranked by real computed 5-year CAGR. Never an invented return figure.
+============================================================ */
+let mutualFundsData = null;
+let mfFilter = 'ALL';
+
+async function fetchMutualFunds(forceRefresh) {
+  const container = document.getElementById('mutualFundsSection');
+  if (!container) return;
+  if (!mutualFundsData) container.innerHTML = `<div style="color:#94a3b8; font-size:12.5px;">Loading real mutual fund data (this can take a few seconds the first time)…</div>`;
+  try {
+    const res = await fetch(`${API_BASE}/api/mutual-funds/picks${forceRefresh ? '?refresh=true' : ''}`);
+    const data = await res.json();
+    mutualFundsData = data;
+    renderMutualFunds();
+  } catch (e) {
+    console.warn('Mutual funds fetch failed:', e);
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">⚠️</span>
+        <div style="color:#94a3b8; font-size:12px;">Couldn't load mutual fund data right now -- the rest of the dashboard keeps working normally.</div>
+      </div>`;
+  }
+}
+
+function setMfFilter(filter) {
+  mfFilter = filter;
+  document.querySelectorAll('.mf-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.mfFilter === filter));
+  renderMutualFunds();
+}
+
+function renderMutualFunds() {
+  const container = document.getElementById('mutualFundsSection');
+  if (!container || !mutualFundsData) return;
+  const data = mutualFundsData;
+
+  if (!data.available) {
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">📡</span>
+        <div>
+          <div style="color:#fcd34d; font-weight:700; font-size:13px;">Mutual fund data unavailable</div>
+          <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${escapeHtml(data.reason || 'No real fund data source is available right now')} -- figures are never fabricated here.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  let funds = data.funds || [];
+  if (mfFilter !== 'ALL') funds = funds.filter(f => f.category === mfFilter);
+
+  const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.universe || '')} · ${escapeHtml(data.dataSource || '')}</div>`;
+
+  if (!funds.length) {
+    container.innerHTML = header + `<div style="color:#94a3b8; font-size:12.5px;">No funds currently match this filter.</div>`;
+    return;
+  }
+
+  container.innerHTML = header + `
+    <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead><tr style="color:#64748b; text-align:left; border-bottom:1px solid #1a2333;">
+        <th style="padding:6px 8px;">Fund</th>
+        <th style="padding:6px 8px;">Category</th>
+        <th style="padding:6px 8px;">NAV</th>
+        <th style="padding:6px 8px;">1Y CAGR</th>
+        <th style="padding:6px 8px;">3Y CAGR</th>
+        <th style="padding:6px 8px;">5Y CAGR</th>
+      </tr></thead>
+      <tbody>
+        ${funds.map(f => `
+          <tr style="border-bottom:1px solid #141b29;">
+            <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;">${escapeHtml(f.name)}<div style="color:#64748b; font-weight:400; font-size:10.5px;">${escapeHtml(f.fundHouse || '')}</div></td>
+            <td style="padding:6px 8px; color:#94a3b8;">${escapeHtml(f.category)}</td>
+            <td style="padding:6px 8px; color:#e2e8f0;">${fmtNum(f.nav)}</td>
+            <td style="padding:6px 8px; color:${(f.cagr1y ?? 0) >= 0 ? '#22c55e' : '#ef4444'};">${f.cagr1y != null ? f.cagr1y + '%' : '–'}</td>
+            <td style="padding:6px 8px; color:${(f.cagr3y ?? 0) >= 0 ? '#22c55e' : '#ef4444'};">${f.cagr3y != null ? f.cagr3y + '%' : '–'}</td>
+            <td style="padding:6px 8px; font-weight:700; color:${(f.cagr5y ?? 0) >= 0 ? '#22c55e' : '#ef4444'};">${f.cagr5y != null ? f.cagr5y + '%' : '–'}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div style="color:#64748b; font-size:10.5px; margin-top:8px;">${escapeHtml(data.note || '')}</div>`;
+}
+
+/* ============================================================
+   IPO CALENDAR -- real NSE public IPO data (/api/ipo).
+============================================================ */
+let ipoData = null;
+let ipoTab = 'ongoing';
+
+async function fetchIpoData(forceRefresh) {
+  const container = document.getElementById('ipoSection');
+  if (!container) return;
+  if (!ipoData) container.innerHTML = `<div style="color:#94a3b8; font-size:12.5px;">Loading real IPO data…</div>`;
+  try {
+    const res = await fetch(`${API_BASE}/api/ipo${forceRefresh ? '?refresh=true' : ''}`);
+    const data = await res.json();
+    ipoData = data;
+    renderIpoData();
+  } catch (e) {
+    console.warn('IPO fetch failed:', e);
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">⚠️</span>
+        <div style="color:#94a3b8; font-size:12px;">Couldn't load IPO data right now -- the rest of the dashboard keeps working normally.</div>
+      </div>`;
+  }
+}
+
+function setIpoTab(tab) {
+  ipoTab = tab;
+  document.querySelectorAll('.ipo-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.ipoTab === tab));
+  renderIpoData();
+}
+
+function renderIpoData() {
+  const container = document.getElementById('ipoSection');
+  if (!container || !ipoData) return;
+  const data = ipoData;
+
+  if (!data.available) {
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">📡</span>
+        <div>
+          <div style="color:#fcd34d; font-weight:700; font-size:13px;">IPO data unavailable</div>
+          <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${escapeHtml(data.reason || 'NSE IPO data could not be reached')} -- listings are never fabricated here.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const rows = data[ipoTab] || [];
+  const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.dataSource || '')}</div>`;
+
+  if (!rows.length) {
+    container.innerHTML = header + `<div style="color:#94a3b8; font-size:12.5px;">No ${escapeHtml(ipoTab)} IPOs right now.</div>`;
+    return;
+  }
+
+  const dateCols = ipoTab === 'closed'
+    ? ['startDate', 'endDate', 'listingDate']
+    : ['startDate', 'endDate'];
+  const dateLabels = ipoTab === 'closed'
+    ? ['Opened', 'Closed', 'Listed']
+    : ['Opens', 'Closes'];
+
+  container.innerHTML = header + `
+    <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead><tr style="color:#64748b; text-align:left; border-bottom:1px solid #1a2333;">
+        <th style="padding:6px 8px;">Company</th>
+        <th style="padding:6px 8px;">Symbol</th>
+        <th style="padding:6px 8px;">Price Band</th>
+        ${dateLabels.map(l => `<th style="padding:6px 8px;">${l}</th>`).join('')}
+        <th style="padding:6px 8px;">Series</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr style="border-bottom:1px solid #141b29;">
+            <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;">${escapeHtml(r.company)}</td>
+            <td style="padding:6px 8px; color:#94a3b8;">${escapeHtml(r.symbol || '–')}</td>
+            <td style="padding:6px 8px; color:#e2e8f0;">${escapeHtml(r.priceRange || '–')}</td>
+            ${dateCols.map(c => `<td style="padding:6px 8px; color:#e2e8f0;">${escapeHtml(r[c] || '–')}</td>`).join('')}
+            <td style="padding:6px 8px; color:#94a3b8;">${escapeHtml(r.series || '–')}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+
 async function fetchIndexPulse() {
   const container = document.getElementById('indexPulseGrid');
   const badge = document.getElementById('pulseTimeBadge');
@@ -10866,6 +11070,10 @@ setInterval(fetchGlobalMarkets, 20000);
 scheduleFastPoll();
 fetchMarketNews();
 setInterval(fetchMarketNews, 60000);
+fetchMutualFunds();
+setInterval(fetchMutualFunds, 600000); // NAV updates once/day -- no need to poll often
+fetchIpoData();
+setInterval(fetchIpoData, 300000);
 
 // BRD FR-03: advanced filters collapsed by default on every viewport, not just mobile.
 (function collapseAdvancedFiltersByDefault() {
