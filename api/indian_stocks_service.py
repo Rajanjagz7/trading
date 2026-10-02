@@ -1,4 +1,5 @@
-"""Indian Stocks Universe — Fetches all NSE+BSE-listed stocks with bullish/bearish classification.
+"""Indian Stocks Universe — Fetches all NSE-listed stocks with bullish/bearish classification.
+Uses NSE's official /api/master-quote endpoint for complete stock universe.
 Supports Large Cap, Mid Cap, Small Cap filtering. Falls back to popular stocks if APIs unavailable."""
 
 import time
@@ -52,7 +53,6 @@ FALLBACK_STOCKS = [
     ("ULTRACEMCO", "UltraTech Cement", "mid_cap"),
     ("INDIGO", "InterGlobe Aviation", "mid_cap"),
     ("ITC", "ITC Limited", "mid_cap"),
-    ("BAJAJFINSV", "Bajaj Finserv", "mid_cap"),
     ("IINDTREE", "Indiamart Intermesh", "small_cap"),
     ("NYKAA", "FSN E-Commerce Ventures", "small_cap"),
     ("IRFC", "Indian Railway Finance", "small_cap"),
@@ -64,65 +64,66 @@ FALLBACK_STOCKS = [
 def _get_session():
     s = requests.Session()
     s.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
         'Referer': 'https://www.nseindia.com/',
+        'Cache-Control': 'no-cache',
     })
     return s
 
 
 def _fetch_nse_stocks() -> List[Dict]:
-    """Fetch all NSE+BSE-listed stocks. Falls back to popular Indian stocks if APIs unavailable."""
+    """Fetch all NSE stocks from NSE master-quote API. Falls back to popular Indian stocks if unavailable."""
     try:
         session = _get_session()
-        all_stocks = []
 
-        # Initialize session with NSE
+        # Warm up session with NSE home page first
         try:
+            print("[Stocks] Warming up NSE session...")
             session.get("https://www.nseindia.com", timeout=10)
-            url = "https://www.nseindia.com/api/equity-master"
+        except Exception as e:
+            print(f"[Stocks] Warmup warning (non-critical): {e}")
+
+        # Fetch stock symbols from NSE master-quote API
+        try:
+            print("[Stocks] Fetching from NSE master-quote API...")
+            url = "https://www.nseindia.com/api/master-quote"
             resp = session.get(url, timeout=10)
             resp.raise_for_status()
-            data = resp.json()
-            nse_stocks = data.get("data", []) if isinstance(data, dict) else []
-            all_stocks.extend(nse_stocks)
-            print(f"[Stocks] Fetched {len(nse_stocks)} from NSE")
+
+            # API returns a simple JSON array of stock symbols
+            symbols = resp.json()
+            if not isinstance(symbols, list):
+                raise ValueError(f"Expected list, got {type(symbols)}")
+
+            print(f"[Stocks] Fetched {len(symbols)} symbols from NSE master-quote API")
+
+            # Convert symbols to our stock format
+            filtered = []
+            for symbol in symbols:
+                sym_upper = symbol.upper() if isinstance(symbol, str) else ""
+                if sym_upper and sym_upper not in EXCLUDED_SYMBOLS and sym_upper not in INDIAN_INDICES:
+                    filtered.append({
+                        "symbol": sym_upper,
+                        "name": sym_upper,  # Name matches symbol for now
+                        "isin": "",
+                        "industry": "",
+                        "category": _classify_stock(sym_upper),
+                        "exchange": "NSE",
+                    })
+
+            if filtered:
+                print(f"[Stocks] Total unique stocks after filtering: {len(filtered)}")
+                return filtered[:500]  # Top 500 stocks
+            else:
+                print("[Stocks] No stocks after filtering, using fallback")
+                raise ValueError("No valid stocks found")
+
         except Exception as e:
-            print(f"[Stocks] NSE fetch failed: {e}")
-
-        # Try BSE equity symbols list
-        try:
-            url_bse = "https://www.bseindia.com/markets/equity/EQReports/consolidatedScripMaster.aspx"
-            resp_bse = session.get(url_bse, timeout=10)
-            if resp_bse.status_code == 200:
-                try:
-                    bse_stocks = resp_bse.json().get("data", [])
-                    all_stocks.extend(bse_stocks)
-                    print(f"[Stocks] Fetched {len(bse_stocks)} from BSE")
-                except:
-                    pass
-        except Exception as e:
-            print(f"[Stocks] BSE fetch failed (non-critical): {e}")
-
-        # Deduplicate by symbol
-        seen_symbols = set()
-        filtered = []
-        for stock in all_stocks:
-            symbol = stock.get("symbol", "").upper()
-            if symbol and symbol not in seen_symbols and symbol not in EXCLUDED_SYMBOLS and symbol not in INDIAN_INDICES:
-                seen_symbols.add(symbol)
-                filtered.append({
-                    "symbol": symbol,
-                    "name": stock.get("name", symbol),
-                    "isin": stock.get("isin", ""),
-                    "industry": stock.get("industry", ""),
-                    "category": _classify_stock(symbol),
-                    "exchange": stock.get("exchange", "NSE"),
-                })
-
-        # If no stocks fetched from APIs, use fallback list of popular Indian stocks
-        if not filtered:
-            print("[Stocks] APIs unavailable, using fallback popular stocks list")
+            print(f"[Stocks] NSE API fetch failed: {e}")
+            # Fall back to popular stocks list
+            print("[Stocks] Using fallback popular stocks list")
+            filtered = []
             for symbol, name, cat in FALLBACK_STOCKS:
                 filtered.append({
                     "symbol": symbol,
@@ -132,12 +133,10 @@ def _fetch_nse_stocks() -> List[Dict]:
                     "category": cat,
                     "exchange": "NSE",
                 })
-
-        print(f"[Stocks] Total unique stocks: {len(filtered)}")
-        return filtered[:500]  # Top 500 stocks
+            return filtered
 
     except Exception as e:
-        print(f"[Stocks] Fetch failed: {e}")
+        print(f"[Stocks] Fetch failed completely: {e}")
         # Return fallback even on exception
         return [
             {
