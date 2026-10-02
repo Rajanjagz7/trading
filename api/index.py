@@ -42,8 +42,8 @@ from .market_news import get_market_news as get_live_market_news
 from .block_deals_service import get_block_deals
 from .indian_stocks_service import get_indian_stocks, get_indian_indices
 try:
-    from .rajan_pavan_indicators import RAJAN_PAVAN_KEYS
-    from . import rajan_pavan_indicators as rp_indicators
+    from .rajan_pavan_indicators_simple import RAJAN_PAVAN_KEYS
+    from . import rajan_pavan_indicators_simple as rp_indicators
     HAS_RAJAN_PAVAN = True
 except ImportError as e:
     print(f"[WARNING] Failed to load Rajan-Pavan indicators: {e}")
