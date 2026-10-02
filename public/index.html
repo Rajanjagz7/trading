@@ -3363,7 +3363,7 @@
     </button>
 
     <!-- Sidebar Filters -->
-    <div class="panel filters" id="sidebarFiltersPanel">
+    <div class="panel filters collapsed" id="sidebarFiltersPanel">
       <!-- Prominent User-Friendly Clear All Filters Action -->
       <button type="button" class="clear-all-filters-btn" id="clearAllFiltersBtn" onclick="clearAllScreenerFilters()" title="Reset all strategy ranges, symbols, tolerance, and filters to defaults">
         <span>🧹</span> <b>Clear All Filters &amp; Reset</b>
@@ -3506,7 +3506,7 @@
     <!-- Main Content Area -->
     <main>
       <!-- 🎯 Chartink Interactive Filter / Screener Query Card -->
-      <div class="chartink-query-card">
+      <div class="chartink-query-card collapsed">
         <div class="query-card-header">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="query-badge">CHARTINK SCREENER QUERY BUILDER</span>
@@ -11074,16 +11074,6 @@ fetchMutualFunds();
 setInterval(fetchMutualFunds, 600000); // NAV updates once/day -- no need to poll often
 fetchIpoData();
 setInterval(fetchIpoData, 300000);
-
-// BRD FR-03: advanced filters collapsed by default on every viewport, not just mobile.
-(function collapseAdvancedFiltersByDefault() {
-  const sidebar = document.getElementById('sidebarFiltersPanel');
-  const queryCard = document.querySelector('.chartink-query-card');
-  const arrow = document.getElementById('filterToggleArrow');
-  if (sidebar) sidebar.classList.add('collapsed');
-  if (queryCard) queryCard.classList.add('collapsed');
-  if (arrow) arrow.textContent = '▼ Show Advanced Filters';
-})();
 
 initStatus().then(() => {
   setActiveScanStrategy('strat1');
