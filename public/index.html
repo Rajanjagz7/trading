@@ -2087,15 +2087,18 @@
 
   @media (max-width: 900px) {
     .workspace { flex-direction: column; align-items: stretch; }
-    .panel.filters { width: 100%; }
+    .panel.filters { width: 100%; display: none !important; }
     .chartink-indices-bar { flex-wrap: nowrap; overflow-x: auto; }
     .clause-row { font-size: 11.5px; gap: 6px; }
     .results-search-box { min-width: 100%; }
+    main { width: 100%; background: #0f1520; }
   }
   @media (max-width: 768px) {
     header { padding: 12px 14px; flex-direction: column; align-items: flex-start; gap: 10px; }
     header > div:last-child { align-items: flex-start !important; }
     .glow-title { font-size: 18px !important; }
+    .panel.filters { display: none !important; }
+    main { width: 100% !important; padding: 10px; }
     .indicator-btn-row {
       display: flex;
       gap: 6px;
