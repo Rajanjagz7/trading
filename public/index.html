@@ -4450,7 +4450,7 @@
         <h2 id="optModalTitle" style="margin:0; font-size:17.5px; font-weight:700;">NIFTY 23150 CE</h2>
         <span id="optTickerBadge" style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#38bdf8; background:#0b111a; border:1px solid #1f2c42; padding:3px 8px; border-radius:5px;">NSE:NIFTY260925C23150</span>
         <span id="optBadgeMoneyness" class="stat" style="padding:2px 8px; font-size:11px;">ATM</span>
-        <span id="optBadgeSignal" class="sig ol" style="display:none;"></span>
+        <span id="optBadgeSignal" class="sig" style="display:none;"></span>
       </div>
       <button id="optChartCloseBtn" class="modal-close-pill" onclick="closeAllModals()">✕ Close</button>
     </div>
@@ -9192,6 +9192,7 @@ function applyHubStrat(key) {
 
   if (currentSelectedContract) {
     drawOptionChart(currentSelectedContract);
+    updateOptionSignalBadge(currentSelectedContract);
   }
 }
 
@@ -9267,7 +9268,14 @@ async function fetchLiveContract(symbol, expiry, strike, type) {
 
     if (strike > 0 && type) {
       const row = data.strikes.find(s => s.strike === strike);
-      if (row && row[type]) return { ...row[type], symbol: data.symbol, expiry: data.expiry, strike, type, spot: data.spot };
+      if (row && row[type]) {
+        const contract = { ...row[type], symbol: data.symbol, expiry: data.expiry, strike, type, spot: data.spot };
+        contract.indBadge = row[type].indBadge || '';
+        contract.indMatched = row[type].indMatched || false;
+        contract.utSignal = row[type].utSignal || '';
+        contract.indNote = row[type].indNote || '';
+        return contract;
+      }
       return null;
     }
     // Spot-only request (ticker card click, no specific strike): use the
@@ -9284,6 +9292,20 @@ async function fetchLiveContract(symbol, expiry, strike, type) {
   } catch (e) {
     return null;
   }
+}
+
+function updateOptionSignalBadge(contract) {
+  const badge = document.getElementById('optBadgeSignal');
+  if (!badge || !contract) return;
+  const isOption = contract.strike > 0 && contract.type;
+  if (!isOption || !contract.indBadge) {
+    badge.style.display = 'none';
+    return;
+  }
+  const cls = contract.indMatched ? 'signal-badge-buy' : (contract.utSignal === 'SELL' ? 'signal-badge-sell' : 'indicator-tag-badge');
+  badge.className = cls;
+  badge.textContent = contract.indBadge;
+  badge.style.display = 'inline-flex';
 }
 
 function renderOptionModalContract(contract) {
@@ -9335,6 +9357,8 @@ function renderOptionModalContract(contract) {
   } else {
     moneynessBadge.textContent = 'F&O Contract';
   }
+
+  updateOptionSignalBadge(contract);
 
   const chg = contract.close - contract.prevClose;
   const chgPct = contract.prevClose > 0 ? (chg / contract.prevClose) * 100 : 0;
@@ -10087,7 +10111,7 @@ async function loadChainData() {
       // the modal keeps showing the previously-loaded symbol's spot/ATM/rows
       // under the newly-selected (unsupported) symbol's title.
       currentChainData = null;
-      document.getElementById('chainTitle').textContent = `Option Chain: ${sym}${known ? '' : ' — Unavailable'}`;
+      document.getElementById('chainTitle').textContent = `Option Chain: ${sym}`;
       document.getElementById('chainSub').textContent = known
         ? `Spot: ₹${fmtNum(known.last)} (index only — no options chain)`
         : 'No option-chain data available for this symbol.';
@@ -10543,7 +10567,7 @@ function renderGlobalTicker(prefix, item) {
   const elVal = document.getElementById(prefix + 'Val');
   const elChg = document.getElementById(prefix + 'Chg');
   if (!item || !item.available) {
-    if (elVal) elVal.textContent = 'Unavailable';
+    if (elVal) elVal.textContent = '–';
     if (elChg) { elChg.textContent = ''; elChg.className = 'index-ticker-chg'; }
     return;
   }
@@ -10596,7 +10620,7 @@ async function fetchGlobalMarkets() {
       }
     } else {
       const elVal = document.getElementById('usdInrVal');
-      if (elVal) elVal.textContent = 'Unavailable';
+      if (elVal) elVal.textContent = '–';
     }
   } catch (err) {
     console.warn('Failed to fetch global markets:', err);
