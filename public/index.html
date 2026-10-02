@@ -69,7 +69,15 @@
     --rx-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
-  * { box-sizing: border-box; }
+  /* Global Performance & Rendering Optimizations */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
   body {
     margin: 0;
     padding: 0;
@@ -80,6 +88,24 @@
     line-height: 1.45;
     position: relative;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Safe area insets for notched phones */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    .app-container {
+      padding-top: max(10px, env(safe-area-inset-top));
+      padding-left: max(18px, env(safe-area-inset-left));
+      padding-right: max(18px, env(safe-area-inset-right));
+      padding-bottom: max(40px, env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Containment for major layout sections */
+  header, nav, main, .panel, .modal-card, .table-wrap, .workspace {
+    contain: layout paint;
   }
 
   /* Animated Trading Canvas Background */
@@ -92,6 +118,7 @@
     pointer-events: none;
     z-index: 0;
     opacity: 0.45;
+    will-change: transform;
   }
 
   .app-container {
@@ -102,6 +129,7 @@
     margin: 0;
     padding: 10px 18px 40px 18px;
     box-sizing: border-box;
+    contain: layout paint;
   }
 
   /* Attractive Market Terminal Glowing Animations */
@@ -217,14 +245,38 @@
     border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 10px 20px;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 14px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     backdrop-filter: blur(8px);
   }
+
+  header > div:first-child {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .header-meta {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .header-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
   .brand-badge-row {
     display: flex;
     align-items: center;
@@ -284,6 +336,30 @@
     color: var(--muted);
     font-size: 12px;
   }
+
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .header-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  #loadedInfo {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    width: 100%;
+  }
+
   .status-badge {
     background: var(--panel-2);
     border: 1px solid var(--line);
@@ -1951,7 +2027,7 @@
     font-size: 13px;
   }
 
-/* Responsive Mobile & Web First Layout (Optimized for Nothing Phone 2 Pro & Mobile Chrome) */
+  /* Responsive Mobile & Web First Layout (Optimized for Nothing Phone 2 Pro & Mobile Chrome) */
   html, body {
     width: 100%;
     max-width: 100vw;
@@ -1960,6 +2036,43 @@
     padding: 0;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth scrolling for all browsers */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 10px;
+  }
+
+  /* Touch target minimums */
+  button, .tab-btn, .action-btn, .small-strat-btn, .preset-pill,
+  .q-pill, .chain-btn, .chart-btn-sm, .dl-btn, .scan-btn, .view-toggle-btn,
+  .opt-card-btn, .pulse-action-btn, .modal-close-pill, .modal-close-action,
+  .market-tab-btn, .market-refresh-btn, .rx-nav-btn, .rx-tile,
+  .index-ticker-card, .global-ticker-card, .pulse-action-btn {
+    min-height: 40px;
+    min-width: 40px;
+    touch-action: manipulation;
+  }
+
+  /* Force hardware acceleration on scrollable regions */
+  .chartink-indices-bar, .global-markets-bar, .indicator-btn-row,
+  .table-wrap, .fp-body, .modal-card, .search-autocomplete-dropdown,
+  .index-pulse-grid, .mobile-cards-wrap, .hub-strategy-selector,
+  .modal-strat-tabs, .ind-chain-table-wrap {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .chartink-indices-bar, .global-markets-bar, .indicator-btn-row,
+  .chartink-preset-ribbon, .market-bar-tabs, .mode-tabs {
+    scrollbar-width: none;
+  }
+  .chartink-indices-bar::-webkit-scrollbar, .global-markets-bar::-webkit-scrollbar,
+  .indicator-btn-row::-webkit-scrollbar, .chartink-preset-ribbon::-webkit-scrollbar,
+  .market-bar-tabs::-webkit-scrollbar, .mode-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   /* Live Index Algo & Option Movement Pulse Dashboard */
@@ -2255,20 +2368,78 @@
   }
 
   @media (max-width: 900px) {
+    /* Sticky header on tablet/mobile for better navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-radius: 0 0 12px 12px;
+      margin: -10px -18px 12px -18px;
+      padding: 12px 14px;
+      width: calc(100% + 36px);
+      max-width: none;
+    }
+
+    @supports (padding-top: env(safe-area-inset-top)) {
+      header {
+        margin-top: calc(-10px - env(safe-area-inset-top));
+        padding-top: max(12px, env(safe-area-inset-top));
+      }
+    }
+
     .workspace-body { flex-direction: column; align-items: stretch; gap: 12px; }
     .panel.filters { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
     .chartink-indices-bar { flex-wrap: nowrap; overflow-x: auto; }
     .clause-row { font-size: 11.5px; gap: 6px; }
     .results-search-box { min-width: 100%; }
     main { width: 100% !important; background: #0f1520; box-sizing: border-box !important; }
+    #loadedInfo { text-align: left !important; width: 100% !important; }
+    header > div:last-child { align-items: flex-start !important; width: 100% !important; }
+    header > div:last-child > div { justify-content: flex-start !important; width: 100% !important; }
+    .glow-title { font-size: 18px !important; }
   }
   @media (max-width: 768px) {
-    header { padding: 12px 14px; flex-direction: column; align-items: flex-start; gap: 10px; }
+    header { padding: 12px 14px; }
     header > div:last-child { align-items: flex-start !important; width: 100% !important; }
     header > div:last-child > div { justify-content: flex-start !important; width: 100% !important; }
     #loadedInfo { text-align: left !important; width: 100% !important; }
     .glow-title { font-size: 18px !important; }
     main { width: 100% !important; padding: 10px; }
+
+    /* Fix iOS modal scrolling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-height: none;
+      min-height: 100%;
+      border-radius: 0;
+      margin: 0;
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #141c2c;
+    }
+
+    .modal-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      background: #0f131a;
+    }
+
     .indicator-btn-row {
       display: flex;
       gap: 6px;
@@ -2314,6 +2485,28 @@
     #indicatorsPanel > div:first-child > div:last-child {
       flex-wrap: wrap;
     }
+
+    /* Consistent spacing */
+    .group { margin-bottom: 12px !important; }
+    .row2 { flex-direction: column; gap: 8px; }
+    .row2 input { width: 100%; }
+
+    /* Search and filters full width */
+    .search-input-wrapper { width: 100%; }
+    #symSelect { width: 100%; }
+    #sidebarFilters { max-width: 100%; overflow-x: auto; }
+
+    /* Larger touch targets for pills and buttons */
+    .q-pill, .chain-btn, .chart-btn-sm, .dl-btn {
+      min-height: 40px !important;
+      padding: 10px 12px !important;
+      box-sizing: border-box !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .quick-clear-btn { padding: 4px 8px; font-size: 11px; }
   }
 
   @media (max-width: 600px) {
@@ -2543,12 +2736,11 @@
      MOBILE UI POLISH  (≤600px)
   ═══════════════════════════════════════════ */
   @media (max-width: 600px) {
-
-    /* ── Workspace ── */
+    /* Workspace */
     .workspace { padding: 8px; border-radius: 8px; }
     .workspace-body { gap: 0; }
 
-    /* ── Mobile filter toggle button ── */
+    /* Mobile filter toggle button */
     .mobile-filter-toggle {
       font-size: 12px !important;
       padding: 10px 12px !important;
@@ -2556,7 +2748,7 @@
       margin-bottom: 10px !important;
     }
 
-    /* ── Mode tabs ── */
+    /* Mode tabs */
     .mode-tabs {
       gap: 4px !important;
       padding: 6px 4px !important;
@@ -2568,7 +2760,7 @@
       border-radius: 6px !important;
     }
 
-    /* ── Indicator Panel ── */
+    /* Indicator Panel */
     #indicatorsPanel {
       padding: 12px 10px !important;
       border-radius: 8px !important;
@@ -2606,11 +2798,11 @@
       font-size: 11px !important;
     }
 
-    /* ── Block Deals table ── */
+    /* Block Deals table */
     #blockDealsBody { border-radius: 6px; }
     #blockDealsBody table { min-width: 520px; font-size: 11px; }
 
-    /* ── Banner / Action buttons ── */
+    /* Banner / Action buttons */
     .banner { border-radius: 8px !important; padding: 10px 10px !important; gap: 8px !important; }
     .action-btn {
       font-size: 11px !important;
@@ -2619,31 +2811,31 @@
       min-height: 36px !important;
     }
 
-    /* ── Main content area ── */
+    /* Main content area */
     main { padding: 8px !important; border-radius: 8px !important; }
 
-    /* ── Cards in results ── */
+    /* Cards in results */
     .opt-card { border-radius: 8px !important; }
 
-    /* ── rx-legacy-tools sections spacing ── */
+    /* rx-legacy-tools sections spacing */
     .rx-legacy-tools {
       margin-bottom: 10px !important;
     }
 
-    /* ── Ticker cards horizontal scroll ── */
+    /* Ticker cards horizontal scroll */
     .index-ticker-card, .global-ticker-card {
       min-width: 110px !important;
       border-radius: 7px !important;
     }
 
-    /* ── Scan button in filter panel ── */
+    /* Scan button in filter panel */
     .scan-btn {
       padding: 12px 0 !important;
       font-size: 13px !important;
       border-radius: 8px !important;
     }
 
-    /* ── fp-section cards on mobile ── */
+    /* fp-section cards on mobile */
     .fp-section {
       border-radius: 8px !important;
       padding: 10px 10px !important;
@@ -2662,20 +2854,22 @@
       font-size: 10px !important;
     }
 
-    /* ── Pill/preset ribbon ── */
+    /* Pill/preset ribbon */
     .preset-pill {
       font-size: 11px !important;
       padding: 6px 10px !important;
     }
 
-    /* ── Results search box ── */
+    /* Results search box */
     .results-search-box input {
       font-size: 12px !important;
     }
 
-    /* ── Toasts ── */
+    /* Toasts */
     #toastContainer {
       bottom: 16px !important;
+      left: 10px !important;
+      right: 10px !important;
     }
   }
 
@@ -2686,6 +2880,17 @@
     #indicatorsPanel { padding: 10px 8px !important; }
     .index-ticker-card, .global-ticker-card { min-width: 96px !important; }
     .fp-section { padding: 8px !important; }
+
+    /* Ultra-compact header */
+    header { padding: 10px 10px !important; }
+    .brand-pill, .live-pill {
+      font-size: 9px !important;
+      padding: 2px 6px !important;
+    }
+    .cron-badge, .ist-clock-badge {
+      font-size: 9px !important;
+      padding: 2px 5px !important;
+    }
   }
 
   /* Rajan Indicators Direct TradingView Launch Button */
@@ -3224,6 +3429,7 @@
       -webkit-overflow-scrolling: touch !important;
       touch-action: pan-x pan-y !important;
       margin-bottom: 8px;
+      border-radius: 8px;
     }
     table {
       min-width: 620px !important;
@@ -3290,6 +3496,39 @@
   /* Ensure Market News Ticker, Block Deals, and Indicators panels are visible */
   #newsTickerPanel, #blockDealsPanel, #indicatorsPanel { display: block !important; }
 
+  /* Filter panel toggle for mobile */
+  .mobile-filter-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 2px solid #3b82f6;
+    color: #e0f2fe;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+  }
+  .mobile-filter-toggle:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+  }
+  .mobile-filter-toggle:active {
+    transform: translateY(0);
+  }
+
+  /* Collapsed state for filter panels */
+  .panel.filters.collapsed,
+  .chartink-query-card.collapsed {
+    display: none !important;
+  }
+
   /* Mobile responsive fixes */
   @media (max-width: 1024px) {
     .group { margin-bottom: 8px; }
@@ -3308,6 +3547,30 @@
     .search-input-wrapper { margin-bottom: 8px; }
     .segbtns { flex-wrap: wrap; }
     .segbtns button { flex: 1; min-width: 60px; }
+
+    /* Fix table overflow on all screens */
+    #recoTableBody { overflow-x: auto; }
+    #recoTableBody table { width: 100%; border-collapse: collapse; }
+
+    /* Fix search input visibility in Chrome */
+    #resultsSearchInput, #symSearch {
+      min-height: 36px;
+      box-sizing: border-box;
+      font-size: 13px;
+    }
+
+    /* Ensure dropdown and autocomplete work properly */
+    .search-autocomplete-dropdown {
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    /* Better filter group layout on mobile */
+    .sidebar-filters-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 
   @media (max-width: 480px) {
@@ -3318,6 +3581,25 @@
     .group { margin-bottom: 6px; }
     .quick-clear-btn { padding: 2px 6px; font-size: 10px; }
     #indicatorSymbol, #indicatorKey { font-size: 10px; }
+
+    /* Reduce padding on very small screens */
+    .app-container {
+      padding: 6px 10px 32px 10px !important;
+    }
+
+    /* Smaller cards */
+    .index-ticker-card, .global-ticker-card {
+      min-width: 100px !important;
+      padding: 4px 8px !important;
+    }
+
+    /* Compact tables */
+    table {
+      font-size: 10px !important;
+    }
+    table th, table td {
+      padding: 4px 6px !important;
+    }
   }
 
   /* Fix table overflow on all screens */
@@ -3343,6 +3625,22 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Improved focus styles for accessibility */
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    html { scroll-behavior: auto; }
+  }
   </style>
 </head>
 <body>
@@ -3362,8 +3660,8 @@
       <h1 class="glow-title">Chartink F&amp;O Algo Screener &amp; Option Indicator Hub</h1>
       <p>Institutional algorithmic screener for Day Low bounce, Previous Close breakout, and Open=Low / Open=High setups with live web &amp; mobile indicators and UT Bot Buy/Sell signals.</p>
     </div>
-    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+    <div class="header-meta">
+      <div class="header-meta-row">
         <span class="cron-badge" style="display:none;" title="Automated Vercel cron scheduled every Sunday at 12:00 AM IST to clear stored CSV data and keep storage clean">⏱️ Sun 12:00 AM Cleanup Cron Active</span>
         <span class="ist-clock-badge" id="tvApiBadge" title="TradingView API (@mathieuc/tradingview) active with live technical analysis & quotes" style="display:none; background:#0f172a; border-color:#2563eb; color:#60a5fa; cursor:pointer;" onclick="checkTvApiStatus()">📊 TV API: Live</span>
         <span class="ist-clock-badge" id="liveClockIst">--:--:-- IST</span>
@@ -10864,82 +11162,87 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 /* ============================================================
    AMBIENT BACKGROUND PARTICLES ANIMATION
 ============================================================ */
-function initAmbientBackground() {
-  const canvas = document.getElementById('ambientCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let width, height, particles;
-  const PARTICLE_COUNT = 45;
-  const CONNECT_DIST = 140;
+  function initAmbientBackground() {
+    const canvas = document.getElementById('ambientCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let width, height, particles;
+    const PARTICLE_COUNT = 45;
+    const CONNECT_DIST = 140;
 
-  function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  class Particle {
-    constructor() { this.reset(true); }
-    reset(initial = false) {
-      this.x = initial ? Math.random() * width : (Math.random() > 0.5 ? 0 : width);
-      this.y = Math.random() * height;
-      this.vx = (Math.random() - 0.5) * 0.45;
-      this.vy = (Math.random() - 0.5) * 0.45;
-      this.radius = Math.random() * 1.8 + 0.8;
-      this.baseAlpha = Math.random() * 0.4 + 0.25;
-      this.pulseSpeed = 0.02 + Math.random() * 0.03;
-      this.pulse = Math.random() * Math.PI * 2;
-      const colors = ['rgba(96, 165, 250,', 'rgba(52, 211, 153,', 'rgba(167, 139, 250,', 'rgba(56, 189, 248,'];
-      this.color = colors[Math.floor(Math.random() * colors.length)];
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
     }
-    update() {
-      this.x += this.vx;
-      this.y += this.vy;
-      this.pulse += this.pulseSpeed;
-      if (this.x < -20) this.x = width + 20;
-      if (this.x > width + 20) this.x = -20;
-      if (this.y < -20) this.y = height + 20;
-      if (this.y > height + 20) this.y = -20;
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(resize, 150);
+    });
+    resize();
+
+    class Particle {
+      constructor() { this.reset(true); }
+      reset(initial = false) {
+        this.x = initial ? Math.random() * width : (Math.random() > 0.5 ? 0 : width);
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.45;
+        this.vy = (Math.random() - 0.5) * 0.45;
+        this.radius = Math.random() * 1.8 + 0.8;
+        this.baseAlpha = Math.random() * 0.4 + 0.25;
+        this.pulseSpeed = 0.02 + Math.random() * 0.03;
+        this.pulse = Math.random() * Math.PI * 2;
+        const colors = ['rgba(96, 165, 250,', 'rgba(52, 211, 153,', 'rgba(167, 139, 250,', 'rgba(56, 189, 248,'];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.pulse += this.pulseSpeed;
+        if (this.x < -20) this.x = width + 20;
+        if (this.x > width + 20) this.x = -20;
+        if (this.y < -20) this.y = height + 20;
+        if (this.y > height + 20) this.y = -20;
+      }
+      draw() {
+        const alpha = this.baseAlpha + Math.sin(this.pulse) * 0.15;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `${this.color} ${Math.max(0.08, alpha)})`;
+        ctx.fill();
+      }
     }
-    draw() {
-      const alpha = this.baseAlpha + Math.sin(this.pulse) * 0.15;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fillStyle = `${this.color} ${Math.max(0.08, alpha)})`;
-      ctx.fill();
-    }
-  }
 
-  particles = Array.from({ length: PARTICLE_COUNT }, () => new Particle());
+    particles = Array.from({ length: PARTICLE_COUNT }, () => new Particle());
 
-  function animate() {
-    if (document.hidden) { requestAnimationFrame(animate); return; }
-    ctx.clearRect(0, 0, width, height);
+    function animate() {
+      if (document.hidden) { requestAnimationFrame(animate); return; }
+      ctx.clearRect(0, 0, width, height);
 
-    for (let i = 0; i < particles.length; i++) {
-      particles[i].update();
-      particles[i].draw();
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
 
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < CONNECT_DIST) {
-          const alpha = (1 - dist / CONNECT_DIST) * 0.16;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(96, 165, 250, ${alpha})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < CONNECT_DIST) {
+            const alpha = (1 - dist / CONNECT_DIST) * 0.16;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(96, 165, 250, ${alpha})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
         }
       }
+      requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
   }
-  requestAnimationFrame(animate);
-}
 
 function initLiveClock() {
   function update() {
