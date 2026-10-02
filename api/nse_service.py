@@ -464,6 +464,49 @@ class NSEService:
             print(f"[NSE] marketStatus error: {e}")
         return {"marketStatus": "Close", "tradeDate": self.today_date or ""}
 
+    def _fetch_nse_futures(self, symbol):
+        s = self._get_session()
+        try:
+            r = s.get(
+                f"https://www.nseindia.com/api/quote-derivative?symbol={symbol}",
+                headers={
+                    "Referer": "https://www.nseindia.com/",
+                    "Accept": "application/json, text/javascript, */*; q=0.01"
+                },
+                timeout=6,
+            )
+            if r.status_code != 200:
+                return None
+            data = r.json()
+            futures = []
+            for item in data.get("stocks", []):
+                meta = item.get("metadata", {})
+                if meta.get("instrumentType") == "Index Futures":
+                    last = meta.get("lastPrice") or meta.get("closePrice")
+                    prev = meta.get("prevClose")
+                    chg = meta.get("change")
+                    pct = meta.get("pChange")
+                    if last is not None and pct is not None:
+                        futures.append({
+                            "lastPrice": last,
+                            "change": chg,
+                            "pChange": pct,
+                            "expiryDate": meta.get("expiryDate", ""),
+                        })
+            if not futures:
+                return None
+            front = futures[0]
+            return {
+                "lastPrice": front["lastPrice"],
+                "change": front["change"],
+                "pChange": front["pChange"],
+                "expiryDate": front["expiryDate"],
+                "source": "NSE"
+            }
+        except Exception as e:
+            print(f"[NSE] futures error for {symbol}: {e}")
+            return None
+
     def _fetch_yahoo_index_quote(self, key):
         """Last close + change for SENSEX/VIX via Yahoo's public chart API —
         neither has any NSE bhavcopy source, and BSE's own API blocks this app."""
@@ -1651,6 +1694,24 @@ class NSEService:
         nasdaq_pct = market_data.get('NQ=F', {}).get('pct')
         nasdaq_chg = market_data.get('NQ=F', {}).get('chg')
 
+        nifty_fut = None
+        nifty_fut_pct = None
+        nifty_fut_chg = None
+        nifty_fut_res = self._fetch_nse_futures("NIFTY")
+        if nifty_fut_res:
+            nifty_fut = nifty_fut_res["lastPrice"]
+            nifty_fut_pct = nifty_fut_res["pChange"]
+            nifty_fut_chg = nifty_fut_res["change"]
+
+        banknifty_fut = None
+        banknifty_fut_pct = None
+        banknifty_fut_chg = None
+        bank_fut_res = self._fetch_nse_futures("BANKNIFTY")
+        if bank_fut_res:
+            banknifty_fut = bank_fut_res["lastPrice"]
+            banknifty_fut_pct = bank_fut_res["pChange"]
+            banknifty_fut_chg = bank_fut_res["change"]
+
         def _entry(id_, name, label, price, fmt, chg, pct, sub_label=None, usd_price=None, usd_fmt=None, market=""):
             """Builds one ticker entry; `available=False` with no fabricated
             numbers when the underlying live fetch didn't come through."""
@@ -1661,7 +1722,7 @@ class NSEService:
                 "label": label,
                 "available": available,
                 "price": price if available else None,
-                "priceFormatted": (fmt.format(price) if available else "Unavailable"),
+                "priceFormatted": (fmt.format(price) if available else "–"),
                 "usdPrice": round(usd_price, 2) if (available and usd_price is not None) else None,
                 "subLabel": (usd_fmt.format(usd_price) if (available and usd_price is not None and usd_fmt) else (sub_label or "")),
                 "chg": chg if available else None,
@@ -1683,23 +1744,14 @@ class NSEService:
                        usd_price=btc_usd, usd_fmt="${:,.0f}", market="Crypto Spot"),
             ],
             "futures": [
-                # GIFT NIFTY / NSE F&O monthly futures used to be shown as
-                # "real spot + a fixed constant premium" labelled "(Est.)" --
-                # one of the four constants (Roll Spread) didn't even match
-                # its own label (code added +128.0, label said +83.0), and a
-                # frozen constant is a worse estimate of a real futures
-                # premium than just saying so honestly. No free, unauthenticated
-                # real GIFT NIFTY / NSE futures data source exists (checked
-                # Yahoo Finance and others) -- marked unavailable rather than
-                # showing fabricated precision, same as US stocks/other crypto below.
                 _entry("gift_nifty", "GIFT NIFTY", "NSE IX Futures", None, "{:,.2f}", None, None,
-                       sub_label="No real-time GIFT NIFTY data source is available", market="NSE IX"),
-                _entry("nifty_fut_near", "NIFTY FUT (Near)", "Monthly Futures", None, "{:,.2f}", None, None,
-                       sub_label="No real-time NSE futures data source is available", market="NSE F&O"),
+                       sub_label="No free unauthenticated source available", market="NSE IX"),
+                _entry("nifty_fut_near", "NIFTY FUT (Near)", "Monthly Futures", nifty_fut, "{:,.2f}", nifty_fut_chg, nifty_fut_pct,
+                       sub_label=nifty_fut_res["expiryDate"] if nifty_fut_res else "NSE F&O", market="NSE F&O"),
                 _entry("nifty_fut_next", "NIFTY FUT (Next)", "Next Month Fut", None, "{:,.2f}", None, None,
-                       sub_label="No real-time NSE futures data source is available", market="NSE F&O"),
-                _entry("bank_fut_near", "BANK NIFTY FUT", "Monthly Futures", None, "{:,.2f}", None, None,
-                       sub_label="No real-time NSE futures data source is available", market="NSE F&O"),
+                       sub_label="NSE F&O", market="NSE F&O"),
+                _entry("bank_fut_near", "BANK NIFTY FUT", "Monthly Futures", banknifty_fut, "{:,.2f}", banknifty_fut_chg, banknifty_fut_pct,
+                       sub_label=bank_fut_res["expiryDate"] if bank_fut_res else "NSE F&O", market="NSE F&O"),
                 _entry("dow_fut", "DOW FUTURES", "US 30 (YM)", dow_fut, "{:,.0f}", dow_chg, dow_pct,
                        sub_label="CBOT Mini", market="US CBOT"),
                 _entry("sp_fut", "S&P 500 FUT", "E-mini S&P (ES)", sp_fut, "{:,.2f}", sp_chg, sp_pct,
