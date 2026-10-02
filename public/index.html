@@ -603,15 +603,6 @@
     gap: 16px;
     align-items: flex-start;
   }
-  .panel.filters {
-    width: 320px;
-    flex-shrink: 0;
-    background: linear-gradient(180deg, #0f1520 0%, #0a0f19 100%);
-    border: 2px solid #1e3a5f;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  }
   main {
     flex: 1;
     min-width: 0;
@@ -619,84 +610,258 @@
     border-radius: 8px;
     padding: 12px;
   }
-
-  /* Sidebar Filter Controls */
-  .group { margin-bottom: 14px; }
-  .group label {
-    display: block;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #94a3b8;
+  /* ═══════════════════════════════════════════
+     REDESIGNED ADVANCED FILTER PANEL
+  ═══════════════════════════════════════════ */
+  .panel.filters {
+    width: 300px;
+    flex-shrink: 0;
+    background: #080d15;
+    border: 1px solid #1a2740;
+    border-radius: 14px;
+    padding: 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 180px);
+  }
+  /* Filter panel header */
+  .fp-header {
+    background: linear-gradient(135deg, #0d1f3c 0%, #0a1628 100%);
+    border-bottom: 1px solid #1a2740;
+    padding: 14px 16px 12px;
+    flex-shrink: 0;
+  }
+  .fp-header-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #60a5fa;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-  }
-  .group input[type="text"], .group input[type="number"], .group select {
-    width: 100%;
-    background: #090e17;
-    border: 1px solid #1f2c3f;
-    border-radius: 6px;
-    color: #fff;
-    padding: 7px 10px;
-    font-size: 12.5px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s ease;
-  }
-  .group input:focus, .group select:focus {
-    border-color: #3b82f6;
-  }
-  .row2 { display: flex; gap: 8px; }
-  .checkline {
+    letter-spacing: 1.5px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
-    cursor: pointer;
-    margin-bottom: 6px;
-    color: #cbd5e1;
+    gap: 7px;
+    margin-bottom: 10px;
   }
-  .checkline input[type="checkbox"] {
-    accent-color: #3b82f6;
-    cursor: pointer;
-  }
-  .segbtns { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid #1f2c3f; }
-  .segbtns button {
-    flex: 1;
-    background: #090e17;
-    border: none;
-    color: var(--muted);
-    padding: 6px 0;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s ease;
-  }
-  .segbtns button.active { background: #2563eb; color: #fff; }
-  .scan-btn {
+  .fp-header-title svg { opacity: 0.8; }
+  /* Clear all button */
+  .fp-clear-btn {
     width: 100%;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #fff;
-    border: 2px solid #34d399;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
     border-radius: 8px;
-    padding: 12px 0;
-    font-size: 14px;
+    color: #fca5a5;
+    padding: 7px 12px;
+    font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .fp-clear-btn:hover {
+    background: rgba(239,68,68,0.16);
+    border-color: rgba(239,68,68,0.45);
+    color: #f87171;
+  }
+  /* Scrollable filter body */
+  .fp-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 14px;
+    scrollbar-width: thin;
+    scrollbar-color: #1e3a5f #080d15;
+  }
+  .fp-body::-webkit-scrollbar { width: 4px; }
+  .fp-body::-webkit-scrollbar-track { background: transparent; }
+  .fp-body::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 4px; }
+  /* Section card */
+  .fp-section {
+    background: #0c1420;
+    border: 1px solid #172438;
+    border-radius: 10px;
+    padding: 11px 12px;
+    margin-bottom: 10px;
+  }
+  .fp-section-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .fp-section-label span { color: #334155; }
+  /* Quick action mini buttons */
+  .fp-mini-btn {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.18);
+    border-radius: 5px;
+    color: #60a5fa;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    line-height: 1.6;
+  }
+  .fp-mini-btn:hover { background: rgba(59,130,246,0.18); }
+  .fp-mini-btn.danger {
+    background: rgba(239,68,68,0.07);
+    border-color: rgba(239,68,68,0.18);
+    color: #f87171;
+  }
+  .fp-mini-btn.danger:hover { background: rgba(239,68,68,0.16); }
+  /* Input fields */
+  .fp-input, .fp-select {
+    width: 100%;
+    background: #060b12;
+    border: 1px solid #192436;
+    border-radius: 7px;
+    color: #e2e8f0;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+  }
+  .fp-input:focus, .fp-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+  }
+  .fp-input::placeholder { color: #334155; }
+  .fp-select option { background: #0c1420; }
+  /* Search wrapper */
+  .fp-search-wrap {
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .fp-search-wrap .fp-input { padding-left: 30px; padding-right: 28px; }
+  .fp-search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #334155;
+    font-size: 13px;
+    pointer-events: none;
+  }
+  .fp-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+    line-height: 1;
+  }
+  .fp-search-clear:hover { color: #94a3b8; }
+  /* Row of two inputs */
+  .fp-row2 { display: flex; gap: 7px; }
+  .fp-row2 .fp-input { font-size: 11px; padding: 6px 8px; }
+  /* Checkbox line */
+  .fp-check {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+    font-size: 12px;
+    color: #94a3b8;
+    cursor: pointer;
+    margin-bottom: 5px;
+    padding: 3px 0;
+  }
+  .fp-check:last-child { margin-bottom: 0; }
+  .fp-check input[type="checkbox"] {
+    accent-color: #3b82f6;
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+  }
+  /* Segmented pill tabs */
+  .fp-seg {
+    display: flex;
+    background: #060b12;
+    border: 1px solid #192436;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .fp-seg button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #475569;
+    padding: 5px 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 6px;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .fp-seg button.active {
+    background: #1d4ed8;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(29,78,216,0.4);
+  }
+  .fp-seg button:not(.active):hover { background: #0f1a2c; color: #94a3b8; }
+  /* TV signal badge */
+  .fp-tv-badge {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 7px;
+    padding: 7px 10px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  /* Sticky scan button at bottom */
+  .fp-footer {
+    padding: 12px 14px;
+    background: #080d15;
+    border-top: 1px solid #1a2740;
+    flex-shrink: 0;
+  }
+  .scan-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: #fff;
+    border: 1px solid #10b981;
+    border-radius: 9px;
+    padding: 11px 0;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(5,150,105,0.35);
     transition: all 0.2s ease;
     font-family: inherit;
-    margin-top: 12px;
+    letter-spacing: 0.5px;
   }
   .scan-btn:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    box-shadow: 0 6px 18px rgba(16,185,129,0.5);
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 6px 20px rgba(16,185,129,0.45);
+    transform: translateY(-1px);
   }
   .scan-btn:active {
     transform: translateY(0);
@@ -2091,7 +2256,7 @@
 
   @media (max-width: 900px) {
     .workspace-body { flex-direction: column; align-items: stretch; }
-    .panel.filters { width: 100%; display: none !important; }
+    .panel.filters { width: 100% !important; max-height: 70vh !important; display: none !important; }
     .chartink-indices-bar { flex-wrap: nowrap; overflow-x: auto; }
     .clause-row { font-size: 11.5px; gap: 6px; }
     .results-search-box { min-width: 100%; }
@@ -3601,143 +3766,174 @@
     <div class="workspace-body">
     <!-- Sidebar Filters -->
     <div class="panel filters" id="sidebarFiltersPanel">
-      <!-- Prominent User-Friendly Clear All Filters Action -->
-      <button type="button" class="clear-all-filters-btn" id="clearAllFiltersBtn" onclick="clearAllScreenerFilters()" title="Reset all strategy ranges, symbols, tolerance, and filters to defaults">
-        <span>🧹</span> <b>Clear All Filters &amp; Reset</b>
-      </button>
 
-      <div class="group" id="symbolFilterGroup">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="margin:0;">Underlying</label>
-          <div style="display:flex; gap:4px;">
-            <button type="button" class="quick-clear-btn" onclick="clearSymSearch()" title="Clear text search">✕ Text</button>
-            <button type="button" class="quick-clear-btn" onclick="clearSymSelect()" title="Reset to All Underlyings">↺ All</button>
-          </div>
+      <!-- Header -->
+      <div class="fp-header">
+        <div class="fp-header-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Advanced Filters
         </div>
-        <div class="search-input-wrapper" style="width:100%; margin-bottom:6px;">
-          <input type="text" id="symSearch" placeholder="Search stock or index (e.g. NIFTY, RELIANCE, TCS)…" style="width:100%; padding-right:26px;">
-          <button type="button" class="search-clear-btn" id="symSearchClearBtn" onclick="clearSymSearch()" style="right:6px;" title="Clear symbol search">✕</button>
-        </div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <select id="symSelect" style="flex:1;"><option value="__ALL__">All symbols</option></select>
-          <button type="button" class="quick-clear-btn" onclick="clearSymSelect()" title="Reset dropdown to All symbols">↺ All</button>
-        </div>
-        <button type="button" class="rajan-tv-btn" onclick="openSelectedStockTradingView()" title="Open searched or selected stock in TradingView with Rajan Indicators" style="display:none;">
-          <span>📈</span> <b>Open in TradingView (Stock Chart ↗)</b>
+        <button type="button" class="fp-clear-btn" id="clearAllFiltersBtn" onclick="clearAllScreenerFilters()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+          Clear All Filters
         </button>
-        <div id="stockTvSignalBadge" class="stock-tv-signal-badge" style="display:none;">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:12px;">📶</span>
-            <span style="color:#94a3b8; font-weight:600;">TV Analysis:</span>
-            <span id="stockTvSignalVal" style="font-weight:700; color:#10b981;">NEUTRAL</span>
+      </div>
+
+      <!-- Scrollable body -->
+      <div class="fp-body">
+
+        <!-- Symbol Search -->
+        <div class="fp-section" id="symbolFilterGroup">
+          <div class="fp-section-label">
+            🔍 Symbol
+            <div style="display:flex;gap:4px;">
+              <button type="button" class="fp-mini-btn danger" onclick="clearSymSearch()">✕ Text</button>
+              <button type="button" class="fp-mini-btn" onclick="clearSymSelect()">↺ All</button>
+            </div>
           </div>
-          <span id="stockTvScoreVal" style="font-size:10.5px; color:#64748b;">TradingView API</span>
-        </div>
-      </div>
-
-      <div class="group" id="instrGroup">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="margin:0;">Instrument type</label>
-          <button type="button" class="quick-clear-btn" onclick="resetInstrGroup()" title="Select both indices and stocks">↺ Both</button>
-        </div>
-        <label class="checkline" for="instIdx"><input type="checkbox" id="instIdx"><span>Index options</span></label>
-        <label class="checkline" for="instStk"><input type="checkbox" id="instStk"><span>Stock options</span></label>
-      </div>
-
-      <div class="group">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="margin:0;">Expiry</label>
-          <button type="button" class="quick-clear-btn" onclick="resetExpSelect()" title="Reset to All expiries">↺ All</button>
-        </div>
-        <select id="expSelect">
-          <option value="all" selected>All expiries</option>
-          <option value="nearest">Nearest expiry (per symbol)</option>
-        </select>
-      </div>
-
-      <div class="group">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="margin:0;">Option type</label>
-          <button type="button" class="quick-clear-btn" onclick="resetOptType()" title="Reset to both CE & PE">↺ Both</button>
-        </div>
-        <div class="segbtns" id="optTypeSeg">
-          <button data-v="BOTH" class="active">Both</button>
-          <button data-v="CE">CE</button>
-          <button data-v="PE">PE</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="checkline" style="justify-content:space-between;">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <input type="checkbox" id="lowOn">
-            <label style="margin:0;" for="lowOn">Day low in range (₹)</label>
+          <div class="fp-search-wrap">
+            <span class="fp-search-icon">🔎</span>
+            <input type="text" id="symSearch" class="fp-input" placeholder="Search NIFTY, RELIANCE, TCS…">
+            <button type="button" class="fp-search-clear" id="symSearchClearBtn" onclick="clearSymSearch()">✕</button>
           </div>
-          <div style="display:flex; gap:4px;">
-            <button type="button" class="quick-clear-btn" onclick="toggleLowFilter(false)" title="Disable Day Low filter">✕ Off</button>
-            <button type="button" class="quick-clear-btn" onclick="resetLowRangeDefault()" title="Reset to ₹5.80–₹8.45">↺ Reset</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="symSelect" class="fp-select" style="flex:1;"><option value="__ALL__">All symbols</option></select>
+            <button type="button" class="fp-mini-btn" onclick="clearSymSelect()" style="white-space:nowrap;">↺</button>
+          </div>
+          <button type="button" class="rajan-tv-btn" onclick="openSelectedStockTradingView()" style="display:none;margin-top:8px;">
+            <span>📈</span> <b>Open in TradingView</b>
+          </button>
+          <div id="stockTvSignalBadge" class="fp-tv-badge" style="display:none;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#94a3b8;">📶 <span style="font-weight:700;">TV Analysis:</span></div>
+            <div>
+              <span id="stockTvSignalVal" style="font-weight:800;color:#10b981;font-size:12px;">NEUTRAL</span>
+              <div id="stockTvScoreVal" style="font-size:10px;color:#475569;text-align:right;">TradingView API</div>
+            </div>
           </div>
         </div>
-        <div class="row2">
-          <input type="number" id="lowFrom" step="0.05" value="" placeholder="Min Day Low (e.g. 5.80)">
-          <input type="number" id="lowTo" step="0.05" value="" placeholder="Max Day Low (e.g. 8.45)">
-        </div>
-      </div>
 
-      <div class="group">
-        <div class="checkline" style="justify-content:space-between;">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <input type="checkbox" id="prevOn">
-            <label style="margin:0;" for="prevOn">Previous close in range (₹)</label>
+        <!-- Instrument Type -->
+        <div class="fp-section" id="instrGroup">
+          <div class="fp-section-label">
+            📊 Instrument
+            <button type="button" class="fp-mini-btn" onclick="resetInstrGroup()">↺ Both</button>
           </div>
-          <div style="display:flex; gap:4px;">
-            <button type="button" class="quick-clear-btn" onclick="togglePrevFilter(false)" title="Disable Prev Close filter">✕ Off</button>
-            <button type="button" class="quick-clear-btn" onclick="resetPrevCloseDefault()" title="Reset to ₹38–₹48">↺ Reset</button>
+          <label class="fp-check" for="instIdx"><input type="checkbox" id="instIdx"><span>Index options</span></label>
+          <label class="fp-check" for="instStk"><input type="checkbox" id="instStk"><span>Stock options</span></label>
+        </div>
+
+        <!-- Expiry -->
+        <div class="fp-section">
+          <div class="fp-section-label">
+            📅 Expiry
+            <button type="button" class="fp-mini-btn" onclick="resetExpSelect()">↺ All</button>
+          </div>
+          <select id="expSelect" class="fp-select">
+            <option value="all" selected>All expiries</option>
+            <option value="nearest">Nearest expiry (per symbol)</option>
+          </select>
+        </div>
+
+        <!-- Option Type -->
+        <div class="fp-section">
+          <div class="fp-section-label">
+            🎯 Option Type
+            <button type="button" class="fp-mini-btn" onclick="resetOptType()">↺ Both</button>
+          </div>
+          <div class="fp-seg" id="optTypeSeg">
+            <button data-v="BOTH" class="active">Both</button>
+            <button data-v="CE">CE</button>
+            <button data-v="PE">PE</button>
           </div>
         </div>
-        <div class="row2">
-          <input type="number" id="prevFrom" step="0.5" value="" placeholder="Min Prev Close (e.g. 38.00)">
-          <input type="number" id="prevTo" step="0.5" value="" placeholder="Max Prev Close (e.g. 48.00)">
+
+        <!-- Day Low Range -->
+        <div class="fp-section">
+          <div class="fp-section-label">
+            📉 Day Low (₹)
+            <div style="display:flex;gap:4px;">
+              <button type="button" class="fp-mini-btn danger" onclick="toggleLowFilter(false)">✕ Off</button>
+              <button type="button" class="fp-mini-btn" onclick="resetLowRangeDefault()">↺</button>
+            </div>
+          </div>
+          <label class="fp-check" for="lowOn" style="margin-bottom:8px;">
+            <input type="checkbox" id="lowOn"><span style="font-size:11px;color:#64748b;">Enable range filter</span>
+          </label>
+          <div class="fp-row2">
+            <input type="number" id="lowFrom" class="fp-input" step="0.05" placeholder="Min (e.g. 5.80)">
+            <input type="number" id="lowTo"   class="fp-input" step="0.05" placeholder="Max (e.g. 8.45)">
+          </div>
         </div>
-      </div>
 
-      <div class="group">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="margin:0;">Open = Low / High tolerance (₹)</label>
-          <button type="button" class="quick-clear-btn" onclick="resetToleranceDefault()">↺ 0.00</button>
+        <!-- Prev Close Range -->
+        <div class="fp-section">
+          <div class="fp-section-label">
+            📆 Prev Close (₹)
+            <div style="display:flex;gap:4px;">
+              <button type="button" class="fp-mini-btn danger" onclick="togglePrevFilter(false)">✕ Off</button>
+              <button type="button" class="fp-mini-btn" onclick="resetPrevCloseDefault()">↺</button>
+            </div>
+          </div>
+          <label class="fp-check" for="prevOn" style="margin-bottom:8px;">
+            <input type="checkbox" id="prevOn"><span style="font-size:11px;color:#64748b;">Enable range filter</span>
+          </label>
+          <div class="fp-row2">
+            <input type="number" id="prevFrom" class="fp-input" step="0.5" placeholder="Min (e.g. 38)">
+            <input type="number" id="prevTo"   class="fp-input" step="0.5" placeholder="Max (e.g. 48)">
+          </div>
         </div>
-        <input type="number" id="tol" step="0.05" value="" placeholder="Tolerance ₹ (e.g. 0.00)">
-      </div>
 
-      <div class="group">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="margin:0;">Minimum open interest (OI)</label>
-          <button type="button" class="quick-clear-btn" onclick="resetOiDefault()">↺ 0</button>
+        <!-- Tolerance -->
+        <div class="fp-section">
+          <div class="fp-section-label">
+            ⚖️ O=L/H Tolerance (₹)
+            <button type="button" class="fp-mini-btn" onclick="resetToleranceDefault()">↺ 0.00</button>
+          </div>
+          <input type="number" id="tol" class="fp-input" step="0.05" placeholder="e.g. 0.00">
         </div>
-        <input type="number" id="minOi" step="5000" value="" placeholder="Min OI (e.g. 50000)">
-      </div>
 
-      <div class="group">
-        <label class="checkline" for="includeUntraded"><input type="checkbox" id="includeUntraded"><span>Include untraded contracts (Vol = 0)</span></label>
-      </div>
-
-      <div class="group">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="margin:0;">Show</label>
-          <button type="button" class="quick-clear-btn" onclick="resetShowMode()" title="Reset to all contracts">↺ All</button>
+        <!-- Min OI -->
+        <div class="fp-section">
+          <div class="fp-section-label">
+            📈 Min Open Interest
+            <button type="button" class="fp-mini-btn" onclick="resetOiDefault()">↺ 0</button>
+          </div>
+          <input type="number" id="minOi" class="fp-input" step="5000" placeholder="e.g. 50000">
         </div>
-        <select id="showMode">
-          <option value="any" selected>All strikes &amp; contracts</option>
-          <option value="matches">Only matching contracts</option>
-          <option value="ol">Only Open = Low (Bullish)</option>
-          <option value="oh">Only Open = High (Bearish)</option>
-          <option value="ol_oh">Only Open=Low or Open=High</option>
-        </select>
+
+        <!-- Include Untraded -->
+        <div class="fp-section">
+          <label class="fp-check" for="includeUntraded">
+            <input type="checkbox" id="includeUntraded">
+            <span>Include untraded contracts (Vol = 0)</span>
+          </label>
+        </div>
+
+        <!-- Show Mode -->
+        <div class="fp-section">
+          <div class="fp-section-label">
+            👁 Show Results
+            <button type="button" class="fp-mini-btn" onclick="resetShowMode()">↺ All</button>
+          </div>
+          <select id="showMode" class="fp-select">
+            <option value="any" selected>All strikes &amp; contracts</option>
+            <option value="matches">Only matching contracts</option>
+            <option value="ol">Only Open = Low (Bullish)</option>
+            <option value="oh">Only Open = High (Bearish)</option>
+            <option value="ol_oh">Open=Low or Open=High</option>
+          </select>
+        </div>
+
+      </div><!-- end fp-body -->
+
+      <!-- Sticky Scan Button -->
+      <div class="fp-footer">
+        <button class="scan-btn" id="scanBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Scan Market
+        </button>
       </div>
 
-      <button class="scan-btn" id="scanBtn">
-        <span>⚡</span> <b>Scan Market</b>
-      </button>
     </div>
 
     <!-- Main Content Area -->
