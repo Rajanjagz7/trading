@@ -551,10 +551,10 @@ def api_indicator_rajan_pavan(
         raise HTTPException(status_code=503, detail="Rajan-Pavan indicators not available")
 
     if key not in RAJAN_PAVAN_KEYS:
-        raise HTTPException(status_code=400, detail=f"Unknown indicator key: {key}")
+        raise HTTPException(status_code=400, detail=f"Unknown indicator key: {key}. Available: {', '.join(RAJAN_PAVAN_KEYS.keys())}")
 
     try:
-        indicator_func = getattr(rp_indicators, f"scan_{key}", None)
+        indicator_func = RAJAN_PAVAN_KEYS.get(key)
         if not indicator_func:
             raise HTTPException(status_code=404, detail=f"Indicator {key} not found")
 
