@@ -3253,8 +3253,8 @@
     </div>
     <span style="font-size:11px; color:#94a3b8;" class="pulse-sub-text">Deterministic Call/Put flow rule — not a guaranteed outcome. NO SIGNAL shown honestly when flow is balanced.</span>
   </div>
-  <div style="overflow-x:auto; background:#0f1520; border:1px solid var(--line); border-radius:8px;">
-    <table style="width:100%; border-collapse:collapse; font-size:12px; white-space:nowrap;">
+  <div style="background:#0f1520; border:1px solid var(--line); border-radius:8px; overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px; min-width:100%;">
       <thead>
         <tr style="background:#131c2c; color:#94a3b8; text-align:left;">
           <th style="padding:8px 12px;">Instrument</th>
@@ -3269,7 +3269,7 @@
           <th style="padding:8px 12px;">Target</th>
           <th style="padding:8px 12px;">Stop Loss</th>
           <th style="padding:8px 12px;">Status</th>
-          <th style="padding:8px 12px;">Timestamp (IST)</th>
+          <th style="padding:8px 12px;">Timestamp</th>
         </tr>
       </thead>
       <tbody id="recoTableBody">
@@ -3405,16 +3405,16 @@
       <button class="small-strat-btn stock-cat-btn" data-cat="small_cap" onclick="setStockCategory('small_cap')">📉 Small Cap</button>
     </div>
 
-    <!-- Stocks Table with Pagination -->
+    <!-- Stocks Table -->
     <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:10px;">
-      <table id="stockPicksTable" style="width:100%; border-collapse:collapse; font-size:12px;">
+      <table id="stockPicksTable" style="width:100%; border-collapse:collapse; font-size:12px; min-width:100%;">
         <thead>
           <tr style="border-bottom:1px solid var(--line); height:32px;">
-            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Symbol</th>
-            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Signal</th>
-            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Price ₹</th>
-            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Range %</th>
-            <th style="text-align:center; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Category</th>
+            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600;">Symbol</th>
+            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600;">Signal</th>
+            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600;">Price ₹</th>
+            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600;">Range %</th>
+            <th style="text-align:center; padding:6px 8px; color:#94a3b8; font-weight:600;">Category</th>
           </tr>
         </thead>
         <tbody id="stockPicksBody">
