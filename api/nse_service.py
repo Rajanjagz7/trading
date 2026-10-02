@@ -246,6 +246,24 @@ def _classify_ema_trend(ltp, ema_value, label):
     return {"signal": "Neutral", "reason": f"Close to its {label} ({diff_pct:+.2f}%)"}
 
 
+def _pick_signal(ltp, ema20, ema50, open_, high, low):
+    if ltp <= 0:
+        return "NEUTRAL"
+    intraday = _classify_intraday(open_, high, low, ltp)
+    short = _classify_ema_trend(ltp, ema20, "20-day EMA")
+    long_term = _classify_ema_trend(ltp, ema50, "50-day EMA")
+    score = 0
+    if intraday["signal"] == "Bullish": score += 1
+    if short["signal"] == "Bullish": score += 1
+    if long_term["signal"] == "Bullish": score += 1
+    if intraday["signal"] == "Bearish": score -= 1
+    if short["signal"] == "Bearish": score -= 1
+    if long_term["signal"] == "Bearish": score -= 1
+    if score >= 2: return "BUY"
+    if score <= -2: return "SELL"
+    return "NEUTRAL"
+
+
 def _build_stock_pick(symbol, instrument_key, quote, candles):
     ohlc = quote.get("ohlc") or {}
     ltp = upstox_service._num(quote.get("last_price"))
@@ -272,6 +290,10 @@ def _build_stock_pick(symbol, instrument_key, quote, candles):
         "intraday": _classify_intraday(open_, high, low, ltp),
         "shortTerm": _classify_ema_trend(ltp, ema20[-1] if ema20 else None, "20-day EMA"),
         "longTerm": _classify_ema_trend(ltp, ema50[-1] if ema50 else None, "50-day EMA"),
+        "entry": round(ltp, 2),
+        "target": round(ltp * 1.05, 2),
+        "stopLoss": round(ltp * 0.97, 2),
+        "signal": _pick_signal(ltp, ema20[-1] if ema20 else None, ema50[-1] if ema50 else None, open_, high, low),
     }
 
 
@@ -505,6 +527,37 @@ class NSEService:
             }
         except Exception as e:
             print(f"[NSE] futures error for {symbol}: {e}")
+            return None
+
+    def _fetch_yahoo_futures(self, symbol):
+        """Yahoo Finance public chart API for futures/indices that NSE doesn't
+        expose cleanly as index futures, e.g. GIFT Nifty."""
+        try:
+            s = self._get_session()
+            r = s.get(
+                f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+                params={"range": "5d", "interval": "1d"},
+                timeout=5,
+            )
+            if r.status_code != 200:
+                return None
+            result = r.json()["chart"]["result"][0]
+            meta = result.get("meta", {})
+            last = meta.get("regularMarketPrice")
+            prev = meta.get("previousClose") or meta.get("chartPreviousClose")
+            if not last:
+                return None
+            change = round(last - prev, 2) if prev else 0.0
+            pct = round((change / prev) * 100.0, 2) if prev else 0.0
+            return {
+                "lastPrice": last,
+                "change": change,
+                "pChange": pct,
+                "expiryDate": "",
+                "source": "Yahoo",
+            }
+        except Exception as e:
+            print(f"[Yahoo] futures error for {symbol}: {e}")
             return None
 
     def _fetch_yahoo_index_quote(self, key):
@@ -1628,7 +1681,7 @@ class NSEService:
             return self.global_cache
 
         import urllib.request
-        syms = ['GC=F', 'CL=F', 'YM=F', 'ES=F', 'NQ=F', 'BTC-USD', 'INR=X']
+        syms = ['GC=F', 'SI=F', 'CL=F', 'NG=F', 'YM=F', 'ES=F', 'NQ=F', 'RTY=F', 'ZN=F', 'BTC-USD', 'INR=X']
         market_data = {}
 
         def _fetch_yahoo_symbol(s):
@@ -1682,6 +1735,24 @@ class NSEService:
         btc_inr = round(btc_usd * inr_rate) if (btc_usd and inr_rate) else None
         btc_inr_chg = round(btc_inr * (btc_pct / 100.0), 1) if (btc_inr and btc_pct is not None) else None
 
+        silver_usd = market_data.get('SI=F', {}).get('price') or None
+        silver_pct = market_data.get('SI=F', {}).get('pct')
+        silver_inr = round(silver_usd * inr_rate) if (silver_usd and inr_rate) else None
+        silver_inr_chg = round(silver_inr * (silver_pct / 100.0), 1) if (silver_inr and silver_pct is not None) else None
+
+        natgas_usd = market_data.get('NG=F', {}).get('price') or None
+        natgas_pct = market_data.get('NG=F', {}).get('pct')
+        natgas_inr = round(natgas_usd * inr_rate) if (natgas_usd and inr_rate) else None
+        natgas_inr_chg = round(natgas_inr * (natgas_pct / 100.0), 1) if (natgas_inr and natgas_pct is not None) else None
+
+        rty_fut = market_data.get('RTY=F', {}).get('price') or None
+        rty_pct = market_data.get('RTY=F', {}).get('pct')
+        rty_chg = market_data.get('RTY=F', {}).get('chg')
+
+        tnx_fut = market_data.get('ZN=F', {}).get('price') or None
+        tnx_pct = market_data.get('ZN=F', {}).get('pct')
+        tnx_chg = market_data.get('ZN=F', {}).get('chg')
+
         dow_fut = market_data.get('YM=F', {}).get('price') or None
         dow_pct = market_data.get('YM=F', {}).get('pct')
         dow_chg = market_data.get('YM=F', {}).get('chg')
@@ -1712,6 +1783,13 @@ class NSEService:
             banknifty_fut_pct = bank_fut_res["pChange"]
             banknifty_fut_chg = bank_fut_res["change"]
 
+        gift_nifty_res = self._fetch_yahoo_futures("NSEIX:NIFTY1!")
+        if not gift_nifty_res:
+            gift_nifty_res = self._fetch_yahoo_futures("^NSEI")
+        gift_nifty = gift_nifty_res["lastPrice"] if gift_nifty_res else None
+        gift_nifty_pct = gift_nifty_res["pChange"] if gift_nifty_res else None
+        gift_nifty_chg = gift_nifty_res["change"] if gift_nifty_res else None
+
         def _entry(id_, name, label, price, fmt, chg, pct, sub_label=None, usd_price=None, usd_fmt=None, market=""):
             """Builds one ticker entry; `available=False` with no fabricated
             numbers when the underlying live fetch didn't come through."""
@@ -1738,14 +1816,18 @@ class NSEService:
             "commodities": [
                 _entry("gold", "GOLD (MCX)", "Gold 24K (₹/10g)", gold_mcx, "₹{:,.0f}", gold_mcx_chg, gold_pct,
                        usd_price=gold_usd, usd_fmt="${:,.1f}/oz", market="MCX / International"),
+                _entry("silver", "SILVER (MCX)", "Silver (₹/kg)", silver_inr, "₹{:,.0f}", silver_inr_chg, silver_pct,
+                       usd_price=silver_usd, usd_fmt="${:,.2f}/oz", market="MCX / International"),
                 _entry("crude", "CRUDE OIL", "Crude (₹/bbl)", crude_mcx, "₹{:,.0f}", crude_mcx_chg, crude_pct,
                        usd_price=crude_usd, usd_fmt="${:.2f}/bbl", market="MCX / WTI"),
+                _entry("natgas", "NATURAL GAS", "NG (₹/MMBtu)", natgas_inr, "₹{:,.0f}", natgas_inr_chg, natgas_pct,
+                       usd_price=natgas_usd, usd_fmt="${:.3f}/MMBtu", market="MCX / Henry Hub"),
                 _entry("btc", "BITCOIN", "BTC / INR", btc_inr, "₹{:,.0f}", btc_inr_chg, btc_pct,
                        usd_price=btc_usd, usd_fmt="${:,.0f}", market="Crypto Spot"),
             ],
             "futures": [
-                _entry("gift_nifty", "GIFT NIFTY", "NSE IX Futures", None, "{:,.2f}", None, None,
-                       sub_label="No free unauthenticated source available", market="NSE IX"),
+                _entry("gift_nifty", "GIFT NIFTY", "NSE IX Futures", gift_nifty, "{:,.2f}", gift_nifty_chg, gift_nifty_pct,
+                       sub_label="Yahoo / NSEIX proxy", market="NSE IX"),
                 _entry("nifty_fut_near", "NIFTY FUT (Near)", "Monthly Futures", nifty_fut, "{:,.2f}", nifty_fut_chg, nifty_fut_pct,
                        sub_label=nifty_fut_res["expiryDate"] if nifty_fut_res else "NSE F&O", market="NSE F&O"),
                 _entry("nifty_fut_next", "NIFTY FUT (Next)", "Next Month Fut", None, "{:,.2f}", None, None,
@@ -1758,6 +1840,10 @@ class NSEService:
                        sub_label="CME Futures", market="US CME"),
                 _entry("nasdaq_fut", "NASDAQ FUT", "E-mini NQ 100", nasdaq_fut, "{:,.2f}", nasdaq_chg, nasdaq_pct,
                        sub_label="CME Futures", market="US CME"),
+                _entry("rty_fut", "RUSSELL 2000", "E-mini Russel (RTY)", rty_fut, "{:,.2f}", rty_chg, rty_pct,
+                       sub_label="CME Mini", market="US CME"),
+                _entry("tnx_fut", "10Y TREASURY", "US 10Y Yield", tnx_fut, "{:,.3f}", tnx_chg, tnx_pct,
+                       sub_label="CBOT", market="US CBOT"),
             ],
             # Spec section 1/7: explicitly unavailable rather than silently
             # absent -- no US equity or broader-crypto data provider is

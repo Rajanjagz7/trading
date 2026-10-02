@@ -3913,6 +3913,26 @@
         <span class="index-ticker-chg" id="usdInrChg"></span>
       </div>
     </div>
+    <div class="global-ticker-card" style="cursor:pointer;" onclick="openOptionChartModal('SILVER', '', 0, '')" title="Silver MCX">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#e2e8f0;">SILVER (MCX) ⚪</span>
+        <span class="global-sub-label" id="silverUsdSub">Loading…</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="silverMcxVal">–</span>
+        <span class="index-ticker-chg" id="silverMcxChg"></span>
+      </div>
+    </div>
+    <div class="global-ticker-card" style="cursor:pointer;" onclick="openOptionChartModal('NATGAS', '', 0, '')" title="Natural Gas MCX">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name" style="color:#fbbf24;">NATURAL GAS (MCX) 🔥</span>
+        <span class="global-sub-label" id="natgasUsdSub">Loading…</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="natgasMcxVal">–</span>
+        <span class="index-ticker-chg" id="natgasMcxChg"></span>
+      </div>
+    </div>
   </div>
   </div>
 
@@ -3952,6 +3972,26 @@
       <div class="index-ticker-right">
         <span class="index-ticker-val" id="nasdaqFutVal">–</span>
         <span class="index-ticker-chg" id="nasdaqFutChg"></span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('RTY', '', 0, '')" style="cursor:pointer;" title="Click to view Russell 2000 Futures chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">RUSSELL 2000 (RTY)</span>
+        <span class="global-sub-label">CME MINI</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="rtyFutVal">–</span>
+        <span class="index-ticker-chg" id="rtyFutChg"></span>
+      </div>
+    </div>
+    <div class="global-ticker-card" onclick="openOptionChartModal('TNX', '', 0, '')" style="cursor:pointer;" title="Click to view 10Y Treasury Yield chart with fitted indicators">
+      <div class="index-ticker-left">
+        <span class="index-ticker-name">10Y TREASURY YIELD</span>
+        <span class="global-sub-label">CBOT</span>
+      </div>
+      <div class="index-ticker-right">
+        <span class="index-ticker-val" id="tnxFutVal">–</span>
+        <span class="index-ticker-chg" id="tnxFutChg"></span>
       </div>
     </div>
   </div>
@@ -4782,6 +4822,13 @@
               <option value="BUY_ONLY">Only BUY Signals</option>
               <option value="ATM_8">Near ATM (±8)</option>
             </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:11.5px; color:var(--muted); font-weight:600;">Premium (₹):</label>
+            <input type="number" id="indPremiumMin" placeholder="Min" step="0.05" min="0" style="width:70px; padding:5px 8px; font-size:12px; background:#090e17; color:#fff; border:1px solid #1f2c3f; border-radius:6px;">
+            <span style="color:#64748b; font-size:11px;">–</span>
+            <input type="number" id="indPremiumMax" placeholder="Max" step="0.05" min="0" style="width:70px; padding:5px 8px; font-size:12px; background:#090e17; color:#fff; border:1px solid #1f2c3f; border-radius:6px;">
+            <button class="action-btn" onclick="applyPremiumFilter()" style="padding:5px 10px; font-size:11px;">Apply</button>
           </div>
           <button class="action-btn" onclick="loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey)" style="padding:5px 12px; font-size:12px;">🔄 Refresh Chain</button>
           <button class="action-btn" onclick="clearIndChainFilters()" style="padding:5px 12px; font-size:12px; border-color:#64748b; color:#cbd5e1;" title="Reset chain strike and symbol filters">🧹 Clear Filters</button>
@@ -8338,48 +8385,50 @@ function renderStockPicks() {
   }
 
   let html = `
-    <div style="overflow-x:auto;">
-      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-        <thead>
-          <tr style="background:#131c2c; color:#94a3b8; text-align:left;">
-            <th style="padding:8px 12px;">Symbol</th>
-            <th style="padding:8px 12px;">LTP</th>
-            <th style="padding:8px 12px;">Chg%</th>
-            <th style="padding:8px 12px;">Intraday</th>
-            <th style="padding:8px 12px;">Short-Term</th>
-            <th style="padding:8px 12px;">Long-Term</th>
-            <th style="padding:8px 12px;">Signal</th>
-            <th style="padding:8px 12px;">Entry</th>
-            <th style="padding:8px 12px;">Target</th>
-            <th style="padding:8px 12px;">Stop Loss</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px;">
   `;
 
   picks.forEach(pick => {
     const signal = pick.signal || 'NEUTRAL';
-    const signalColor = signal === 'BUY' ? '#22c55e' : signal === 'SELL' ? '#ef4444' : '#64748b';
-    const chgColor = (pick.changePct || 0) >= 0 ? '#22c55e' : '#ef4444';
-    const chgPrefix = (pick.changePct || 0) >= 0 ? '+' : '';
+    const isBuy = signal === 'BUY';
+    const isSell = signal === 'SELL';
+    const cardBg = isBuy ? 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))' : isSell ? 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04))' : '#0f1520';
+    const borderColor = isBuy ? '#22c55e' : isSell ? '#ef4444' : '#1f2c3f';
+    const signalBadge = isBuy ? '<span class="signal-badge-buy" style="font-size:12px; padding:3px 8px;">🟢 BUY</span>' : isSell ? '<span class="signal-badge-sell" style="font-size:12px; padding:3px 8px;">🔴 SELL</span>' : '<span class="ut-badge" style="font-size:12px; padding:3px 8px;">⚪ NEUTRAL</span>';
 
     html += `
-      <tr style="border-bottom:1px solid #141b29;">
-        <td style="padding:8px; font-weight:700; color:#f1f5f9;">${escapeHtml(pick.symbol)}</td>
-        <td style="padding:8px; color:#e2e8f0;">₹ ${fmtNum(pick.ltp)}</td>
-        <td style="padding:8px; color:${chgColor};">${chgPrefix}${fmtPct(pick.changePct)}%</td>
-        <td style="padding:8px; color:${pick.intraday?.signal === 'Bullish' ? '#22c55e' : pick.intraday?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.intraday?.signal || '–'}</td>
-        <td style="padding:8px; color:${pick.shortTerm?.signal === 'Bullish' ? '#22c55e' : pick.shortTerm?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.shortTerm?.signal || '–'}</td>
-        <td style="padding:8px; color:${pick.longTerm?.signal === 'Bullish' ? '#22c55e' : pick.longTerm?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.longTerm?.signal || '–'}</td>
-        <td style="padding:8px; color:${signalColor}; font-weight:700;">${signal}</td>
-        <td style="padding:8px; color:#e2e8f0;">₹ ${fmtNum(pick.entry)}</td>
-        <td style="padding:8px; color:#22c55e;">₹ ${fmtNum(pick.target)}</td>
-        <td style="padding:8px; color:#ef4444;">₹ ${fmtNum(pick.stopLoss)}</td>
-      </tr>
+      <div style="background:${cardBg}; border:1px solid ${borderColor}; border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div>
+            <div style="font-weight:800; color:#f1f5f9; font-size:15px;">${escapeHtml(pick.symbol)}</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">₹ ${fmtNum(pick.ltp)} · <span style="color:${(pick.changePct || 0) >= 0 ? '#22c55e' : '#ef4444'};">${(pick.changePct || 0) >= 0 ? '+' : ''}${fmtPct(pick.changePct)}%</span></div>
+          </div>
+          ${signalBadge}
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; font-size:11.5px;">
+          <div style="background:#0f1520; padding:8px; border-radius:6px; border:1px solid #1a2333;">
+            <div style="color:#64748b; font-size:10px; margin-bottom:4px;">Entry</div>
+            <div style="color:#e2e8f0; font-weight:700; font-family:'IBM Plex Mono',monospace;">₹ ${fmtNum(pick.entry)}</div>
+          </div>
+          <div style="background:#0f1520; padding:8px; border-radius:6px; border:1px solid #1a2333;">
+            <div style="color:#64748b; font-size:10px; margin-bottom:4px;">Target</div>
+            <div style="color:#22c55e; font-weight:700; font-family:'IBM Plex Mono',monospace;">₹ ${fmtNum(pick.target)}</div>
+          </div>
+          <div style="background:#0f1520; padding:8px; border-radius:6px; border:1px solid #1a2333;">
+            <div style="color:#64748b; font-size:10px; margin-bottom:4px;">Stop Loss</div>
+            <div style="color:#ef4444; font-weight:700; font-family:'IBM Plex Mono',monospace;">₹ ${fmtNum(pick.stopLoss)}</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:11px; color:#94a3b8;">
+          <span style="padding:3px 7px; background:#1a2333; border-radius:4px;">Intraday: <b style="color:${pick.intraday?.signal === 'Bullish' ? '#22c55e' : pick.intraday?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.intraday?.signal || '–'}</b></span>
+          <span style="padding:3px 7px; background:#1a2333; border-radius:4px;">Short: <b style="color:${pick.shortTerm?.signal === 'Bullish' ? '#22c55e' : pick.shortTerm?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.shortTerm?.signal || '–'}</b></span>
+          <span style="padding:3px 7px; background:#1a2333; border-radius:4px;">Long: <b style="color:${pick.longTerm?.signal === 'Bullish' ? '#22c55e' : pick.longTerm?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.longTerm?.signal || '–'}</b></span>
+        </div>
+      </div>
     `;
   });
 
-  html += '</tbody></table></div>';
+  html += '</div>';
   container.innerHTML = html;
 }
 
@@ -9141,8 +9190,11 @@ function refreshSymbolDropdownForStocksOnly() {
 ============================================================ */
 let currentIndSymbol = 'NIFTY';
 let currentIndExpiry = '';
+let currentIndKey = 'ut';
 let currentIndChainData = null;
 let currentIndStrikeFilter = 'ALL';
+let currentIndPremiumMin = null;
+let currentIndPremiumMax = null;
 let currentIndView = 'chain';
 
 function openIndicatorModal(key) {
@@ -9203,6 +9255,31 @@ function onIndExpiryChange(exp) {
 
 function onIndFilterChange(filt) {
   currentIndStrikeFilter = filt;
+  if (currentIndChainData) {
+    renderIndChainTable(currentIndChainData.strikes || [], currentIndChainData.atmStrike, currentIndKey);
+  }
+}
+
+function applyPremiumFilter() {
+  const minEl = document.getElementById('indPremiumMin');
+  const maxEl = document.getElementById('indPremiumMax');
+  currentIndPremiumMin = minEl && minEl.value !== '' ? parseFloat(minEl.value) : null;
+  currentIndPremiumMax = maxEl && maxEl.value !== '' ? parseFloat(maxEl.value) : null;
+  if (currentIndChainData) {
+    renderIndChainTable(currentIndChainData.strikes || [], currentIndChainData.atmStrike, currentIndKey);
+  }
+}
+
+function clearIndChainFilters() {
+  currentIndStrikeFilter = 'ALL';
+  const strikeFilterEl = document.getElementById('indStrikeFilter');
+  if (strikeFilterEl) strikeFilterEl.value = 'ALL';
+  const minEl = document.getElementById('indPremiumMin');
+  const maxEl = document.getElementById('indPremiumMax');
+  if (minEl) minEl.value = '';
+  if (maxEl) maxEl.value = '';
+  currentIndPremiumMin = null;
+  currentIndPremiumMax = null;
   if (currentIndChainData) {
     renderIndChainTable(currentIndChainData.strikes || [], currentIndChainData.atmStrike, currentIndKey);
   }
@@ -9338,6 +9415,16 @@ function renderIndChainTable(strikes, atm, ind) {
     if (atmIdx >= 0) {
       filtered = strikes.slice(Math.max(0, atmIdx - 8), Math.min(strikes.length, atmIdx + 9));
     }
+  }
+
+  if (currentIndPremiumMin !== null || currentIndPremiumMax !== null) {
+    filtered = filtered.filter(s => {
+      const ceMatch = (!currentIndPremiumMin || (s.CE && s.CE.close >= currentIndPremiumMin)) &&
+                      (!currentIndPremiumMax || (s.CE && s.CE.close <= currentIndPremiumMax));
+      const peMatch = (!currentIndPremiumMin || (s.PE && s.PE.close >= currentIndPremiumMin)) &&
+                      (!currentIndPremiumMax || (s.PE && s.PE.close <= currentIndPremiumMax));
+      return ceMatch || peMatch;
+    });
   }
 
   if (!filtered.length) {
@@ -10898,6 +10985,10 @@ async function fetchGlobalMarkets() {
     const crudeSub = document.getElementById('crudeUsdSub'); if (crudeSub && byId.crude) crudeSub.textContent = byId.crude.subLabel;
     renderGlobalTicker('btcInr', byId.btc);
     const btcSub = document.getElementById('btcUsdSub'); if (btcSub && byId.btc) btcSub.textContent = byId.btc.subLabel;
+    renderGlobalTicker('silverMcx', byId.silver);
+    const silverSub = document.getElementById('silverUsdSub'); if (silverSub && byId.silver) silverSub.textContent = byId.silver.subLabel;
+    renderGlobalTicker('natgasMcx', byId.natgas);
+    const natgasSub = document.getElementById('natgasUsdSub'); if (natgasSub && byId.natgas) natgasSub.textContent = byId.natgas.subLabel;
 
     renderGlobalTicker('giftNifty', byId.gift_nifty);
     const giftSub = document.getElementById('giftNiftyBasis'); if (giftSub && byId.gift_nifty) giftSub.textContent = byId.gift_nifty.subLabel;
@@ -10910,6 +11001,8 @@ async function fetchGlobalMarkets() {
     renderGlobalTicker('dowFut', byId.dow_fut);
     renderGlobalTicker('spFut', byId.sp_fut);
     renderGlobalTicker('nasdaqFut', byId.nasdaq_fut);
+    renderGlobalTicker('rtyFut', byId.rty_fut);
+    renderGlobalTicker('tnxFut', byId.tnx_fut);
 
     if (data.inrUsd != null) {
       const elVal = document.getElementById('usdInrVal');
