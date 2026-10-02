@@ -2610,6 +2610,80 @@
     .index-ticker-name {
       font-size: 10.5px !important;
     }
+
+    /* Module-wise panel bar */
+    .module-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 8px 10px;
+      background: #0f1520;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .module-btn {
+      background: #1a2333;
+      color: #94a3b8;
+      border: 1px solid #2a3a52;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .module-btn.active {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    .module-btn:hover:not(.active) {
+      background: #253349;
+      color: #e2e8f0;
+    }
+
+    /* Collapsible module panels */
+    .module-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: #0f1520;
+    }
+    .module-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #131c2c;
+      cursor: pointer;
+      user-select: none;
+    }
+    .module-panel-header:hover {
+      background: #1a2333;
+    }
+    .module-panel-title {
+      font-weight: 700;
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+    .module-panel-toggle {
+      background: #1a2333;
+      border: 1px solid #2a3a52;
+      color: #94a3b8;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .module-panel-body {
+      padding: 12px;
+      display: block;
+    }
+    .module-panel-body.hidden {
+      display: none;
+    }
     .index-ticker-val {
       font-size: 12px !important;
     }
@@ -3703,6 +3777,21 @@
     <button class="rx-nav-btn" data-route="/indicators" onclick="navigate('/indicators')">⚡ Indicators</button>
   </nav>
 
+  <!-- Module-wise panel toggles -->
+  <div class="module-bar" id="moduleBar">
+    <span style="font-size:11px; color:#94a3b8; margin-right:8px;">MODULES:</span>
+    <button class="module-btn active" data-module="marketOverview" onclick="toggleModule('marketOverview')">📊 Market Overview</button>
+    <button class="module-btn active" data-module="futures" onclick="toggleModule('futures')">📈 Futures</button>
+    <button class="module-btn active" data-module="indexPulse" onclick="toggleModule('indexPulse')">⚡ Index Pulse</button>
+    <button class="module-btn active" data-module="recommendations" onclick="toggleModule('recommendations')">📋 Recommendations</button>
+    <button class="module-btn active" data-module="scanner" onclick="toggleModule('scanner')">🔍 Scanner</button>
+    <button class="module-btn active" data-module="indicators" onclick="toggleModule('indicators')">⚡ Indicators</button>
+    <button class="module-btn active" data-module="optionChain" onclick="toggleModule('optionChain')">📊 Option Chain</button>
+    <button class="module-btn active" data-module="stockPicks" onclick="toggleModule('stockPicks')">📦 Stock Picks</button>
+    <button class="module-btn" onclick="toggleAllModules(true)">Show All</button>
+    <button class="module-btn" onclick="toggleAllModules(false)">Hide All</button>
+  </div>
+
   <!-- 🌐 Indian & Global Markets Selector Tabs -->
   <div class="market-bar-tabs">
     <button class="market-tab-btn active" id="mktTabAll" onclick="switchMarketBar('all')">
@@ -3723,7 +3812,13 @@
   </div>
 
   <!-- 📊 1. Indian Spot Indices Ticker Rail -->
-  <div class="chartink-indices-bar" id="chartinkIndicesBar">
+  <div class="module-panel" id="module-marketOverview">
+    <div class="module-panel-header" onclick="toggleModule('marketOverview')">
+      <span class="module-panel-title">📊 Market Overview</span>
+      <button class="module-panel-toggle" onclick="event.stopPropagation(); toggleModule('marketOverview')">Hide</button>
+    </div>
+    <div class="module-panel-body">
+      <div class="chartink-indices-bar" id="chartinkIndicesBar">
     <div class="index-ticker-card" onclick="openOptionChartModal('NIFTY', '', 0, '')" style="cursor:pointer;" title="Click to view NIFTY chart with fitted indicators">
       <div class="index-ticker-left">
         <span class="index-ticker-name">NIFTY 50 📈</span>
@@ -3819,9 +3914,16 @@
       </div>
     </div>
   </div>
+  </div>
 
   <!-- 📈 3. US & Indian Market Monthly Futures Ticker Rail -->
-  <div class="global-markets-bar" id="globalFuturesBar">
+  <div class="module-panel" id="module-futures">
+    <div class="module-panel-header" onclick="toggleModule('futures')">
+      <span class="module-panel-title">📈 Futures</span>
+      <button class="module-panel-toggle" onclick="event.stopPropagation(); toggleModule('futures')">Hide</button>
+    </div>
+    <div class="module-panel-body">
+      <div class="global-markets-bar" id="globalFuturesBar">
     <div class="global-ticker-card" onclick="openOptionChartModal('DOW', '', 0, '')" style="cursor:pointer;" title="Click to view Dow Jones Futures chart with fitted indicators">
       <div class="index-ticker-left">
         <span class="index-ticker-name">DOW FUT (US 30) 🇺🇸</span>
@@ -3853,9 +3955,16 @@
       </div>
     </div>
   </div>
+  </div>
 
   <!-- 🚀 Live Index Algo & Option Movement Pulse Dashboard -->
-  <div class="index-pulse-container" id="indexPulseContainer">
+  <div class="module-panel" id="module-indexPulse">
+    <div class="module-panel-header" onclick="toggleModule('indexPulse')">
+      <span class="module-panel-title">⚡ Index Pulse</span>
+      <button class="module-panel-toggle" onclick="event.stopPropagation(); toggleModule('indexPulse')">Hide</button>
+    </div>
+    <div class="module-panel-body">
+      <div class="index-pulse-container" id="indexPulseContainer">
     <div class="pulse-header">
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         <span class="pulse-title">⚡ Live Index Algo &amp; Option Flow Pulse</span>
@@ -3870,12 +3979,19 @@
       <div style="grid-column: 1 / -1; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">Loading live Index Option Movement Pulse...</div>
     </div>
   </div>
+  </div>
 
   <!-- Recommendation for the Day -- a deterministic rule (Call/Put volume-
        share verdict >=55% one-sided = a signal, else NO SIGNAL), not a
        guaranteed-outcome claim. See the "basedOnVerdict" field per row and
        api/nse_service.py's get_indices_pulse() for the exact documented rule. -->
-  <div class="pulse-header" style="margin-top:14px;">
+  <div class="module-panel" id="module-recommendations">
+    <div class="module-panel-header" onclick="toggleModule('recommendations')">
+      <span class="module-panel-title">📋 Recommendations</span>
+      <button class="module-panel-toggle" onclick="event.stopPropagation(); toggleModule('recommendations')">Hide</button>
+    </div>
+    <div class="module-panel-body">
+      <div class="pulse-header" style="margin-top:0;">
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
       <span class="pulse-title">📋 Recommendation for the Day</span>
       <span class="pulse-badge" id="recoTimeBadge">Loading…</span>
@@ -3906,9 +4022,35 @@
       </tbody>
     </table>
   </div>
+  </div>
+
+  <!-- 📦 Stocks Only Picks (Upstox live) -->
+  <div class="module-panel" id="module-stockPicks">
+    <div class="module-panel-header" onclick="toggleModule('stockPicks')">
+      <span class="module-panel-title">📦 Stocks Only Picks</span>
+      <button class="module-panel-toggle" onclick="event.stopPropagation(); toggleModule('stockPicks')">Hide</button>
+    </div>
+    <div class="module-panel-body">
+      <div id="stockPicksPanel" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <span style="font-weight:700; color:#e2e8f0; font-size:14px;">📊 Live Stock Picks</span>
+          <button class="action-btn" onclick="fetchStockPicks()" style="padding:4px 12px; font-size:11px;">🔄 Refresh</button>
+        </div>
+        <div id="stockPicksContent">
+          <div style="color:#94a3b8; font-size:12px; padding:12px; text-align:center;">Loading stock picks...</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Phase 1 (BRD redesign): clean Dashboard landing view (FR-01) -->
-  <div class="rx-dashboard" id="rxDashboard" style="display:none;">
+  <div class="module-panel" id="module-scanner">
+    <div class="module-panel-header" onclick="toggleModule('scanner')">
+      <span class="module-panel-title">🔍 Scanner</span>
+      <button class="module-panel-toggle" onclick="event.stopPropagation(); toggleModule('scanner')">Hide</button>
+    </div>
+    <div class="module-panel-body">
+      <div class="workspace rx-legacy-tools">
     <div class="rx-dashboard-issue" id="rxDashboardIssue" style="display:none;">
       <span id="rxDashboardIssueMsg"></span>
       <button onclick="initStatus(); fetchIndexPulse(); fetchGlobalMarkets();">🔄 Retry</button>
@@ -4369,9 +4511,10 @@
     </main>
     </div><!-- end workspace-body -->
   </div><!-- end workspace -->
-</div><!-- end app-container -->
+  </div>
+  </div>
 
-<!-- Option Chain Modal Dialog -->
+  <!-- Option Chain Modal Dialog -->
 <div id="chainModal" class="modal-overlay" style="display:none;">
   <div class="modal-card">
     <div class="modal-header">
@@ -7250,6 +7393,71 @@ function syncStocksOnlyButtons() {
   if (picksPanel) {
     picksPanel.style.display = stocksOnlyLock ? 'block' : 'none';
   }
+
+  if (stocksOnlyLock) {
+    fetchStockPicks();
+  }
+}
+
+const MODULE_STATE_KEY = 'rajan_module_state';
+const DEFAULT_MODULES = {
+  marketOverview: true,
+  futures: true,
+  indexPulse: true,
+  recommendations: true,
+  scanner: true,
+  indicators: true,
+  optionChain: true,
+  stockPicks: true,
+};
+
+function getModuleState() {
+  try {
+    const raw = localStorage.getItem(MODULE_STATE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { ...DEFAULT_MODULES };
+}
+
+function saveModuleState(state) {
+  try {
+    localStorage.setItem(MODULE_STATE_KEY, JSON.stringify(state));
+  } catch (e) {}
+}
+
+function applyModuleState(state) {
+  Object.keys(state).forEach((key) => {
+    const panel = document.getElementById('module-' + key);
+    const btn = document.querySelector('.module-btn[data-module="' + key + '"]');
+    const visible = !!state[key];
+    if (panel) {
+      panel.style.display = visible ? '' : 'none';
+    }
+    if (btn) {
+      btn.classList.toggle('active', visible);
+    }
+  });
+}
+
+function toggleModule(key) {
+  const state = getModuleState();
+  state[key] = !state[key];
+  saveModuleState(state);
+  applyModuleState(state);
+}
+
+function toggleAllModules(visible) {
+  const state = getModuleState();
+  Object.keys(state).forEach((key) => {
+    state[key] = visible;
+  });
+  saveModuleState(state);
+  applyModuleState(state);
+}
+
+function initModuleState() {
+  const state = getModuleState();
+  applyModuleState(state);
 }
 
 // Persistent "Stocks Only" lock -- unlike the other quick-scan buttons this
@@ -8091,6 +8299,88 @@ async function fetchIndexPulse() {
     if (badge) badge.textContent = 'Syncing...';
     showDashboardIssue('Live index option flow is temporarily unavailable. Retrying automatically.');
   }
+}
+
+let stockPicksData = null;
+
+async function fetchStockPicks() {
+  const container = document.getElementById('stockPicksContent');
+  if (!container) return;
+  container.innerHTML = '<div style="color:#94a3b8; font-size:12px; padding:12px; text-align:center;">Loading stock picks...</div>';
+  try {
+    const res = await fetch(`${API_BASE}/api/stock-picks`);
+    const data = await res.json();
+    stockPicksData = data;
+    renderStockPicks();
+  } catch (err) {
+    console.warn('Stock picks fetch error:', err);
+    container.innerHTML = '<div style="color:#ef4444; font-size:12px; padding:12px; text-align:center;">Failed to load stock picks. Please try again.</div>';
+  }
+}
+
+function renderStockPicks() {
+  const container = document.getElementById('stockPicksContent');
+  if (!container) return;
+  if (!stockPicksData) {
+    container.innerHTML = '<div style="color:#94a3b8; font-size:12px; padding:12px; text-align:center;">No stock picks available.</div>';
+    return;
+  }
+
+  if (!stockPicksData.available) {
+    container.innerHTML = `<div style="color:#fbbf24; font-size:12px; padding:12px; text-align:center;">${escapeHtml(stockPicksData.reason || 'Stock picks are currently unavailable.')}</div>`;
+    return;
+  }
+
+  const picks = stockPicksData.picks || [];
+  if (!picks.length) {
+    container.innerHTML = '<div style="color:#94a3b8; font-size:12px; padding:12px; text-align:center;">No stock picks available at this time.</div>';
+    return;
+  }
+
+  let html = `
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+        <thead>
+          <tr style="background:#131c2c; color:#94a3b8; text-align:left;">
+            <th style="padding:8px 12px;">Symbol</th>
+            <th style="padding:8px 12px;">LTP</th>
+            <th style="padding:8px 12px;">Chg%</th>
+            <th style="padding:8px 12px;">Intraday</th>
+            <th style="padding:8px 12px;">Short-Term</th>
+            <th style="padding:8px 12px;">Long-Term</th>
+            <th style="padding:8px 12px;">Signal</th>
+            <th style="padding:8px 12px;">Entry</th>
+            <th style="padding:8px 12px;">Target</th>
+            <th style="padding:8px 12px;">Stop Loss</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  picks.forEach(pick => {
+    const signal = pick.signal || 'NEUTRAL';
+    const signalColor = signal === 'BUY' ? '#22c55e' : signal === 'SELL' ? '#ef4444' : '#64748b';
+    const chgColor = (pick.changePct || 0) >= 0 ? '#22c55e' : '#ef4444';
+    const chgPrefix = (pick.changePct || 0) >= 0 ? '+' : '';
+
+    html += `
+      <tr style="border-bottom:1px solid #141b29;">
+        <td style="padding:8px; font-weight:700; color:#f1f5f9;">${escapeHtml(pick.symbol)}</td>
+        <td style="padding:8px; color:#e2e8f0;">₹ ${fmtNum(pick.ltp)}</td>
+        <td style="padding:8px; color:${chgColor};">${chgPrefix}${fmtPct(pick.changePct)}%</td>
+        <td style="padding:8px; color:${pick.intraday?.signal === 'Bullish' ? '#22c55e' : pick.intraday?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.intraday?.signal || '–'}</td>
+        <td style="padding:8px; color:${pick.shortTerm?.signal === 'Bullish' ? '#22c55e' : pick.shortTerm?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.shortTerm?.signal || '–'}</td>
+        <td style="padding:8px; color:${pick.longTerm?.signal === 'Bullish' ? '#22c55e' : pick.longTerm?.signal === 'Bearish' ? '#ef4444' : '#94a3b8'};">${pick.longTerm?.signal || '–'}</td>
+        <td style="padding:8px; color:${signalColor}; font-weight:700;">${signal}</td>
+        <td style="padding:8px; color:#e2e8f0;">₹ ${fmtNum(pick.entry)}</td>
+        <td style="padding:8px; color:#22c55e;">₹ ${fmtNum(pick.target)}</td>
+        <td style="padding:8px; color:#ef4444;">₹ ${fmtNum(pick.stopLoss)}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
 }
 
 // Renders the "Recommendation for the Day" table from the real
@@ -11490,6 +11780,7 @@ initAmbientBackground();
 initLiveClock();
 initRuleEventListeners();
 updateAlertsBadge();
+initModuleState();
 fetchIndexPulse();
 setInterval(fetchIndexPulse, 30000);
 fetchGlobalMarkets();
@@ -11498,6 +11789,9 @@ scheduleFastPoll();
 
 initStatus().then(() => {
   setActiveScanStrategy('strat1');
+  if (stocksOnlyLock) {
+    fetchStockPicks();
+  }
 });
 
 renderRoute(); // Phase 0 router: resolve whatever route (or none) is in the URL on first load

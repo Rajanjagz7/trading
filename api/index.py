@@ -124,6 +124,14 @@ def get_chain(symbol: str = "NIFTY", expiry: Optional[str] = None, indicator: Op
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/stock-picks")
+def get_stock_picks(force_refresh: bool = False):
+    try:
+        res = nse_service.get_stock_picks(force_refresh=force_refresh)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/scan")
 def scan_bhavcopy(req: ScanRequest):
     if not nse_service.today_rows:
