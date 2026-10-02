@@ -3247,9 +3247,19 @@
        guaranteed-outcome claim. See the "basedOnVerdict" field per row and
        api/nse_service.py's get_indices_pulse() for the exact documented rule. -->
   <div class="pulse-header" style="margin-top:14px;">
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-      <span class="pulse-title">📋 Recommendation for the Day</span>
-      <span class="pulse-badge" id="recoTimeBadge">Loading…</span>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span class="pulse-title">📋 Recommendation for the Day</span>
+        <span class="pulse-badge" id="recoTimeBadge">Loading…</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; font-size:10px; flex-wrap:wrap;">
+        <select id="recoPaginationSelect" onchange="updateRecoPagination(this.value)" style="padding:4px 6px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:3px; font-size:10px; cursor:pointer;">
+          <option value="10" selected>10</option>
+          <option value="5">5</option>
+          <option value="20">20</option>
+        </select>
+        <span style="color:#64748b;">per page</span>
+      </div>
     </div>
     <span style="font-size:11px; color:#94a3b8;" class="pulse-sub-text">Deterministic Call/Put flow rule — not a guaranteed outcome. NO SIGNAL shown honestly when flow is balanced.</span>
   </div>
@@ -3277,6 +3287,7 @@
       </tbody>
     </table>
   </div>
+  <div id="recoPaginationControls" style="display:flex; gap:4px; padding:10px 0; justify-content:center; flex-wrap:wrap; font-size:11px;"></div>
 
   <!-- Phase 1 (BRD redesign): clean Dashboard landing view (FR-01) -->
   <div class="rx-dashboard" id="rxDashboard" style="display:none;">
@@ -8014,6 +8025,19 @@ async function fetchIndexPulse() {
   }
 }
 
+let recoCurrentPage = 1;
+let recoItemsPerPage = 10;
+let recoAllData = null;
+let recoAllIndices = [];
+
+function updateRecoPagination(itemsPerPage) {
+  recoItemsPerPage = parseInt(itemsPerPage);
+  recoCurrentPage = 1;
+  if (recoAllData && recoAllIndices.length > 0) {
+    renderRecommendationTable(recoAllData, recoAllIndices);
+  }
+}
+
 // Renders the "Recommendation for the Day" table from the real
 // `recommendation` object each index already carries in /api/indices/pulse
 // (see get_indices_pulse() in nse_service.py for the documented rule this
@@ -8023,7 +8047,15 @@ function renderRecommendationTable(data, indices) {
   const badge = document.getElementById('recoTimeBadge');
   if (!tbody) return;
 
-  const rows = indices.map(sym => {
+  recoAllData = data;
+  recoAllIndices = indices;
+
+  const totalPages = Math.ceil(indices.length / recoItemsPerPage);
+  recoCurrentPage = Math.min(recoCurrentPage, totalPages || 1);
+  const startIdx = (recoCurrentPage - 1) * recoItemsPerPage;
+  const paginatedIndices = indices.slice(startIdx, startIdx + recoItemsPerPage);
+
+  const rows = paginatedIndices.map(sym => {
     const item = data[sym];
     if (!item) return '';
     const rec = item.recommendation;
@@ -8064,9 +8096,29 @@ function renderRecommendationTable(data, indices) {
   }).filter(Boolean).join('');
 
   tbody.innerHTML = rows || '<tr><td colspan="13" style="padding:16px; text-align:center; color:#94a3b8;">No recommendation data available.</td></tr>';
+
   if (badge) {
     const now = new Date();
     badge.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kolkata' })} IST`;
+  }
+
+  const controlsDiv = document.getElementById('recoPaginationControls');
+  if (controlsDiv && totalPages > 1) {
+    let btns = '';
+    if (recoCurrentPage > 1) btns += `<button onclick="recoCurrentPage=1; renderRecommendationTable(recoAllData, recoAllIndices)" style="padding:4px 6px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:3px; font-size:10px; cursor:pointer;">«</button>`;
+    if (recoCurrentPage > 1) btns += `<button onclick="recoCurrentPage--; renderRecommendationTable(recoAllData, recoAllIndices)" style="padding:4px 6px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:3px; font-size:10px; cursor:pointer;">‹</button>`;
+
+    for (let i = Math.max(1, recoCurrentPage - 1); i <= Math.min(totalPages, recoCurrentPage + 1); i++) {
+      const isActive = i === recoCurrentPage;
+      btns += `<button onclick="recoCurrentPage=${i}; renderRecommendationTable(recoAllData, recoAllIndices)" style="padding:4px 6px; background:${isActive ? '#2563eb' : '#1e293b'}; color:#e2e8f0; border:1px solid ${isActive ? '#3b82f6' : '#334155'}; border-radius:3px; font-size:10px; cursor:pointer; font-weight:${isActive ? '700' : '400'};">${i}</button>`;
+    }
+
+    if (recoCurrentPage < totalPages) btns += `<button onclick="recoCurrentPage++; renderRecommendationTable(recoAllData, recoAllIndices)" style="padding:4px 6px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:3px; font-size:10px; cursor:pointer;">›</button>`;
+    if (recoCurrentPage < totalPages) btns += `<button onclick="recoCurrentPage=${totalPages}; renderRecommendationTable(recoAllData, recoAllIndices)" style="padding:4px 6px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:3px; font-size:10px; cursor:pointer;">»</button>`;
+
+    controlsDiv.innerHTML = btns;
+  } else if (controlsDiv) {
+    controlsDiv.innerHTML = '';
   }
 }
 
