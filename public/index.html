@@ -3216,34 +3216,61 @@
     .rx-quick-actions { grid-template-columns: repeat(2, 1fr); }
   }
 
-  /* Mobile Table Responsive: Convert tables to card layout on small screens */
+  /* Mobile Table Responsive: Clean tabular presentation with touch scrolling */
   @media (max-width: 600px) {
-    table { width: 100% !important; }
-    table thead { display: none; }
-    table tbody tr { display: block; border-bottom: 1px solid #1a2333 !important; margin-bottom: 12px; padding: 12px 0; border-radius: 8px; background: #0f1520; }
+    .table-wrap, #blockDealsBody, #recoTableBody, #stockPicksBody, .chain-table-wrap, .opt-chain-container {
+      width: 100% !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-x pan-y !important;
+      margin-bottom: 8px;
+    }
+    table {
+      min-width: 620px !important;
+      width: 100% !important;
+      border-collapse: collapse !important;
+      font-size: 11px !important;
+    }
+    table thead {
+      display: table-header-group !important;
+    }
+    table thead th {
+      padding: 6px 8px !important;
+      background: var(--panel-2) !important;
+      color: #94a3b8 !important;
+      font-size: 11px !important;
+      white-space: nowrap !important;
+      border-bottom: 1px solid var(--line) !important;
+      text-align: left;
+    }
+    table tbody tr {
+      display: table-row !important;
+      background: transparent !important;
+      border-bottom: 1px solid #1a2333 !important;
+    }
     table tbody td {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px !important;
+      display: table-cell !important;
+      padding: 6px 8px !important;
+      text-align: left !important;
+      vertical-align: middle !important;
       border: none !important;
-      text-align: right;
+      white-space: nowrap !important;
     }
     table tbody td:before {
-      content: attr(data-label);
-      font-weight: 600;
-      color: #94a3b8;
-      text-align: left;
-      flex: 1;
-      margin-right: 8px;
+      content: none !important;
+      display: none !important;
     }
-    table tbody td:first-child:before { content: none; }
     table tbody td:first-child {
-      display: block;
+      display: table-cell !important;
       font-weight: 700;
       color: #f1f5f9;
-      padding: 8px 12px !important;
-      margin-bottom: 8px;
+      padding: 6px 8px !important;
+      margin-bottom: 0 !important;
+    }
+    table th.tgt-cell, table td.tgt-cell,
+    table th.sl-cell, table td.sl-cell,
+    table th[style*="text-align:right"], table td[style*="text-align:right"] {
+      text-align: right !important;
     }
   }
 
@@ -4886,9 +4913,48 @@ const UI_MODE = new URLSearchParams(location.search).get('ui') || localStorage.g
 
 const ROUTES = {
   '/': { legacy: () => {}, next: () => showView('dashboard') },
-  '/scanner': { legacy: () => {}, next: () => showView('legacy') },
-  '/results': { legacy: () => {}, next: () => showView('legacy') },
-  '/indicators': { legacy: () => {}, next: () => showView('legacy') },
+  '/scanner': {
+    legacy: () => {
+      showView('legacy');
+      const el = document.getElementById('sidebarFiltersPanel') || document.querySelector('.workspace');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    next: () => {
+      showView('legacy');
+      setTimeout(() => {
+        const el = document.getElementById('sidebarFiltersPanel') || document.querySelector('.workspace');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  },
+  '/results': {
+    legacy: () => {
+      showView('legacy');
+      const el = document.getElementById('resultsTable') || document.getElementById('resultsCardsWrap');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    next: () => {
+      showView('legacy');
+      setTimeout(() => {
+        const el = document.getElementById('resultsTable') || document.getElementById('resultsCardsWrap');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  },
+  '/indicators': {
+    legacy: () => {
+      showView('legacy');
+      const el = document.getElementById('indicatorsPanel');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    next: () => {
+      showView('legacy');
+      setTimeout(() => {
+        const el = document.getElementById('indicatorsPanel');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  },
   '/chain': { legacy: () => {}, next: () => { showView('dashboard'); openChainModal(currentChainSymbol || 'NIFTY', ''); } },
   '/chart': { legacy: () => {}, next: () => { showView('dashboard'); openOptionChartModal('NIFTY', '', 0, ''); } },
   '/chart/:symbol/:expiry/:strike/:type': {
