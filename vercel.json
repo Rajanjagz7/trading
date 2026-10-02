@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "public": "public",
+  "buildCommand": "echo 'No build needed'",
   "builds": [
     {
       "src": "api/tv.js",
@@ -8,10 +10,6 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -24,15 +22,8 @@
       "dest": "api/index.py"
     },
     {
-      "src": "/.*\\.html$",
-      "dest": "public/$1",
-      "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
-      }
-    },
-    {
       "src": "/(.*)",
-      "dest": "public/$1"
+      "dest": "/$1"
     }
   ]
 }
