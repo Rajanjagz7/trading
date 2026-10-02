@@ -2138,6 +2138,16 @@
 
   /* Specific Adjustments for CMF Phone 2 / Nothing Phone 2 & Mobile Chrome (~360px - 430px Viewports) */
   @media (max-width: 600px) {
+    /* Mobile responsive grid layouts */
+    #indicatorBody [style*="grid-template-columns:1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+    }
+
+    #indicatorBody {
+      font-size: 10px !important;
+      padding: 8px !important;
+    }
+
     .app-container {
       padding: max(6px, env(safe-area-inset-top)) 8px max(36px, env(safe-area-inset-bottom)) 8px !important;
       width: 100% !important;
@@ -7662,14 +7672,14 @@ async function runIndicator() {
           optionChainHTML = `
             <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
               <div style="color:#64748b; font-weight:700; margin-bottom:8px;">📈 Option Chain (Top 3)</div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:10px; color:#e2e8f0;">
-                <div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:10px; color:#e2e8f0; word-wrap:break-word; overflow-wrap:break-word;">
+                <div style="min-width:0;">
                   <div style="color:#22c55e; font-weight:700; margin-bottom:6px;">📞 Calls (CE)</div>
-                  ${topCalls.map(c => `<div>₹${c.strike} | OI: ${(c.openInterest/100000).toFixed(1)}L</div>`).join('')}
+                  ${topCalls.map(c => `<div style="word-break:break-word;">₹${c.strike} | OI: ${(c.openInterest/100000).toFixed(1)}L</div>`).join('')}
                 </div>
-                <div>
+                <div style="min-width:0;">
                   <div style="color:#ef4444; font-weight:700; margin-bottom:6px;">📱 Puts (PE)</div>
-                  ${topPuts.map(p => `<div>₹${p.strike} | OI: ${(p.openInterest/100000).toFixed(1)}L</div>`).join('')}
+                  ${topPuts.map(p => `<div style="word-break:break-word;">₹${p.strike} | OI: ${(p.openInterest/100000).toFixed(1)}L</div>`).join('')}
                 </div>
               </div>
             </div>`;
@@ -7690,8 +7700,8 @@ async function runIndicator() {
               <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
                 <div style="color:#64748b; font-weight:700; margin-bottom:8px;">🔗 Block Deals (${symbol})</div>
                 ${symbolDeals.map(d => `
-                  <div style="color:#e2e8f0; font-size:10px; padding:4px 0; border-bottom:1px solid #141b29;">
-                    <div>Qty: ${(d.quantity/100000).toFixed(1)}L @ ₹${d.price.toFixed(2)} | Value: ₹${(d.value/10000000).toFixed(1)}Cr</div>
+                  <div style="color:#e2e8f0; font-size:10px; padding:4px 0; border-bottom:1px solid #141b29; word-wrap:break-word; overflow-wrap:break-word;">
+                    <div style="word-break:break-word;">Qty: ${(d.quantity/100000).toFixed(1)}L @ ₹${d.price.toFixed(2)} | Value: ₹${(d.value/10000000).toFixed(1)}Cr</div>
                   </div>
                 `).join('')}
               </div>`;
@@ -7702,20 +7712,20 @@ async function runIndicator() {
       }
 
       body.innerHTML = `
-        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0; border-left:3px solid ${signalColor};">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-            <span style="font-size:18px;">${signalEmoji}</span>
-            <div>
-              <div style="color:#60a5fa; font-weight:700; font-size:13px;">📊 ${symbol} - ${key.replaceAll('-', ' ').toUpperCase()}</div>
+        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0; border-left:3px solid ${signalColor}; overflow:hidden; word-wrap:break-word;">
+          <div style="display:flex; flex-wrap:wrap; align-items:flex-start; gap:8px; margin-bottom:12px;">
+            <span style="font-size:18px; flex-shrink:0;">${signalEmoji}</span>
+            <div style="min-width:0; flex:1;">
+              <div style="color:#60a5fa; font-weight:700; font-size:13px; word-break:break-word;">📊 ${symbol} - ${key.replaceAll('-', ' ').toUpperCase()}</div>
               <div style="color:${signalColor}; font-weight:700; font-size:12px;">${r.signal} Signal</div>
             </div>
           </div>
-          <div style="background:#0f1520; padding:10px; border-radius:4px; margin-bottom:8px;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px; color:#e2e8f0;">
-              <div>💰 Price: <span style="font-weight:700;">₹${r.price?.toFixed(2) || 'N/A'}</span></div>
-              <div>📍 Entry: <span style="font-weight:700;">₹${r.entry?.toFixed(2) || 'N/A'}</span></div>
-              <div>🎯 Target: <span style="color:#22c55e; font-weight:700;">₹${r.target?.toFixed(2) || 'N/A'}</span></div>
-              <div>🛑 SL: <span style="color:#ef4444; font-weight:700;">₹${r.stoploss?.toFixed(2) || 'N/A'}</span></div>
+          <div style="background:#0f1520; padding:10px; border-radius:4px; margin-bottom:8px; overflow:hidden;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px; color:#e2e8f0; word-wrap:break-word; overflow-wrap:break-word;">
+              <div style="min-width:0; word-break:break-word;">💰 Price: <span style="font-weight:700;">₹${r.price?.toFixed(2) || 'N/A'}</span></div>
+              <div style="min-width:0; word-break:break-word;">📍 Entry: <span style="font-weight:700;">₹${r.entry?.toFixed(2) || 'N/A'}</span></div>
+              <div style="min-width:0; word-break:break-word;">🎯 Target: <span style="color:#22c55e; font-weight:700;">₹${r.target?.toFixed(2) || 'N/A'}</span></div>
+              <div style="min-width:0; word-break:break-word;">🛑 SL: <span style="color:#ef4444; font-weight:700;">₹${r.stoploss?.toFixed(2) || 'N/A'}</span></div>
             </div>
           </div>
           ${r.target && r.price ? `<div style="color:#64748b; font-size:10px;">📊 Return: ${((r.target - r.price) / r.price * 100).toFixed(2)}%</div>` : ''}
