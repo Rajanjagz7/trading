@@ -1,10 +1,7 @@
 {
-  "buildCommand": "echo Building",
-  "outputDirectory": "./",
+  "buildCommand": "echo 'Vercel Build' && date",
+  "outputDirectory": ".",
   "version": 2,
-  "env": {
-    "BUILD_TIME": "@now"
-  },
   "builds": [
     {
       "src": "api/tv.js",
@@ -17,16 +14,12 @@
   ],
   "routes": [
     {
-      "src": "/api/tv(.*)",
+      "src": "/api/tv.*",
       "dest": "api/tv.js"
     },
     {
-      "src": "/api/(.*)",
+      "src": "/api/.*",
       "dest": "api/index.py"
-    },
-    {
-      "src": "/.*",
-      "dest": "/$1"
     }
   ]
 }
