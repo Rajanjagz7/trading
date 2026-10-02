@@ -9193,6 +9193,17 @@ function applyHubStrat(key) {
   if (currentSelectedContract) {
     drawOptionChart(currentSelectedContract);
     updateOptionSignalBadge(currentSelectedContract);
+    if (currentHubStratKey && currentSelectedContract.strike > 0 && currentSelectedContract.type) {
+      fetchLiveContract(currentSelectedContract.symbol, currentSelectedContract.expiry, currentSelectedContract.strike, currentSelectedContract.type)
+        .then(live => {
+          if (live && currentSelectedContract.symbol === live.symbol && currentSelectedContract.strike === live.strike && currentSelectedContract.type === live.type) {
+            currentSelectedContract = live;
+            updateOptionSignalBadge(live);
+            drawOptionChart(live);
+          }
+        })
+        .catch(() => {});
+    }
   }
 }
 
@@ -9262,6 +9273,7 @@ async function fetchLiveContract(symbol, expiry, strike, type) {
   try {
     let url = `${API_BASE}/api/chain?symbol=${encodeURIComponent(symbol)}`;
     if (expiry) url += `&expiry=${encodeURIComponent(expiry)}`;
+    if (currentHubStratKey) url += `&indicator=${encodeURIComponent(currentHubStratKey)}`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.error || !data.strikes) return null;

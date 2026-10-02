@@ -89,6 +89,14 @@ def get_upstox_status():
     """Authenticated Upstox REST integration status."""
     return upstox_service.health()
 
+@app.get("/api/market/global")
+def get_market_global():
+    try:
+        data = nse_service.get_global_markets()
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Global market error: {str(e)}")
+
 @app.get("/api/fetch-latest")
 def fetch_latest_get(force: bool = False):
     return fetch_latest_post(force)
