@@ -7634,11 +7634,11 @@ async function fetchBlockDeals(forceRefresh) {
 /* ─── Rajan-Pavan Indicators ─── */
 async function runIndicator() {
   const symbol = document.getElementById('indicatorSymbol')?.value || 'NIFTY';
-  const key = document.getElementById('indicatorKey')?.value || 'ut';
+  const key = document.getElementById('indicatorKey')?.value || 'hammer-support';
   const body = document.getElementById('indicatorBody');
   if (!body) return;
 
-  body.innerHTML = '<div style="color:#94a3b8;">Loading indicator results...</div>';
+  body.innerHTML = '<div style="color:#94a3b8;">⏳ Loading indicator, option chain & block deals...</div>';
 
   try {
     const url = `${API_BASE}/api/indicators/rajan-pavan?key=${key}&symbol=${symbol}`;
@@ -7647,23 +7647,86 @@ async function runIndicator() {
 
     if (data.results) {
       const r = data.results;
+      const signalColor = r.signal === 'BULLISH' ? '#22c55e' : r.signal === 'BEARISH' ? '#ef4444' : '#94a3b8';
+      const signalEmoji = r.signal === 'BULLISH' ? '🟢' : r.signal === 'BEARISH' ? '🔴' : '⚪';
+
+      // Fetch option chain data
+      let optionChainHTML = '';
+      try {
+        const chainRes = await fetch(`${API_BASE}/api/option-chain?symbol=${symbol}`);
+        const chainData = await chainRes.json();
+        if (chainData.data && chainData.data.length > 0) {
+          const topCalls = chainData.data.filter(d => d.optionType === 'CE').slice(0, 3);
+          const topPuts = chainData.data.filter(d => d.optionType === 'PE').slice(0, 3);
+          optionChainHTML = `
+            <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
+              <div style="color:#64748b; font-weight:700; margin-bottom:8px;">📈 Option Chain (Top 3)</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:10px; color:#e2e8f0;">
+                <div>
+                  <div style="color:#22c55e; font-weight:700; margin-bottom:6px;">📞 Calls (CE)</div>
+                  ${topCalls.map(c => `<div>₹${c.strike} | OI: ${(c.openInterest/100000).toFixed(1)}L</div>`).join('')}
+                </div>
+                <div>
+                  <div style="color:#ef4444; font-weight:700; margin-bottom:6px;">📱 Puts (PE)</div>
+                  ${topPuts.map(p => `<div>₹${p.strike} | OI: ${(p.openInterest/100000).toFixed(1)}L</div>`).join('')}
+                </div>
+              </div>
+            </div>`;
+        }
+      } catch (e) {
+        console.warn('Option chain error:', e);
+      }
+
+      // Fetch block deals
+      let blockDealsHTML = '';
+      try {
+        const dealsRes = await fetch(`${API_BASE}/api/block-deals`);
+        const dealsData = await dealsRes.json();
+        if (dealsData.deals) {
+          const symbolDeals = dealsData.deals.filter(d => d.symbol === symbol).slice(0, 3);
+          if (symbolDeals.length > 0) {
+            blockDealsHTML = `
+              <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
+                <div style="color:#64748b; font-weight:700; margin-bottom:8px;">🔗 Block Deals (${symbol})</div>
+                ${symbolDeals.map(d => `
+                  <div style="color:#e2e8f0; font-size:10px; padding:4px 0; border-bottom:1px solid #141b29;">
+                    <div>Qty: ${(d.quantity/100000).toFixed(1)}L @ ₹${d.price.toFixed(2)} | Value: ₹${(d.value/10000000).toFixed(1)}Cr</div>
+                  </div>
+                `).join('')}
+              </div>`;
+          }
+        }
+      } catch (e) {
+        console.warn('Block deals error:', e);
+      }
+
       body.innerHTML = `
-        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
-          <div style="color:#60a5fa; font-weight:700; margin-bottom:10px;">📊 ${symbol} - ${key.toUpperCase()}</div>
-          <div style="color:#e2e8f0; font-size:11px; line-height:1.8;">
-            <div>🎯 Signal: <span style="color:#22c55e; font-weight:600;">${r.signal || 'N/A'}</span></div>
-            <div>💰 Price: ₹${r.price?.toFixed(2) || 'N/A'}</div>
-            ${r.entry ? `<div>📍 Entry: ₹${r.entry.toFixed(2)}</div>` : ''}
-            ${r.target ? `<div>🎪 Target: ₹${r.target.toFixed(2)}</div>` : ''}
-            ${r.stoploss ? `<div>🛑 Stop Loss: ₹${r.stoploss.toFixed(2)}</div>` : ''}
+        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0; border-left:3px solid ${signalColor};">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <span style="font-size:18px;">${signalEmoji}</span>
+            <div>
+              <div style="color:#60a5fa; font-weight:700; font-size:13px;">📊 ${symbol} - ${key.replaceAll('-', ' ').toUpperCase()}</div>
+              <div style="color:${signalColor}; font-weight:700; font-size:12px;">${r.signal} Signal</div>
+            </div>
           </div>
+          <div style="background:#0f1520; padding:10px; border-radius:4px; margin-bottom:8px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px; color:#e2e8f0;">
+              <div>💰 Price: <span style="font-weight:700;">₹${r.price?.toFixed(2) || 'N/A'}</span></div>
+              <div>📍 Entry: <span style="font-weight:700;">₹${r.entry?.toFixed(2) || 'N/A'}</span></div>
+              <div>🎯 Target: <span style="color:#22c55e; font-weight:700;">₹${r.target?.toFixed(2) || 'N/A'}</span></div>
+              <div>🛑 SL: <span style="color:#ef4444; font-weight:700;">₹${r.stoploss?.toFixed(2) || 'N/A'}</span></div>
+            </div>
+          </div>
+          ${r.target && r.price ? `<div style="color:#64748b; font-size:10px;">📊 Return: ${((r.target - r.price) / r.price * 100).toFixed(2)}%</div>` : ''}
         </div>
+        ${optionChainHTML}
+        ${blockDealsHTML}
       `;
     } else if (data.detail) {
       body.innerHTML = `<div style="color:#fbbf24; padding:10px;">⚠️ ${data.detail}</div>`;
     }
   } catch (e) {
-    body.innerHTML = `<div style="color:#ef4444; padding:10px;">Error: ${e.message}</div>`;
+    body.innerHTML = `<div style="color:#ef4444; padding:10px;">❌ Error: ${e.message}</div>`;
   }
 }
 
