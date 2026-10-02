@@ -3216,7 +3216,7 @@
          no account), so this honestly says so rather than fabricating
          headlines or timestamps. Swap renderNewsSection()'s "unavailable"
          branch for a real fetch once a provider (e.g. NewsAPI) is wired up. -->
-    <div class="rx-section-label" style="margin-top:0;">📰 Live Market News</div>
+    <div id="liveNewsHeading" class="rx-section-label" style="margin-top:0;">📰 Live Market News</div>
     <div id="newsSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
       <div style="display:flex; align-items:center; gap:12px; color:#94a3b8; font-size:12px;">Loading…</div>
     </div>
@@ -3224,7 +3224,7 @@
     <!-- Best Mutual Funds -- real AMFI NAV history via mfapi.in, ranked by
          real computed 5-year CAGR for a fixed universe of Direct-Growth
          equity schemes. Never an invented return figure. -->
-    <div class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
+    <div id="bestMutualFundsHeading" class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
       <span>💰 Best Mutual Funds (5-Year Returns)</span>
       <span style="display:flex; gap:6px;">
         <button class="small-strat-btn mf-filter-btn active" data-mf-filter="ALL" onclick="setMfFilter('ALL')" style="padding:3px 9px; font-size:11px;">All</button>
@@ -3240,7 +3240,7 @@
     </div>
 
     <!-- IPO Calendar -- real NSE public IPO data (upcoming / ongoing / closed). -->
-    <div class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
+    <div id="ipoCalendarHeading" class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
       <span>🚀 IPO Calendar</span>
       <span style="display:flex; gap:6px;">
         <button class="small-strat-btn ipo-tab-btn active" data-ipo-tab="ongoing" onclick="setIpoTab('ongoing')" style="padding:3px 9px; font-size:11px;">Ongoing</button>
@@ -3318,7 +3318,7 @@
        Real NSE equity prices from Upstox (not option premiums), classified
        Intraday/Short-Term/Long-Term by a documented rule. -->
   <div class="rx-legacy-tools" id="stockPicksPanel" style="display:none; background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+    <div id="stockPicksHeading" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
       <div>
         <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📈 Real Stock Buy Picks</div>
         <div style="color:#94a3b8; font-size:11.5px; margin-top:2px; max-width:560px;">Real NSE equity prices (not option premiums), classified Intraday / Short-Term / Long-Term by a documented rule — not a guaranteed outcome.</div>
@@ -7346,16 +7346,14 @@ async function fetchMarketNews() {
     const headlines = Array.isArray(data.headlines) ? data.headlines : [];
 
     if (!data.available || headlines.length === 0) {
-      container.innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px;">
-          <span style="font-size:22px;">📡</span>
-          <div>
-            <div style="color:#fcd34d; font-weight:700; font-size:13px;">News unavailable</div>
-            <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${data.reason || 'No live news provider is configured for this app yet'} -- headlines are never fabricated here.</div>
-          </div>
-        </div>`;
+      container.style.display = 'none';
+      const heading = container.previousElementSibling;
+      if (heading && heading.id === 'liveNewsHeading') heading.style.display = 'none';
       return;
     }
+    container.style.display = 'block';
+    const heading = container.previousElementSibling;
+    if (heading && heading.id === 'liveNewsHeading') heading.style.display = 'block';
 
     // Dedup identical headlines (same title + source) before rendering.
     const seen = new Set();
@@ -7432,16 +7430,14 @@ function renderStockPicks() {
   const data = stockPicksData;
 
   if (!data.available) {
-    body.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:22px;">📡</span>
-        <div>
-          <div style="color:#fcd34d; font-weight:700; font-size:13px;">Stock picks unavailable</div>
-          <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${escapeHtml(data.reason || 'No real stock price source is available right now')} -- picks are never fabricated here.</div>
-        </div>
-      </div>`;
+    body.style.display = 'none';
+    const heading = body.previousElementSibling;
+    if (heading && heading.id === 'stockPicksHeading') heading.style.display = 'none';
     return;
   }
+  body.style.display = 'block';
+  const heading = body.previousElementSibling;
+  if (heading && heading.id === 'stockPicksHeading') heading.style.display = 'block';
 
   let picks = data.picks || [];
   if (stockPickFilter === 'INTRADAY') picks = picks.filter(p => p.intraday.signal === 'Bullish');
@@ -7520,16 +7516,14 @@ function renderMutualFunds() {
   const data = mutualFundsData;
 
   if (!data.available) {
-    container.innerHTML = `
-      <div class="unavailable-state">
-        <span class="unavailable-state-icon">📡</span>
-        <div>
-          <div class="unavailable-state-text-main">Mutual fund data unavailable</div>
-          <div class="unavailable-state-text-sub">${escapeHtml(data.reason || 'No real fund data source is available right now')} -- figures are never fabricated here.</div>
-        </div>
-      </div>`;
+    container.style.display = 'none';
+    const heading = container.previousElementSibling;
+    if (heading && heading.id === 'bestMutualFundsHeading') heading.style.display = 'none';
     return;
   }
+  container.style.display = 'block';
+  const heading = container.previousElementSibling;
+  if (heading && heading.id === 'bestMutualFundsHeading') heading.style.display = 'block';
 
   let funds = data.funds || [];
   if (mfFilter !== 'ALL') funds = funds.filter(f => f.category === mfFilter);
@@ -7605,16 +7599,14 @@ function renderIpoData() {
   const data = ipoData;
 
   if (!data.available) {
-    container.innerHTML = `
-      <div class="unavailable-state">
-        <span class="unavailable-state-icon">📡</span>
-        <div>
-          <div class="unavailable-state-text-main">IPO data unavailable</div>
-          <div class="unavailable-state-text-sub">${escapeHtml(data.reason || 'NSE IPO data could not be reached')} -- listings are never fabricated here.</div>
-        </div>
-      </div>`;
+    container.style.display = 'none';
+    const heading = container.previousElementSibling;
+    if (heading && heading.id === 'ipoCalendarHeading') heading.style.display = 'none';
     return;
   }
+  container.style.display = 'block';
+  const heading = container.previousElementSibling;
+  if (heading && heading.id === 'ipoCalendarHeading') heading.style.display = 'block';
 
   const rows = data[ipoTab] || [];
   const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.dataSource || '')}</div>`;
