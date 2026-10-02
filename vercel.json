@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "echo Build",
-  "outputDirectory": "public",
   "builds": [
     {
       "src": "api/tv.js",
@@ -10,6 +8,10 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -20,6 +22,10 @@
     {
       "src": "/api/.*",
       "dest": "api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "public/$1"
     }
   ]
 }
