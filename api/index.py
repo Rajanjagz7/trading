@@ -38,6 +38,15 @@ _load_env_file()
 from .nse_service import nse_service, now_ist_iso, get_market_news, get_stock_picks
 from .market_extras_service import get_mutual_fund_picks, get_ipo_data
 from .upstox_service import upstox_service
+from .market_news import get_market_news as get_live_market_news
+from .block_deals_service import get_block_deals
+try:
+    from .rajan_pavan_indicators import RAJAN_PAVAN_KEYS
+    import rajan_pavan_indicators as rp_indicators
+    HAS_RAJAN_PAVAN = True
+except ImportError:
+    HAS_RAJAN_PAVAN = False
+    RAJAN_PAVAN_KEYS = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -419,6 +428,133 @@ def tv_status(action: str = "status", symbol: str = "NSE:NIFTY"):
         "supportedActions": ["quote", "ta", "search", "status"],
         "version": "1.0.0"
     }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NEW FEATURES: Market News, Rajan-Pavan Indicators, Block Deals
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/news/market")
+def get_news(limit: int = 40, force_refresh: bool = False):
+    """Live market news from multiple RSS feeds (India, Global, Crypto)."""
+    try:
+        result = get_live_market_news(limit=limit, force_refresh=force_refresh)
+        return result
+    except Exception as e:
+        return {
+            "available": False,
+            "items": [],
+            "reason": f"Market news fetch failed: {str(e)}",
+            "fetchedAt": now_ist_iso(),
+        }
+
+@app.get("/api/block-deals")
+def get_block_deals_endpoint(force_refresh: bool = False):
+    """Today's NSE block deals — all stocks with block transactions."""
+    try:
+        result = get_block_deals(force_refresh=force_refresh)
+        return result
+    except Exception as e:
+        return {
+            "available": False,
+            "deals": [],
+            "count": 0,
+            "reason": f"Block deals fetch failed: {str(e)}",
+            "fetchedAt": now_ist_iso(),
+        }
+
+@app.get("/api/indicators/rajan-pavan")
+def api_indicator_rajan_pavan(
+    key: str,
+    symbol: str = "NIFTY",
+    lookbackDays: Optional[int] = None,
+    emaLength: Optional[int] = None,
+    trendLength: Optional[int] = None,
+    fastLength: Optional[int] = None,
+    slowLength: Optional[int] = None,
+    pivotLeft: Optional[int] = None,
+    pivotRight: Optional[int] = None,
+    useStructure: Optional[bool] = None,
+    maxBodyPct: Optional[float] = None,
+    minLowerWickBody: Optional[float] = None,
+    maxUpperWickBody: Optional[float] = None,
+    supportDistancePct: Optional[float] = None,
+    supportTolerancePct: Optional[float] = None,
+    useTrend: Optional[bool] = None,
+    useVolume: Optional[bool] = None,
+    volumeLength: Optional[int] = None,
+    volumeMultiplier: Optional[float] = None,
+    signalMode: Optional[str] = None,
+    rangeLength: Optional[int] = None,
+    emaDistancePct: Optional[float] = None,
+    volumeFactor: Optional[float] = None,
+    lookback: Optional[int] = None,
+    useEMA: Optional[bool] = None,
+    useRSI: Optional[bool] = None,
+    rsiLength: Optional[int] = None,
+    rsiMax: Optional[float] = None,
+    useMACD: Optional[bool] = None,
+    useSMA50: Optional[bool] = None,
+    useWeeklyTrend: Optional[bool] = None,
+    weeklyEmaLength: Optional[int] = None,
+    priceMovePct: Optional[float] = None,
+    nrLength: Optional[int] = None,
+    nearHighPct: Optional[float] = None,
+    consolidationLength: Optional[int] = None,
+    minimumClose: Optional[float] = None,
+    stAtrLength: Optional[int] = None,
+    stFactor: Optional[float] = None,
+    rsiMinimum: Optional[float] = None,
+    bigVolumeMultiplier: Optional[float] = None,
+    lowVolumeMultiplier: Optional[float] = None,
+    supportLength: Optional[int] = None,
+    contractionBars: Optional[int] = None,
+    vixDivisor: Optional[float] = None,
+    supportLookback: Optional[int] = None,
+):
+    """Rajan-Pavan: 15 advanced Pine Script indicators (translated to Python)."""
+    if not HAS_RAJAN_PAVAN:
+        raise HTTPException(status_code=503, detail="Rajan-Pavan indicators not available")
+
+    if key not in RAJAN_PAVAN_KEYS:
+        raise HTTPException(status_code=400, detail=f"Unknown indicator key: {key}")
+
+    try:
+        indicator_func = getattr(rp_indicators, f"scan_{key}", None)
+        if not indicator_func:
+            raise HTTPException(status_code=404, detail=f"Indicator {key} not found")
+
+        # Build kwargs from provided parameters
+        kwargs = {"symbol": symbol}
+
+        # Add all optional parameters if provided
+        param_names = [
+            'lookbackDays', 'emaLength', 'trendLength', 'fastLength', 'slowLength',
+            'pivotLeft', 'pivotRight', 'useStructure', 'maxBodyPct', 'minLowerWickBody',
+            'maxUpperWickBody', 'supportDistancePct', 'supportTolerancePct', 'useTrend',
+            'useVolume', 'volumeLength', 'volumeMultiplier', 'signalMode', 'rangeLength',
+            'emaDistancePct', 'volumeFactor', 'lookback', 'useEMA', 'useRSI', 'rsiLength',
+            'rsiMax', 'useMACD', 'useSMA50', 'useWeeklyTrend', 'weeklyEmaLength',
+            'priceMovePct', 'nrLength', 'nearHighPct', 'consolidationLength', 'minimumClose',
+            'stAtrLength', 'stFactor', 'rsiMinimum', 'bigVolumeMultiplier', 'lowVolumeMultiplier',
+            'supportLength', 'contractionBars', 'vixDivisor', 'supportLookback'
+        ]
+
+        for param_name in param_names:
+            param_value = locals().get(param_name)
+            if param_value is not None:
+                kwargs[param_name] = param_value
+
+        result = indicator_func(**kwargs)
+
+        return {
+            "available": True,
+            "indicator": key,
+            "symbol": symbol,
+            "results": result,
+            "timestamp": now_ist_iso(),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rajan-Pavan scan failed: {str(e)}")
 
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
 @app.api_route("/", methods=["GET", "HEAD"])
