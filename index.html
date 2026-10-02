@@ -3238,6 +3238,28 @@
     </div>
   </div>
 
+  <!-- Real Stock Buy Picks -- shown only while "Stocks Only" is locked on.
+       Real NSE equity prices from Upstox (not option premiums), classified
+       Intraday/Short-Term/Long-Term by a documented rule. -->
+  <div class="rx-legacy-tools" id="stockPicksPanel" style="display:none; background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+      <div>
+        <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📈 Real Stock Buy Picks</div>
+        <div style="color:#94a3b8; font-size:11.5px; margin-top:2px; max-width:560px;">Real NSE equity prices (not option premiums), classified Intraday / Short-Term / Long-Term by a documented rule — not a guaranteed outcome.</div>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="small-strat-btn pick-filter-btn active" data-pick-filter="ALL" onclick="setStockPickFilter('ALL')">All</button>
+        <button class="small-strat-btn pick-filter-btn" data-pick-filter="INTRADAY" onclick="setStockPickFilter('INTRADAY')">⚡ Intraday Bullish</button>
+        <button class="small-strat-btn pick-filter-btn" data-pick-filter="SHORT" onclick="setStockPickFilter('SHORT')">📆 Short-Term Bullish</button>
+        <button class="small-strat-btn pick-filter-btn" data-pick-filter="LONG" onclick="setStockPickFilter('LONG')">🏦 Long-Term Bullish</button>
+        <button class="small-strat-btn" onclick="fetchStockPicks(true)" title="Force a fresh fetch">🔄</button>
+      </div>
+    </div>
+    <div id="stockPicksBody">
+      <div style="color:#94a3b8; font-size:12.5px;">Loading real stock data…</div>
+    </div>
+  </div>
+
   <!-- Mode Selector Tabs -->
   <div class="mode-tabs rx-legacy-tools">
     <button class="tab-btn active" data-tab="auto">⚡ Daily Settlement Data (NSE Auto-Sync)</button>
@@ -6496,6 +6518,13 @@ function syncStocksOnlyButtons() {
   if (navBtn) navBtn.classList.toggle('active', stocksOnlyLock);
   const scannerBtn = document.getElementById('stocksOnlyToggle');
   if (scannerBtn) scannerBtn.classList.toggle('active', stocksOnlyLock);
+  refreshSymbolDropdownForStocksOnly();
+
+  const picksPanel = document.getElementById('stockPicksPanel');
+  if (picksPanel) {
+    picksPanel.style.display = stocksOnlyLock ? 'block' : 'none';
+    if (stocksOnlyLock) fetchStockPicks();
+  }
 }
 
 // Persistent "Stocks Only" lock -- unlike the other quick-scan buttons this
@@ -7281,6 +7310,100 @@ async function fetchMarketNews() {
         <div style="color:#94a3b8; font-size:12px;">News unavailable right now -- the trading dashboard keeps working normally regardless.</div>
       </div>`;
   }
+}
+
+/* ============================================================
+   REAL STOCK BUY PICKS -- shown while "Stocks Only" is locked on.
+   Real NSE equity prices from Upstox (never option premiums), classified
+   Intraday / Short-Term / Long-Term by /api/stocks/picks's documented rule.
+============================================================ */
+let stockPicksData = null;
+let stockPickFilter = 'ALL';
+
+async function fetchStockPicks(forceRefresh) {
+  const body = document.getElementById('stockPicksBody');
+  if (!body) return;
+  if (!stockPicksData) body.innerHTML = `<div style="color:#94a3b8; font-size:12.5px;">Loading real stock data…</div>`;
+  try {
+    const res = await fetch(`${API_BASE}/api/stocks/picks${forceRefresh ? '?refresh=true' : ''}`);
+    const data = await res.json();
+    stockPicksData = data;
+    renderStockPicks();
+  } catch (e) {
+    console.warn('Stock picks fetch failed:', e);
+    body.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">⚠️</span>
+        <div style="color:#94a3b8; font-size:12px;">Couldn't load stock picks right now -- the rest of the dashboard keeps working normally.</div>
+      </div>`;
+  }
+}
+
+function setStockPickFilter(filter) {
+  stockPickFilter = filter;
+  document.querySelectorAll('.pick-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.pickFilter === filter));
+  renderStockPicks();
+}
+
+function stockSignalPill(sig) {
+  const color = sig === 'Bullish' ? '#22c55e' : sig === 'Bearish' ? '#ef4444' : '#64748b';
+  return `<span style="color:${color}; font-weight:700;">${escapeHtml(sig)}</span>`;
+}
+
+function renderStockPicks() {
+  const body = document.getElementById('stockPicksBody');
+  if (!body || !stockPicksData) return;
+  const data = stockPicksData;
+
+  if (!data.available) {
+    body.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">📡</span>
+        <div>
+          <div style="color:#fcd34d; font-weight:700; font-size:13px;">Stock picks unavailable</div>
+          <div style="color:#94a3b8; font-size:11.5px; margin-top:2px;">${escapeHtml(data.reason || 'No real stock price source is available right now')} -- picks are never fabricated here.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  let picks = data.picks || [];
+  if (stockPickFilter === 'INTRADAY') picks = picks.filter(p => p.intraday.signal === 'Bullish');
+  else if (stockPickFilter === 'SHORT') picks = picks.filter(p => p.shortTerm.signal === 'Bullish');
+  else if (stockPickFilter === 'LONG') picks = picks.filter(p => p.longTerm.signal === 'Bullish');
+
+  const asOf = data.timestamp ? new Date(data.timestamp).toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' }) : '';
+  const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.universe || '')} · as of ${asOf} IST</div>`;
+
+  if (!picks.length) {
+    body.innerHTML = header + `<div style="color:#94a3b8; font-size:12.5px;">No stocks currently match this filter.</div>`;
+    return;
+  }
+
+  body.innerHTML = header + `
+    <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+      <thead><tr style="color:#64748b; text-align:left; border-bottom:1px solid #1a2333;">
+        <th style="padding:6px 8px;">Stock</th>
+        <th style="padding:6px 8px;">LTP</th>
+        <th style="padding:6px 8px;">Chg%</th>
+        <th style="padding:6px 8px;" title="Based on today's price position vs open and today's range">⚡ Intraday</th>
+        <th style="padding:6px 8px;" title="Based on LTP vs the 20-day EMA">📆 Short-Term</th>
+        <th style="padding:6px 8px;" title="Based on LTP vs the 50-day EMA">🏦 Long-Term</th>
+      </tr></thead>
+      <tbody>
+        ${picks.map(p => `
+          <tr style="border-bottom:1px solid #141b29;">
+            <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;">${escapeHtml(p.symbol)}</td>
+            <td style="padding:6px 8px; color:#e2e8f0;">${fmtNum(p.ltp)}</td>
+            <td style="padding:6px 8px; color:${p.changePct >= 0 ? '#22c55e' : '#ef4444'};">${p.changePct >= 0 ? '+' : ''}${p.changePct}%</td>
+            <td style="padding:6px 8px;" title="${escapeHtml(p.intraday.reason)}">${stockSignalPill(p.intraday.signal)}</td>
+            <td style="padding:6px 8px;" title="${escapeHtml(p.shortTerm.reason)}">${stockSignalPill(p.shortTerm.signal)}</td>
+            <td style="padding:6px 8px;" title="${escapeHtml(p.longTerm.reason)}">${stockSignalPill(p.longTerm.signal)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
 }
 
 async function fetchIndexPulse() {
@@ -8071,13 +8194,20 @@ async function initStatus() {
   }
 }
 
+// Populated from /api/symbols -- symbol -> 'Index' | 'Stock', so "Stocks
+// Only" can actually hide NIFTY/BANKNIFTY/etc. from the underlying picker
+// instead of leaving them selectable while every scan silently excludes them.
+let allSymbolsDetailed = [];
+
 async function loadSymbols() {
   try {
     const res = await fetch(`${API_BASE}/api/symbols`);
     const data = await res.json();
     if (data.symbols && data.symbols.length) {
       allSymbols = data.symbols;
+      allSymbolsDetailed = Array.isArray(data.detailed) ? data.detailed : [];
       populateSymbols(allSymbols);
+      refreshSymbolDropdownForStocksOnly();
     }
   } catch (e) {}
 }
@@ -8097,6 +8227,32 @@ function populateSymbols(list) {
   const indSymSel = document.getElementById('indSymbolSelect');
   if (indSymSel) {
     indSymSel.innerHTML = list.map(s => `<option value="${s}" ${s === currentIndSymbol ? 'selected' : ''}>${s}</option>`).join('');
+  }
+}
+
+// When "Stocks Only" is locked, every scan already excludes index contracts --
+// but until now the #symSelect dropdown still listed NIFTY/BANKNIFTY/etc. as
+// selectable, so choosing one there silently produced zero results with no
+// explanation. This hides index entries while the lock is on (and restores
+// them when it's off), resetting the selection if it's now invalid.
+function refreshSymbolDropdownForStocksOnly() {
+  const sel = document.getElementById('symSelect');
+  if (!sel || !allSymbolsDetailed.length) return;
+  const indexSymbols = new Set(allSymbolsDetailed.filter(s => s.instr === 'Index').map(s => s.symbol));
+
+  let selectedWasHidden = false;
+  for (const opt of sel.options) {
+    if (opt.value === '__ALL__') continue;
+    const shouldHide = stocksOnlyLock && indexSymbols.has(opt.value);
+    opt.hidden = shouldHide;
+    opt.disabled = shouldHide;
+    if (shouldHide && opt.selected) selectedWasHidden = true;
+  }
+
+  if (selectedWasHidden) {
+    sel.value = '__ALL__';
+    showToast('📦 Stocks Only is on — index selection cleared, showing all stocks', 'info');
+    sel.dispatchEvent(new Event('change'));
   }
 }
 

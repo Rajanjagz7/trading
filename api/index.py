@@ -35,7 +35,7 @@ def _load_env_file():
 
 _load_env_file()
 
-from .nse_service import nse_service, now_ist_iso, get_market_news
+from .nse_service import nse_service, now_ist_iso, get_market_news, get_stock_picks
 from .upstox_service import upstox_service
 
 @asynccontextmanager
@@ -226,7 +226,20 @@ def fetch_latest(force: bool = False):
 
 @app.get("/api/symbols")
 def get_symbols():
-    return {"symbols": nse_service.get_symbols()}
+    return {
+        "symbols": nse_service.get_symbols(),
+        "detailed": nse_service.get_symbols_detailed(),
+    }
+
+@app.get("/api/stocks/picks")
+def get_stocks_picks(refresh: Optional[bool] = False):
+    """
+    Real Stock Buy Picks: real NSE equity prices (not option premiums) from
+    Upstox, classified Intraday / Short-Term / Long-Term via a documented,
+    deterministic rule. Honestly reports unavailable if Upstox isn't
+    configured or no live quotes come back -- never fabricates a pick.
+    """
+    return get_stock_picks(force_refresh=bool(refresh))
 
 @app.get("/api/chain")
 def get_chain(symbol: str = "NIFTY", expiry: Optional[str] = None, indicator: Optional[str] = None):

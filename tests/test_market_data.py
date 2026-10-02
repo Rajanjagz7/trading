@@ -15,6 +15,9 @@ from api.nse_service import (
     compute_recommendation,
     now_ist_iso,
     IST,
+    _ema_series,
+    _classify_intraday,
+    _classify_ema_trend,
 )
 
 
@@ -214,3 +217,63 @@ class TestExpirySafetyGuard:
         expiries_in_results = {r["expiry"] for r in result["results"]}
         # "Nearest" must mean nearest *future* expiry, never the past one
         assert expiries_in_results == {near_future}
+
+
+# ---------------------------------------------------------------------------
+# Real Stock Buy Picks -- pure classification functions (Intraday /
+# Short-Term / Long-Term), no network I/O.
+# ---------------------------------------------------------------------------
+
+class TestEmaSeries:
+    def test_too_little_history_returns_empty(self):
+        assert _ema_series([1, 2, 3], period=20) == []
+
+    def test_flat_prices_converge_to_the_same_value(self):
+        series = _ema_series([100.0] * 25, period=20)
+        assert series[-1] == 100.0
+
+    def test_ema_reacts_toward_a_sustained_price_move(self):
+        closes = [100.0] * 20 + [110.0] * 10
+        series = _ema_series(closes, period=20)
+        # EMA should climb toward the new, higher price level but not have
+        # fully caught up to it after only 10 more bars.
+        assert 100.0 < series[-1] < 110.0
+
+
+class TestClassifyIntraday:
+    def test_strong_up_day_is_bullish(self):
+        rec = _classify_intraday(100, 110, 99, 108)
+        assert rec["signal"] == "Bullish"
+
+    def test_strong_down_day_is_bearish(self):
+        rec = _classify_intraday(100, 101, 90, 92)
+        assert rec["signal"] == "Bearish"
+
+    def test_choppy_midrange_day_is_neutral(self):
+        rec = _classify_intraday(100, 110, 90, 101)
+        assert rec["signal"] == "Neutral"
+
+    def test_missing_ohlc_is_neutral_with_a_reason(self):
+        rec = _classify_intraday(0, 0, 0, 0)
+        assert rec["signal"] == "Neutral"
+        assert "insufficient" in rec["reason"].lower()
+
+
+class TestClassifyEmaTrend:
+    def test_well_above_ema_is_bullish(self):
+        rec = _classify_ema_trend(ltp=110, ema_value=100, label="20-day EMA")
+        assert rec["signal"] == "Bullish"
+        assert "20-day EMA" in rec["reason"]
+
+    def test_well_below_ema_is_bearish(self):
+        rec = _classify_ema_trend(ltp=90, ema_value=100, label="50-day EMA")
+        assert rec["signal"] == "Bearish"
+
+    def test_close_to_ema_is_neutral(self):
+        rec = _classify_ema_trend(ltp=100.3, ema_value=100, label="20-day EMA")
+        assert rec["signal"] == "Neutral"
+
+    def test_missing_ema_is_neutral_with_a_reason(self):
+        rec = _classify_ema_trend(ltp=100, ema_value=None, label="50-day EMA")
+        assert rec["signal"] == "Neutral"
+        assert "not enough" in rec["reason"].lower()

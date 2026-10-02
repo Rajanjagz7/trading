@@ -150,3 +150,48 @@ class TestCriticalDashboardFlow:
 
         failure_count = page.evaluate("fastPollFailureCount")
         assert failure_count == 0, "Failure counter should reset to 0 after a successful poll"
+
+    def test_08_stocks_only_hides_index_symbols_and_shows_real_stock_picks(self, page):
+        page.goto(BASE_URL + "#/scanner", wait_until="domcontentloaded")
+        page.wait_for_function("typeof lastResults !== 'undefined'", timeout=20000)
+        page.wait_for_function("allSymbolsDetailed && allSymbolsDetailed.length > 0", timeout=15000)
+
+        page.evaluate("if (!stocksOnlyLock) toggleStocksOnly()")
+
+        # The underlying picker must no longer offer index symbols while
+        # Stocks Only is locked -- this is the bug that let a user pick NIFTY
+        # and silently get zero results with no explanation.
+        hidden_indices = page.evaluate("""
+            () => {
+                const sel = document.getElementById('symSelect');
+                const indexNames = new Set(['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY']);
+                return [...sel.options].filter(o => indexNames.has(o.value)).every(o => o.hidden);
+            }
+        """)
+        assert hidden_indices, "Index symbols must be hidden from the picker while Stocks Only is locked"
+
+        # Selecting an index then re-locking Stocks Only must reset the
+        # selection back to All rather than leaving a contradictory state.
+        reset_value = page.evaluate("""
+            () => {
+                toggleStocksOnly(); // unlock
+                const sel = document.getElementById('symSelect');
+                sel.value = 'NIFTY';
+                sel.dispatchEvent(new Event('change'));
+                toggleStocksOnly(); // re-lock
+                return sel.value;
+            }
+        """)
+        assert reset_value == '__ALL__'
+
+        # The real Stock Buy Picks panel must show either real picks (from a
+        # known real source, not option premiums) or an honest unavailable
+        # state -- never a blank panel.
+        page.wait_for_function(
+            "!document.getElementById('stockPicksBody').textContent.includes('Loading')",
+            timeout=20000,
+        )
+        picks_text = page.evaluate("document.getElementById('stockPicksBody').textContent")
+        assert ("Intraday" in picks_text) or ("unavailable" in picks_text.lower()), (
+            f"Stock picks panel shows neither real picks nor an honest unavailable state: {picks_text!r}"
+        )

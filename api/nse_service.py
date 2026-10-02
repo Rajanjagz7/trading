@@ -199,6 +199,168 @@ def get_market_news():
     return result
 
 
+# Real Stock Buy Picks: classifies real NSE equity data (not option premiums)
+# into Intraday / Short-Term / Long-Term bullish-bearish-neutral buckets via a
+# documented, deterministic rule -- not a guaranteed outcome, and nothing
+# here is fabricated if Upstox data isn't available.
+STOCK_PICKS_UNIVERSE_SIZE = 40
+STOCK_PICKS_CACHE_TTL_SECONDS = 300
+_stock_picks_cache = {"time": 0.0, "data": None}
+
+
+def _ema_series(closes, period):
+    """Standard EMA, seeded with a simple average of the first `period`
+    closes. Returns [] if there isn't enough history for this period."""
+    if len(closes) < period:
+        return []
+    k = 2.0 / (period + 1)
+    ema = sum(closes[:period]) / period
+    out = [ema]
+    for price in closes[period:]:
+        ema = price * k + ema * (1 - k)
+        out.append(ema)
+    return out
+
+
+def _classify_intraday(open_, high, low, ltp):
+    if open_ <= 0 or high <= 0 or high < low:
+        return {"signal": "Neutral", "reason": "Insufficient intraday OHLC data"}
+    day_range = high - low
+    position_pct = ((ltp - low) / day_range) * 100 if day_range > 0 else 50.0
+    above_open = ltp > open_
+    if above_open and position_pct >= 60:
+        return {"signal": "Bullish", "reason": f"Above today's open, in the top {100 - round(position_pct)}% of today's range"}
+    if (not above_open) and position_pct <= 40:
+        return {"signal": "Bearish", "reason": f"Below today's open, in the bottom {round(position_pct)}% of today's range"}
+    return {"signal": "Neutral", "reason": f"No clear intraday bias ({round(position_pct)}% of today's range)"}
+
+
+def _classify_ema_trend(ltp, ema_value, label):
+    if ema_value is None or ema_value <= 0:
+        return {"signal": "Neutral", "reason": f"Not enough daily history for a {label}"}
+    diff_pct = round(((ltp - ema_value) / ema_value) * 100, 2)
+    if diff_pct >= 1.0:
+        return {"signal": "Bullish", "reason": f"{diff_pct:+.2f}% above its {label}"}
+    if diff_pct <= -1.0:
+        return {"signal": "Bearish", "reason": f"{diff_pct:+.2f}% below its {label}"}
+    return {"signal": "Neutral", "reason": f"Close to its {label} ({diff_pct:+.2f}%)"}
+
+
+def _build_stock_pick(symbol, instrument_key, quote, candles):
+    ohlc = quote.get("ohlc") or {}
+    ltp = upstox_service._num(quote.get("last_price"))
+    open_ = upstox_service._num(ohlc.get("open"))
+    high = upstox_service._num(ohlc.get("high"))
+    low = upstox_service._num(ohlc.get("low"))
+    prev_close = upstox_service._num(quote.get("prev_close_price"), upstox_service._num(ohlc.get("close")))
+    if ltp <= 0:
+        return None
+
+    change_pct = round(((ltp - prev_close) / prev_close) * 100, 2) if prev_close > 0 else 0.0
+    closes = [c["close"] for c in candles if c.get("close", 0) > 0]
+    ema20 = _ema_series(closes, 20)
+    ema50 = _ema_series(closes, 50)
+
+    return {
+        "symbol": symbol,
+        "ltp": round(ltp, 2),
+        "open": round(open_, 2),
+        "high": round(high, 2),
+        "low": round(low, 2),
+        "prevClose": round(prev_close, 2),
+        "changePct": change_pct,
+        "intraday": _classify_intraday(open_, high, low, ltp),
+        "shortTerm": _classify_ema_trend(ltp, ema20[-1] if ema20 else None, "20-day EMA"),
+        "longTerm": _classify_ema_trend(ltp, ema50[-1] if ema50 else None, "50-day EMA"),
+    }
+
+
+def get_stock_picks(force_refresh=False):
+    now = time.time()
+    cached = _stock_picks_cache["data"]
+    if not force_refresh and cached is not None and (now - _stock_picks_cache["time"]) < STOCK_PICKS_CACHE_TTL_SECONDS:
+        return cached
+
+    if not upstox_service.is_configured():
+        return {
+            "available": False,
+            "reason": "Upstox is not configured for this app -- no real stock price source to classify",
+            "picks": [],
+            "timestamp": now_ist_iso(),
+        }
+
+    symbols = nse_service.get_top_stock_symbols_by_oi(STOCK_PICKS_UNIVERSE_SIZE)
+    if not symbols:
+        return {
+            "available": False,
+            "reason": "No F&O stock data loaded yet",
+            "picks": [],
+            "timestamp": now_ist_iso(),
+        }
+
+    def _resolve_one(sym):
+        try:
+            key, is_index = upstox_service._resolve_underlying(sym)
+            return (sym, key) if not is_index else None
+        except Exception:
+            return None
+
+    resolved = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+        for result in pool.map(_resolve_one, symbols):
+            if result:
+                resolved[result[0]] = result[1]
+
+    if not resolved:
+        return {
+            "available": False,
+            "reason": "Could not resolve any real stock instrument keys via Upstox right now",
+            "picks": [],
+            "timestamp": now_ist_iso(),
+        }
+
+    try:
+        quotes = upstox_service._full_quotes(list(resolved.values()))
+    except Exception as e:
+        return {
+            "available": False,
+            "reason": f"Upstox live quotes request failed: {e}",
+            "picks": [],
+            "timestamp": now_ist_iso(),
+        }
+
+    def _one(sym_key):
+        sym, key = sym_key
+        quote = quotes.get(key)
+        if not quote:
+            return None
+        try:
+            candles = upstox_service.get_candles(key, "day")
+        except Exception:
+            candles = []
+        return _build_stock_pick(sym, key, quote, candles)
+
+    picks = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+        for result in pool.map(_one, resolved.items()):
+            if result:
+                picks.append(result)
+
+    picks.sort(key=lambda p: p["symbol"])
+
+    result = {
+        "available": len(picks) > 0,
+        "reason": None if picks else "Upstox returned no usable live quotes for this stock universe right now",
+        "universe": f"Top {len(symbols)} real F&O stocks today, ranked by open interest",
+        "count": len(picks),
+        "picks": picks,
+        "timestamp": now_ist_iso(),
+    }
+    _stock_picks_cache["time"] = now
+    _stock_picks_cache["data"] = result
+    return result
+
+
 # SENSEX and India VIX have no NSE bhavcopy/F&O source at all (SENSEX is a BSE
 # index, and BSE's own API hard-blocks this app's requests) — Yahoo Finance's
 # public chart API gives a plain index quote for both with no auth needed.
@@ -520,6 +682,35 @@ class NSEService:
         if not self.today_rows:
             return []
         return sorted(list({r["symbol"] for r in self.today_rows}))
+
+    def get_symbols_detailed(self):
+        """Same symbol list as get_symbols(), but tagged Index/Stock so the
+        frontend can filter the underlying picker correctly when "Stocks
+        Only" is active instead of still offering NIFTY/BANKNIFTY etc."""
+        if not self.today_rows:
+            return []
+        seen = {}
+        for r in self.today_rows:
+            seen.setdefault(r["symbol"], r["instr"])
+        return sorted(
+            [{"symbol": s, "instr": t} for s, t in seen.items()],
+            key=lambda x: x["symbol"],
+        )
+
+    def get_top_stock_symbols_by_oi(self, n=40):
+        """The N most liquid real F&O stocks today, ranked by total open
+        interest. Used as the Stock Picks universe instead of a hardcoded
+        index-membership list, which can drift stale -- this is always
+        exactly today's real, F&O-eligible, most-active stocks."""
+        if not self.today_rows:
+            return []
+        oi_by_symbol = {}
+        for r in self.today_rows:
+            if r["instr"] != "Stock":
+                continue
+            oi_by_symbol[r["symbol"]] = oi_by_symbol.get(r["symbol"], 0.0) + r.get("oi", 0.0)
+        ranked = sorted(oi_by_symbol.items(), key=lambda kv: kv[1], reverse=True)
+        return [sym for sym, _ in ranked[:n]]
 
     def get_indices_pulse(self):
         """
