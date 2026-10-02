@@ -3373,6 +3373,60 @@
     </div>
   </div>
 
+  <!-- 📰 MARKET NEWS TICKER -->
+  <div class="rx-legacy-tools" id="newsTickerPanel" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📰 Market News Ticker</div>
+      <button class="small-strat-btn" onclick="fetchMarketNews(true)" title="Refresh news">🔄</button>
+    </div>
+    <div id="newsTickerBody" style="color:#94a3b8; font-size:12px;">Loading news...</div>
+  </div>
+
+  <!-- 🔗 BLOCK DEALS -->
+  <div class="rx-legacy-tools" id="blockDealsPanel" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="font-weight:700; font-size:14px; color:#f1f5f9;">🔗 Block Deals (NSE Daily)</div>
+      <button class="small-strat-btn" onclick="fetchBlockDeals(true)" title="Refresh deals">🔄</button>
+    </div>
+    <div id="blockDealsBody" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:11px;">
+        <thead><tr style="border-bottom:1px solid var(--line); color:#94a3b8;">
+          <th style="text-align:left; padding:6px;">Symbol</th><th style="text-align:right; padding:6px;">Qty</th>
+          <th style="text-align:right; padding:6px;">Price</th><th style="text-align:right; padding:6px;">Value</th>
+          <th style="text-align:left; padding:6px;">Client</th><th style="text-align:left; padding:6px;">Time</th>
+        </tr></thead>
+        <tbody id="blockDealsRows">
+          <tr><td colspan="6" style="text-align:center; padding:12px; color:#94a3b8;">Loading block deals...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 📊 RAJAN-PAVAN INDICATORS -->
+  <div class="rx-legacy-tools" id="indicatorsPanel" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+      <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📊 Rajan-Pavan Indicators (15 Strategies)</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <select id="indicatorSymbol" style="padding:6px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:4px; font-size:11px;">
+          <option value="NIFTY">NIFTY</option>
+          <option value="BANKNIFTY">BANKNIFTY</option>
+          <option value="FINNIFTY">FINNIFTY</option>
+          <option value="SENSEX">SENSEX</option>
+          <option value="MIDCPNIFTY">MIDCPNIFTY</option>
+        </select>
+        <select id="indicatorKey" style="padding:6px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:4px; font-size:11px;">
+          <option value="ut">⚡ UT Bot</option>
+          <option value="trade_predictor">🔮 Trade Predictor</option>
+          <option value="quantum_matrix">🌌 Quantum Matrix</option>
+          <option value="target_proj">🎯 Target Proj</option>
+          <option value="supertrend">📈 Supertrend</option>
+        </select>
+        <button class="small-strat-btn" onclick="runIndicator()">Run</button>
+      </div>
+    </div>
+    <div id="indicatorBody" style="color:#94a3b8; font-size:12px; padding:10px;">Select symbol & indicator, then click Run</div>
+  </div>
+
   <!-- Mode Selector Tabs -->
   <div class="mode-tabs rx-legacy-tools">
     <button class="tab-btn active" data-tab="auto">⚡ Daily Settlement Data (NSE Auto-Sync)</button>
@@ -7446,6 +7500,98 @@ async function fetchMarketNews() {
 let stockPicksData = null;
 let stockPickFilter = 'ALL';
 
+/* ─── Market News ─── */
+async function fetchMarketNews(forceRefresh) {
+  const body = document.getElementById('newsTickerBody');
+  if (!body) return;
+  try {
+    const url = `${API_BASE}/api/news/market?limit=8${forceRefresh ? '&refresh=true' : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.items && data.items.length > 0) {
+      body.innerHTML = data.items.map((item, i) => `
+        <div style="padding:8px 0; border-bottom:1px solid #1a2333; ${i === 0 ? '' : ''}">
+          <a href="${item.link}" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:600;">
+            ${item.title}
+          </a>
+          <div style="color:#64748b; font-size:10px; margin-top:2px;">
+            📌 ${item.source} · ${new Date(item.pubDate).toLocaleString()}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      body.innerHTML = '<div style="color:#94a3b8; padding:10px;">No news available</div>';
+    }
+  } catch (e) {
+    body.innerHTML = `<div style="color:#ef4444; padding:10px;">Error: ${e.message}</div>`;
+  }
+}
+
+/* ─── Block Deals ─── */
+async function fetchBlockDeals(forceRefresh) {
+  const tbody = document.getElementById('blockDealsRows');
+  if (!tbody) return;
+  try {
+    const url = `${API_BASE}/api/block-deals${forceRefresh ? '?refresh=true' : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.deals && data.deals.length > 0) {
+      tbody.innerHTML = data.deals.slice(0, 10).map(deal => `
+        <tr style="border-bottom:1px solid #1a2333;">
+          <td style="padding:6px; color:#60a5fa; font-weight:600;">${deal.symbol}</td>
+          <td style="padding:6px; text-align:right; color:#e2e8f0;">${(deal.quantity/100000).toFixed(1)}L</td>
+          <td style="padding:6px; text-align:right; color:#e2e8f0;">₹${deal.price.toFixed(2)}</td>
+          <td style="padding:6px; text-align:right; color:#22c55e;">₹${(deal.value/10000000).toFixed(1)}Cr</td>
+          <td style="padding:6px; color:#94a3b8; font-size:10px;">${deal.clientName.substring(0, 15)}</td>
+          <td style="padding:6px; color:#94a3b8; font-size:10px;">${deal.time}</td>
+        </tr>
+      `).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:12px; color:#94a3b8;">No block deals today (Market closed)</td></tr>';
+    }
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:10px;">Error: ${e.message}</td></tr>`;
+  }
+}
+
+/* ─── Rajan-Pavan Indicators ─── */
+async function runIndicator() {
+  const symbol = document.getElementById('indicatorSymbol')?.value || 'NIFTY';
+  const key = document.getElementById('indicatorKey')?.value || 'ut';
+  const body = document.getElementById('indicatorBody');
+  if (!body) return;
+
+  body.innerHTML = '<div style="color:#94a3b8;">Loading indicator results...</div>';
+
+  try {
+    const url = `${API_BASE}/api/indicators/rajan-pavan?key=${key}&symbol=${symbol}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.results) {
+      const r = data.results;
+      body.innerHTML = `
+        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
+          <div style="color:#60a5fa; font-weight:700; margin-bottom:10px;">📊 ${symbol} - ${key.toUpperCase()}</div>
+          <div style="color:#e2e8f0; font-size:11px; line-height:1.8;">
+            <div>🎯 Signal: <span style="color:#22c55e; font-weight:600;">${r.signal || 'N/A'}</span></div>
+            <div>💰 Price: ₹${r.price?.toFixed(2) || 'N/A'}</div>
+            ${r.entry ? `<div>📍 Entry: ₹${r.entry.toFixed(2)}</div>` : ''}
+            ${r.target ? `<div>🎪 Target: ₹${r.target.toFixed(2)}</div>` : ''}
+            ${r.stoploss ? `<div>🛑 Stop Loss: ₹${r.stoploss.toFixed(2)}</div>` : ''}
+          </div>
+        </div>
+      `;
+    } else if (data.detail) {
+      body.innerHTML = `<div style="color:#fbbf24; padding:10px;">⚠️ ${data.detail}</div>`;
+    }
+  } catch (e) {
+    body.innerHTML = `<div style="color:#ef4444; padding:10px;">Error: ${e.message}</div>`;
+  }
+}
+
 let stocksData = null;
 let stocksCurrentCategory = 'all';
 let stocksCurrentPage = 1;
@@ -11173,6 +11319,8 @@ setInterval(fetchIpoData, 300000);
 initStatus().then(() => {
   setActiveScanStrategy('strat1');
   fetchIndianStocks(); // Load stock picks on startup
+  fetchMarketNews(); // Load market news
+  fetchBlockDeals(); // Load block deals
 });
 
 renderRoute(); // Phase 0 router: resolve whatever route (or none) is in the URL on first load
