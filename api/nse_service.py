@@ -88,6 +88,117 @@ def compute_recommendation(sym, verdict, top_call, top_put, data_status):
         "timestamp": now_ist_iso(),
     }
 
+
+# Live Market News (spec section 6): real public RSS feeds from Indian
+# financial publishers -- no API key needed, no ToS-gray-area scraping of a
+# paid service. Each feed is independent so one going down (e.g. Moneycontrol's
+# feed, confirmed stale/abandoned as of this writing) doesn't take the others
+# down with it.
+NEWS_FEEDS = [
+    ("Economic Times", "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"),
+    ("Business Standard", "https://www.business-standard.com/rss/markets-106.rss"),
+    ("Livemint", "https://www.livemint.com/rss/markets"),
+]
+NEWS_CACHE_TTL_SECONDS = 120
+_news_cache = {"time": 0.0, "data": None}
+
+
+def _parse_rss_feed(source_name, url):
+    """Fetch and parse one RSS feed into our headline shape. Raises on
+    failure -- the caller decides how to treat a single feed going down."""
+    from defusedxml.ElementTree import fromstring
+    from email.utils import parsedate_to_datetime
+
+    resp = requests.get(url, timeout=6, impersonate="chrome")
+    resp.raise_for_status()
+    root = fromstring(resp.content)
+
+    items = []
+    for item in root.findall(".//item")[:10]:
+        title_el = item.find("title")
+        link_el = item.find("link")
+        pubdate_el = item.find("pubDate")
+        if title_el is None or not (title_el.text or "").strip():
+            continue
+
+        published_at = now_ist_iso()
+        if pubdate_el is not None and pubdate_el.text:
+            try:
+                published_at = parsedate_to_datetime(pubdate_el.text).isoformat()
+            except (TypeError, ValueError):
+                pass
+
+        items.append({
+            "headline": title_el.text.strip(),
+            "url": (link_el.text or "").strip() if link_el is not None else "",
+            "source": source_name,
+            "publishedAt": published_at,
+        })
+    return items
+
+
+def get_market_news():
+    """
+    Fetches real headlines from public market-news RSS feeds. Never
+    fabricates a headline or timestamp -- if every feed fails, this honestly
+    reports unavailable instead of showing stale/fake content. Cached for
+    NEWS_CACHE_TTL_SECONDS so a dashboard polling this every 60s doesn't
+    re-fetch 3 external feeds on every single call.
+    """
+    now = time.time()
+    cached = _news_cache["data"]
+    if cached is not None and (now - _news_cache["time"]) < NEWS_CACHE_TTL_SECONDS:
+        return cached
+
+    all_items = []
+    failures = []
+    for source_name, url in NEWS_FEEDS:
+        try:
+            all_items.extend(_parse_rss_feed(source_name, url))
+        except Exception as e:
+            failures.append(f"{source_name}: {e}")
+
+    if not all_items:
+        result = {
+            "available": False,
+            "reason": "All configured news feeds failed to respond" if failures else "No live news provider is configured for this app yet",
+            "headlines": [],
+            "timestamp": now_ist_iso(),
+        }
+        # Don't cache a total failure -- let the next poll retry sooner.
+        return result
+
+    # Dedup by headline text (same story often appears near-identically
+    # across publishers), then sort newest-first by real pubDate.
+    seen = set()
+    unique = []
+    for it in all_items:
+        key = it["headline"].lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(it)
+
+    def _sort_key(it):
+        try:
+            return datetime.fromisoformat(it["publishedAt"])
+        except ValueError:
+            return datetime.min.replace(tzinfo=IST)
+
+    unique.sort(key=_sort_key, reverse=True)
+
+    result = {
+        "available": True,
+        "headlines": unique[:15],
+        "sourcesOk": len(NEWS_FEEDS) - len(failures),
+        "sourcesTotal": len(NEWS_FEEDS),
+        "timestamp": now_ist_iso(),
+    }
+    _news_cache["time"] = now
+    _news_cache["data"] = result
+    return result
+
+
 # SENSEX and India VIX have no NSE bhavcopy/F&O source at all (SENSEX is a BSE
 # index, and BSE's own API hard-blocks this app's requests) — Yahoo Finance's
 # public chart API gives a plain index quote for both with no auth needed.

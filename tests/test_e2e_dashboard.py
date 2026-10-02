@@ -98,14 +98,21 @@ class TestCriticalDashboardFlow:
                 f"Recommendation row has neither a signal nor NO SIGNAL: {row_text!r}"
             )
 
-    def test_05_news_section_is_honest_about_unavailability(self, page):
+    def test_05_news_section_shows_real_headlines_or_is_honest_about_unavailability(self, page):
         page.goto(BASE_URL, wait_until="domcontentloaded")
         page.wait_for_function("typeof lastResults !== 'undefined'", timeout=20000)
         page.wait_for_timeout(1500)
         news_text = page.evaluate("document.getElementById('newsSection').textContent")
-        # No real news provider is configured -- must say so, never show a
-        # fabricated headline.
-        assert "unavailable" in news_text.lower() or "No live news" in news_text
+        # Real RSS feeds (Economic Times / Business Standard / Livemint) back
+        # this section now -- it must show either a real headline (from a
+        # known real source) or an honest unavailable state if every feed
+        # failed. It must never show blank content or a fabricated headline.
+        known_sources = ("Economic Times", "Business Standard", "Livemint")
+        shows_real_headline = any(src in news_text for src in known_sources)
+        shows_honest_unavailable = "unavailable" in news_text.lower() or "No live news" in news_text
+        assert shows_real_headline or shows_honest_unavailable, (
+            f"News section shows neither a real headline nor an honest unavailable state: {news_text!r}"
+        )
 
     def test_06_connection_status_reflects_real_poll_health(self, page):
         page.goto(BASE_URL, wait_until="domcontentloaded")

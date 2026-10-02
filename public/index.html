@@ -7216,6 +7216,22 @@ function scheduleFastPoll() {
 // No provider is configured today, so this always shows the honest
 // "unavailable" state; once a real API key is wired up server-side, real
 // headlines/source/time will render here with zero frontend changes.
+// Third-party RSS text/URLs are untrusted input -- escape before innerHTML.
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function safeNewsUrl(url) {
+  try {
+    const u = new URL(url, window.location.href);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+  } catch (e) {
+    return '';
+  }
+}
+
 async function fetchMarketNews() {
   const container = document.getElementById('newsSection');
   if (!container) return;
@@ -7245,11 +7261,18 @@ async function fetchMarketNews() {
       return true;
     });
 
-    container.innerHTML = unique.slice(0, 8).map(h => `
+    container.innerHTML = unique.slice(0, 8).map(h => {
+      const headlineHtml = escapeHtml(h.headline) + (h.instrument ? ` <span style="color:#60a5fa; font-size:11px;">· ${escapeHtml(h.instrument)}</span>` : '');
+      const safeUrl = h.url ? safeNewsUrl(h.url) : '';
+      const titleEl = safeUrl
+        ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" style="color:#f1f5f9; font-size:12.5px; text-decoration:none;">${headlineHtml}</a>`
+        : `<span style="color:#f1f5f9; font-size:12.5px;">${headlineHtml}</span>`;
+      return `
       <div style="display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid #1a2333;">
-        <span style="color:#f1f5f9; font-size:12.5px;">${h.headline}${h.instrument ? ` <span style="color:#60a5fa; font-size:11px;">· ${h.instrument}</span>` : ''}</span>
-        <span style="color:#64748b; font-size:11px; white-space:nowrap;">${h.source || 'Unknown'} · ${h.publishedAt ? new Date(h.publishedAt).toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' }) : ''}</span>
-      </div>`).join('');
+        ${titleEl}
+        <span style="color:#64748b; font-size:11px; white-space:nowrap;">${escapeHtml(h.source) || 'Unknown'} · ${h.publishedAt ? new Date(h.publishedAt).toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' }) : ''}</span>
+      </div>`;
+    }).join('');
   } catch (e) {
     console.warn('News fetch failed:', e);
     container.innerHTML = `
