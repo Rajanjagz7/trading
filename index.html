@@ -3331,25 +3331,45 @@
     </div>
   </div>
 
-  <!-- Real Stock Buy Picks -- shown only while "Stocks Only" is locked on.
-       Real NSE equity prices from Upstox (not option premiums), classified
-       Intraday/Short-Term/Long-Term by a documented rule. -->
+  <!-- Real Stock Buy Picks — ALL Indian Stocks with bullish/bearish classification -->
   <div class="rx-legacy-tools" id="stockPicksPanel" style="display:none; background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
-    <div id="stockPicksHeading" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
       <div>
         <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📈 Real Stock Buy Picks</div>
-        <div style="color:#94a3b8; font-size:11.5px; margin-top:2px; max-width:560px;">Real NSE equity prices (not option premiums), classified Intraday / Short-Term / Long-Term by a documented rule — not a guaranteed outcome.</div>
+        <div style="color:#94a3b8; font-size:11.5px; margin-top:2px; max-width:560px;">All Indian stocks (NSE+BSE) with bullish/bearish classification — Large Cap, Mid Cap, Small Cap</div>
       </div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        <button class="small-strat-btn pick-filter-btn active" data-pick-filter="ALL" onclick="setStockPickFilter('ALL')">All</button>
-        <button class="small-strat-btn pick-filter-btn" data-pick-filter="INTRADAY" onclick="setStockPickFilter('INTRADAY')">⚡ Intraday Bullish</button>
-        <button class="small-strat-btn pick-filter-btn" data-pick-filter="SHORT" onclick="setStockPickFilter('SHORT')">📆 Short-Term Bullish</button>
-        <button class="small-strat-btn pick-filter-btn" data-pick-filter="LONG" onclick="setStockPickFilter('LONG')">🏦 Long-Term Bullish</button>
-        <button class="small-strat-btn" onclick="fetchStockPicks(true)" title="Force a fresh fetch">🔄</button>
-      </div>
+      <button class="small-strat-btn" onclick="fetchIndianStocks(true)" title="Force a fresh fetch">🔄 Refresh</button>
     </div>
-    <div id="stockPicksBody">
-      <div style="color:#94a3b8; font-size:12.5px;">Loading real stock data…</div>
+
+    <!-- Category Filters -->
+    <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
+      <button class="small-strat-btn stock-cat-btn active" data-cat="all" onclick="setStockCategory('all')">📊 All Stocks</button>
+      <button class="small-strat-btn stock-cat-btn" data-cat="large_cap" onclick="setStockCategory('large_cap')">🏢 Large Cap</button>
+      <button class="small-strat-btn stock-cat-btn" data-cat="mid_cap" onclick="setStockCategory('mid_cap')">📈 Mid Cap</button>
+      <button class="small-strat-btn stock-cat-btn" data-cat="small_cap" onclick="setStockCategory('small_cap')">📉 Small Cap</button>
+    </div>
+
+    <!-- Stocks Table with Pagination -->
+    <div style="overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:10px;">
+      <table id="stockPicksTable" style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--line); height:32px;">
+            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Symbol</th>
+            <th style="text-align:left; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Signal</th>
+            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Price ₹</th>
+            <th style="text-align:right; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Range %</th>
+            <th style="text-align:center; padding:6px 8px; color:#94a3b8; font-weight:600; white-space:nowrap;">Category</th>
+          </tr>
+        </thead>
+        <tbody id="stockPicksBody">
+          <tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Loading stocks…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div id="stockPicksPagination" style="display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+      <!-- Populated by JS -->
     </div>
   </div>
 
@@ -7426,88 +7446,89 @@ async function fetchMarketNews() {
 let stockPicksData = null;
 let stockPickFilter = 'ALL';
 
-async function fetchStockPicks(forceRefresh) {
+let stocksData = null;
+let stocksCurrentCategory = 'all';
+let stocksCurrentPage = 1;
+
+async function fetchIndianStocks(forceRefresh) {
   const body = document.getElementById('stockPicksBody');
   if (!body) return;
-  if (!stockPicksData) body.innerHTML = `<div style="color:#94a3b8; font-size:12.5px;">Loading real stock data…</div>`;
   try {
-    const res = await fetch(`${API_BASE}/api/stocks/picks${forceRefresh ? '?refresh=true' : ''}`);
+    const url = `${API_BASE}/api/stocks/indian?category=${stocksCurrentCategory}&page=${stocksCurrentPage}&limit=10${forceRefresh ? '&force_refresh=true' : ''}`;
+    const res = await fetch(url);
     const data = await res.json();
-    stockPicksData = data;
-    renderStockPicks();
+    stocksData = data;
+    renderIndianStocks();
   } catch (e) {
-    console.warn('Stock picks fetch failed:', e);
-    body.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:22px;">⚠️</span>
-        <div style="color:#94a3b8; font-size:12px;">Couldn't load stock picks right now -- the rest of the dashboard keeps working normally.</div>
-      </div>`;
+    console.warn('Indian stocks fetch failed:', e);
+    body.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#ef4444;">Error loading stocks: ${e.message}</td></tr>`;
   }
 }
 
-function setStockPickFilter(filter) {
-  stockPickFilter = filter;
-  document.querySelectorAll('.pick-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.pickFilter === filter));
-  renderStockPicks();
+function setStockCategory(cat) {
+  stocksCurrentCategory = cat;
+  stocksCurrentPage = 1;
+  document.querySelectorAll('.stock-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  fetchIndianStocks();
 }
 
-function stockSignalPill(sig) {
-  const color = sig === 'Bullish' ? '#22c55e' : sig === 'Bearish' ? '#ef4444' : '#64748b';
-  return `<span style="color:${color}; font-weight:700;">${escapeHtml(sig)}</span>`;
-}
-
-function renderStockPicks() {
+function renderIndianStocks() {
   const body = document.getElementById('stockPicksBody');
-  if (!body || !stockPicksData) return;
-  const data = stockPicksData;
+  const pagination = document.getElementById('stockPicksPagination');
+  if (!body || !stocksData) return;
 
-  if (!data.available) {
-    body.style.display = 'none';
-    const heading = body.previousElementSibling;
-    if (heading && heading.id === 'stockPicksHeading') heading.style.display = 'none';
-    return;
-  }
-  body.style.display = 'block';
-  const heading = body.previousElementSibling;
-  if (heading && heading.id === 'stockPicksHeading') heading.style.display = 'block';
-
-  let picks = data.picks || [];
-  if (stockPickFilter === 'INTRADAY') picks = picks.filter(p => p.intraday.signal === 'Bullish');
-  else if (stockPickFilter === 'SHORT') picks = picks.filter(p => p.shortTerm.signal === 'Bullish');
-  else if (stockPickFilter === 'LONG') picks = picks.filter(p => p.longTerm.signal === 'Bullish');
-
-  const asOf = data.timestamp ? new Date(data.timestamp).toLocaleTimeString('en-IN', { hour12: false, timeZone: 'Asia/Kolkata' }) : '';
-  const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.universe || '')} · as of ${asOf} IST</div>`;
-
-  if (!picks.length) {
-    body.innerHTML = header + `<div style="color:#94a3b8; font-size:12.5px;">No stocks currently match this filter.</div>`;
+  if (!stocksData.available || !stocksData.stocks || stocksData.stocks.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#94a3b8;">No stocks available for this category.</td></tr>`;
+    pagination.innerHTML = '';
     return;
   }
 
-  body.innerHTML = header + `
-    <div style="overflow-x:auto;">
-    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-      <thead><tr style="color:#64748b; text-align:left; border-bottom:1px solid #1a2333;">
-        <th style="padding:6px 8px;">Stock</th>
-        <th style="padding:6px 8px;">LTP</th>
-        <th style="padding:6px 8px;">Chg%</th>
-        <th style="padding:6px 8px;" title="Based on today's price position vs open and today's range">⚡ Intraday</th>
-        <th style="padding:6px 8px;" title="Based on LTP vs the 20-day EMA">📆 Short-Term</th>
-        <th style="padding:6px 8px;" title="Based on LTP vs the 50-day EMA">🏦 Long-Term</th>
-      </tr></thead>
-      <tbody>
-        ${picks.map(p => `
-          <tr style="border-bottom:1px solid #141b29;">
-            <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;">${escapeHtml(p.symbol)}</td>
-            <td style="padding:6px 8px; color:#e2e8f0;">${fmtNum(p.ltp)}</td>
-            <td style="padding:6px 8px; color:${p.changePct >= 0 ? '#22c55e' : '#ef4444'};">${p.changePct >= 0 ? '+' : ''}${p.changePct}%</td>
-            <td style="padding:6px 8px;" title="${escapeHtml(p.intraday.reason)}">${stockSignalPill(p.intraday.signal)}</td>
-            <td style="padding:6px 8px;" title="${escapeHtml(p.shortTerm.reason)}">${stockSignalPill(p.shortTerm.signal)}</td>
-            <td style="padding:6px 8px;" title="${escapeHtml(p.longTerm.reason)}">${stockSignalPill(p.longTerm.signal)}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
-    </div>`;
+  // Render stock rows
+  const rows = stocksData.stocks.map(stock => {
+    const signal = stock.signal || 'NEUTRAL';
+    const signalColor = signal === 'BULLISH' ? '#22c55e' : signal === 'BEARISH' ? '#ef4444' : '#64748b';
+    const categoryLabel = stock.category === 'large_cap' ? '🏢 Large' : stock.category === 'mid_cap' ? '📈 Mid' : '📉 Small';
+    return `
+      <tr style="border-bottom:1px solid #1a2333;">
+        <td style="padding:8px; font-weight:700; color:#f1f5f9;">${escapeHtml(stock.symbol)}</td>
+        <td style="padding:8px; color:${signalColor}; font-weight:600;">${signal}</td>
+        <td style="padding:8px; text-align:right; color:#e2e8f0;">₹ ${stock.price ? stock.price.toFixed(2) : 'N/A'}</td>
+        <td style="padding:8px; text-align:right; color:${stock.range_pct > 50 ? '#22c55e' : '#ef4444'};">${stock.range_pct || 0}%</td>
+        <td style="padding:8px; text-align:center; color:#94a3b8; font-size:11px;">${categoryLabel}</td>
+      </tr>`;
+  }).join('');
+
+  body.innerHTML = rows;
+
+  // Render pagination
+  const totalPages = stocksData.pages || 1;
+  const paginationHTML = [];
+
+  if (stocksCurrentPage > 1) {
+    paginationHTML.push(`<button class="small-strat-btn" onclick="goStockPage(${stocksCurrentPage - 1})">← Previous</button>`);
+  }
+
+  for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - stocksCurrentPage) <= 1) {
+      paginationHTML.push(`<button class="small-strat-btn ${i === stocksCurrentPage ? 'active' : ''}" onclick="goStockPage(${i})" style="${i === stocksCurrentPage ? 'background:linear-gradient(135deg, #3b82f6, #2563eb);' : ''}">${i}</button>`);
+    }
+  }
+
+  if (stocksCurrentPage < totalPages) {
+    paginationHTML.push(`<button class="small-strat-btn" onclick="goStockPage(${stocksCurrentPage + 1})">Next →</button>`);
+  }
+
+  pagination.innerHTML = paginationHTML.length > 0 ? paginationHTML.join('') : '';
+
+  // Add status info
+  const status = `<div style="color:#64748b; font-size:11px; text-align:center; margin-top:8px;">Page ${stocksCurrentPage} of ${totalPages} · ${stocksData.total} total stocks · ${stocksData.cached ? '(cached)' : '(live)'}</div>`;
+  pagination.innerHTML += status;
+}
+
+function goStockPage(page) {
+  if (page < 1) return;
+  stocksCurrentPage = page;
+  fetchIndianStocks();
 }
 
 /* ============================================================
@@ -11151,6 +11172,7 @@ setInterval(fetchIpoData, 300000);
 
 initStatus().then(() => {
   setActiveScanStrategy('strat1');
+  fetchIndianStocks(); // Load stock picks on startup
 });
 
 renderRoute(); // Phase 0 router: resolve whatever route (or none) is in the URL on first load

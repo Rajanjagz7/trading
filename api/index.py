@@ -40,6 +40,7 @@ from .market_extras_service import get_mutual_fund_picks, get_ipo_data
 from .upstox_service import upstox_service
 from .market_news import get_market_news as get_live_market_news
 from .block_deals_service import get_block_deals
+from .indian_stocks_service import get_indian_stocks, get_indian_indices
 try:
     from .rajan_pavan_indicators import RAJAN_PAVAN_KEYS
     import rajan_pavan_indicators as rp_indicators
@@ -430,8 +431,42 @@ def tv_status(action: str = "status", symbol: str = "NSE:NIFTY"):
     }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# NEW FEATURES: Market News, Rajan-Pavan Indicators, Block Deals
+# NEW FEATURES: Indian Stocks, Market News, Rajan-Pavan Indicators, Block Deals
 # ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/stocks/indian")
+def get_stocks_indian(
+    category: Optional[str] = None,
+    page: int = 1,
+    limit: int = 10,
+    force_refresh: bool = False
+):
+    """All Indian stocks (large cap, mid cap, small cap) with bullish/bearish classification.
+    Pagination: 10 stocks per page by default.
+    Categories: large_cap, mid_cap, small_cap, or all (default)."""
+    try:
+        result = get_indian_stocks(category=category, page=page, limit=limit, force_refresh=force_refresh)
+        return result
+    except Exception as e:
+        return {
+            "available": False,
+            "stocks": [],
+            "reason": f"Stock fetch failed: {str(e)}",
+            "fetchedAt": now_ist_iso(),
+        }
+
+@app.get("/api/indices/indian-only")
+def get_indices_indian():
+    """Get only Indian indices (excludes global commodities like Bitcoin, Crude Oil, Gold)."""
+    try:
+        result = get_indian_indices()
+        return result
+    except Exception as e:
+        return {
+            "available": False,
+            "indices": [],
+            "reason": f"Indices fetch failed: {str(e)}",
+        }
 
 @app.get("/api/news/market")
 def get_news(limit: int = 40, force_refresh: bool = False):
