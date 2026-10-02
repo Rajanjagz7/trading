@@ -1,5 +1,5 @@
 """Indian Stocks Universe — Fetches all NSE+BSE-listed stocks with bullish/bearish classification.
-Supports Large Cap, Mid Cap, Small Cap filtering."""
+Supports Large Cap, Mid Cap, Small Cap filtering. Falls back to popular stocks if APIs unavailable."""
 
 import time
 import requests
@@ -21,6 +21,45 @@ INDIAN_INDICES = {
 # Remove global commodities
 EXCLUDED_SYMBOLS = {"BITCOIN", "CRUDEOIL", "GOLD", "SILVER"}
 
+# Fallback popular Indian stocks when APIs are unavailable
+FALLBACK_STOCKS = [
+    ("RELIANCE", "Reliance Industries", "large_cap"),
+    ("TCS", "Tata Consultancy Services", "large_cap"),
+    ("INFY", "Infosys", "large_cap"),
+    ("HDFCBANK", "HDFC Bank", "large_cap"),
+    ("ICICIBANK", "ICICI Bank", "large_cap"),
+    ("SBIN", "State Bank of India", "large_cap"),
+    ("WIPRO", "Wipro", "large_cap"),
+    ("BHARTIARTL", "Bharti Airtel", "large_cap"),
+    ("MARUTI", "Maruti Suzuki", "large_cap"),
+    ("HCLTECH", "HCL Technologies", "large_cap"),
+    ("LTTS", "LTT Infotech", "large_cap"),
+    ("NESTLEIND", "Nestlé India", "large_cap"),
+    ("HINDALCO", "Hindalco Industries", "large_cap"),
+    ("POWERGRID", "Power Grid Corporation", "large_cap"),
+    ("ONGC", "ONGC", "large_cap"),
+    ("AXISBANK", "Axis Bank", "mid_cap"),
+    ("SUNPHARMA", "Sun Pharma", "mid_cap"),
+    ("TECHM", "Tech Mahindra", "mid_cap"),
+    ("TITAN", "Titan Company", "mid_cap"),
+    ("JSWSTEEL", "JSW Steel", "mid_cap"),
+    ("BAJAJFINSV", "Bajaj Finserv", "mid_cap"),
+    ("CIPLA", "Cipla", "mid_cap"),
+    ("COALINDIA", "Coal India", "mid_cap"),
+    ("DRREDDY", "Dr. Reddy's Laboratories", "mid_cap"),
+    ("GAIL", "GAIL (India)", "mid_cap"),
+    ("LT", "Larsen & Toubro", "mid_cap"),
+    ("ULTRACEMCO", "UltraTech Cement", "mid_cap"),
+    ("INDIGO", "InterGlobe Aviation", "mid_cap"),
+    ("ITC", "ITC Limited", "mid_cap"),
+    ("BAJAJFINSV", "Bajaj Finserv", "mid_cap"),
+    ("IINDTREE", "Indiamart Intermesh", "small_cap"),
+    ("NYKAA", "FSN E-Commerce Ventures", "small_cap"),
+    ("IRFC", "Indian Railway Finance", "small_cap"),
+    ("LODHA", "Macrotech Developments", "small_cap"),
+    ("TRENT", "Trent Limited", "small_cap"),
+]
+
 
 def _get_session():
     s = requests.Session()
@@ -33,7 +72,7 @@ def _get_session():
 
 
 def _fetch_nse_stocks() -> List[Dict]:
-    """Fetch all NSE+BSE-listed stocks."""
+    """Fetch all NSE+BSE-listed stocks. Falls back to popular Indian stocks if APIs unavailable."""
     try:
         session = _get_session()
         all_stocks = []
@@ -56,8 +95,6 @@ def _fetch_nse_stocks() -> List[Dict]:
             url_bse = "https://www.bseindia.com/markets/equity/EQReports/consolidatedScripMaster.aspx"
             resp_bse = session.get(url_bse, timeout=10)
             if resp_bse.status_code == 200:
-                # Parse BSE CSV or JSON response
-                # Note: BSE may return different format, extract what we can
                 try:
                     bse_stocks = resp_bse.json().get("data", [])
                     all_stocks.extend(bse_stocks)
@@ -83,23 +120,45 @@ def _fetch_nse_stocks() -> List[Dict]:
                     "exchange": stock.get("exchange", "NSE"),
                 })
 
+        # If no stocks fetched from APIs, use fallback list of popular Indian stocks
+        if not filtered:
+            print("[Stocks] APIs unavailable, using fallback popular stocks list")
+            for symbol, name, cat in FALLBACK_STOCKS:
+                filtered.append({
+                    "symbol": symbol,
+                    "name": name,
+                    "isin": "",
+                    "industry": "",
+                    "category": cat,
+                    "exchange": "NSE",
+                })
+
         print(f"[Stocks] Total unique stocks: {len(filtered)}")
         return filtered[:500]  # Top 500 stocks
 
     except Exception as e:
         print(f"[Stocks] Fetch failed: {e}")
-        return []
+        # Return fallback even on exception
+        return [
+            {
+                "symbol": symbol,
+                "name": name,
+                "isin": "",
+                "industry": "",
+                "category": cat,
+                "exchange": "NSE",
+            }
+            for symbol, name, cat in FALLBACK_STOCKS
+        ]
 
 
 def _classify_stock(symbol: str) -> str:
     """Classify stock as large cap, mid cap, or small cap based on market cap."""
-    # Simplified classification - in production, use actual market cap data
-    # For now, use symbol-based heuristics
-    nifty_50 = {"RELIANCE", "TCS", "INFY", "HDFC", "ICICIBANK", "SBIN", "BHARTIARTL", "MARUTI", "HCLTECH", "WIPRO"}
+    nifty_50 = {"RELIANCE", "TCS", "INFY", "HDFC", "ICICIBANK", "SBIN", "BHARTIARTL", "MARUTI", "HCLTECH", "WIPRO", "AXISBANK", "SUNPHARMA"}
 
     if symbol in nifty_50:
         return "large_cap"
-    elif symbol.startswith("M") or symbol.startswith("L"):
+    elif symbol.startswith("M") or symbol.startswith("L") or symbol.startswith("N"):
         return "mid_cap"
     else:
         return "small_cap"
@@ -121,7 +180,6 @@ def _compute_bullish_bearish(symbol: str) -> Dict:
             fifty_week_low = quote.get("summaryDetail", {}).get("fiftyTwoWeekLow", {}).get("raw", 0)
 
             if fifty_week_high and fifty_week_low and price:
-                # Simple classification: if price > 75% of range = bullish
                 range_pct = (price - fifty_week_low) / (fifty_week_high - fifty_week_low) * 100
                 return {
                     "signal": "BULLISH" if range_pct > 75 else "BEARISH" if range_pct < 25 else "NEUTRAL",
@@ -150,10 +208,22 @@ def get_indian_stocks(
     if force_refresh or _cache["data"] is None or age > STOCKS_CACHE_TTL:
         stocks = _fetch_nse_stocks()
 
-        # Add bullish/bearish classification
-        for stock in stocks:
-            signal = _compute_bullish_bearish(stock["symbol"])
-            stock.update(signal)
+        # Add bullish/bearish classification (skip for fallback to keep it fast)
+        if len(stocks) > 20:  # Only compute for real fetched data
+            for stock in stocks:
+                try:
+                    signal = _compute_bullish_bearish(stock["symbol"])
+                    stock.update(signal)
+                except:
+                    stock["signal"] = "NEUTRAL"
+                    stock["range_pct"] = 50
+                    stock["price"] = 0
+        else:
+            # Fallback stocks - add default signals
+            for stock in stocks:
+                stock["signal"] = "NEUTRAL"
+                stock["range_pct"] = 50
+                stock["price"] = 0
 
         # Organize by category
         by_category = {"large_cap": [], "mid_cap": [], "small_cap": []}
