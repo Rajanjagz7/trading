@@ -1,7 +1,7 @@
 {
-  "buildCommand": "echo 'Vercel Build' && date",
-  "outputDirectory": ".",
   "version": 2,
+  "buildCommand": "echo Build",
+  "outputDirectory": "public",
   "builds": [
     {
       "src": "api/tv.js",
