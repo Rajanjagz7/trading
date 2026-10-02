@@ -1,5 +1,10 @@
 {
+  "buildCommand": "echo Building",
+  "outputDirectory": "./",
   "version": 2,
+  "env": {
+    "BUILD_TIME": "@now"
+  },
   "builds": [
     {
       "src": "api/tv.js",
@@ -20,7 +25,7 @@
       "dest": "api/index.py"
     },
     {
-      "src": "/(.*)",
+      "src": "/.*",
       "dest": "/$1"
     }
   ]
