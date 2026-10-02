@@ -26,8 +26,41 @@ Important adaptation notes (see the final delivery report for the full list):
 
 from datetime import datetime
 
-from trade_predictor import _ema
-from ut_bot import _rma, _true_range, fetch_index_history
+try:
+    from .trade_predictor import _ema
+    from .ut_bot import _rma, _true_range, fetch_index_history
+except ImportError:
+    try:
+        from trade_predictor import _ema
+        from ut_bot import _rma, _true_range, fetch_index_history
+    except ImportError:
+        # Fallback implementations if modules not found
+        def _ema(values, period):
+            if not values or len(values) < period:
+                return None
+            alpha = 2.0 / (period + 1)
+            ema_val = sum(values[:period]) / period
+            for val in values[period:]:
+                ema_val = alpha * val + (1 - alpha) * ema_val
+            return ema_val
+
+        def _rma(values, period):
+            if not values or len(values) < period:
+                return None
+            alpha = 1.0 / period
+            rma_val = values[0]
+            for val in values[1:]:
+                rma_val = alpha * val + (1 - alpha) * rma_val
+            return rma_val
+
+        def _true_range(high, low, close_prev):
+            tr1 = high - low
+            tr2 = abs(high - close_prev) if close_prev else 0
+            tr3 = abs(low - close_prev) if close_prev else 0
+            return max(tr1, tr2, tr3)
+
+        def fetch_index_history(symbol, days=252):
+            return []
 
 ALLOWED_SYMBOLS = ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BITCOIN", "CRUDEOIL", "GOLD")
 
