@@ -207,22 +207,12 @@ def get_indian_stocks(
     if force_refresh or _cache["data"] is None or age > STOCKS_CACHE_TTL:
         stocks = _fetch_nse_stocks()
 
-        # Add bullish/bearish classification (skip for fallback to keep it fast)
-        if len(stocks) > 20:  # Only compute for real fetched data
-            for stock in stocks:
-                try:
-                    signal = _compute_bullish_bearish(stock["symbol"])
-                    stock.update(signal)
-                except:
-                    stock["signal"] = "NEUTRAL"
-                    stock["range_pct"] = 50
-                    stock["price"] = 0
-        else:
-            # Fallback stocks - add default signals
-            for stock in stocks:
-                stock["signal"] = "NEUTRAL"
-                stock["range_pct"] = 50
-                stock["price"] = 0
+        # Skip bullish/bearish computation - would require 200+ API calls to Yahoo Finance
+        # Signals can be computed on-demand per symbol if needed later
+        for stock in stocks:
+            stock["signal"] = "NEUTRAL"
+            stock["range_pct"] = 50
+            stock["price"] = 0
 
         # Organize by category
         by_category = {"large_cap": [], "mid_cap": [], "small_cap": []}
