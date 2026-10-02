@@ -2255,18 +2255,19 @@
   }
 
   @media (max-width: 900px) {
-    .workspace-body { flex-direction: column; align-items: stretch; }
-    .panel.filters { width: 100% !important; max-height: 70vh !important; display: none !important; }
+    .workspace-body { flex-direction: column; align-items: stretch; gap: 12px; }
+    .panel.filters { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
     .chartink-indices-bar { flex-wrap: nowrap; overflow-x: auto; }
     .clause-row { font-size: 11.5px; gap: 6px; }
     .results-search-box { min-width: 100%; }
-    main { width: 100%; background: #0f1520; }
+    main { width: 100% !important; background: #0f1520; box-sizing: border-box !important; }
   }
   @media (max-width: 768px) {
     header { padding: 12px 14px; flex-direction: column; align-items: flex-start; gap: 10px; }
-    header > div:last-child { align-items: flex-start !important; }
+    header > div:last-child { align-items: flex-start !important; width: 100% !important; }
+    header > div:last-child > div { justify-content: flex-start !important; width: 100% !important; }
+    #loadedInfo { text-align: left !important; width: 100% !important; }
     .glow-title { font-size: 18px !important; }
-    .panel.filters { display: none !important; }
     main { width: 100% !important; padding: 10px; }
     .indicator-btn-row {
       display: flex;
@@ -2536,6 +2537,155 @@
       left: 10px !important;
       right: 10px !important;
     }
+  }
+
+  /* ═══════════════════════════════════════════
+     MOBILE UI POLISH  (≤600px)
+  ═══════════════════════════════════════════ */
+  @media (max-width: 600px) {
+
+    /* ── Workspace ── */
+    .workspace { padding: 8px; border-radius: 8px; }
+    .workspace-body { gap: 0; }
+
+    /* ── Mobile filter toggle button ── */
+    .mobile-filter-toggle {
+      font-size: 12px !important;
+      padding: 10px 12px !important;
+      border-radius: 8px !important;
+      margin-bottom: 10px !important;
+    }
+
+    /* ── Mode tabs ── */
+    .mode-tabs {
+      gap: 4px !important;
+      padding: 6px 4px !important;
+      border-radius: 8px !important;
+    }
+    .tab-btn {
+      font-size: 11px !important;
+      padding: 7px 10px !important;
+      border-radius: 6px !important;
+    }
+
+    /* ── Indicator Panel ── */
+    #indicatorsPanel {
+      padding: 12px 10px !important;
+      border-radius: 8px !important;
+      margin-bottom: 10px !important;
+    }
+    #indicatorsPanel > div:first-child {
+      gap: 8px !important;
+    }
+    #indicatorsPanel > div:first-child > div:first-child {
+      font-size: 12px !important;
+      width: 100%;
+    }
+    #indicatorsPanel > div:first-child > div:last-child {
+      width: 100%;
+      flex-direction: column !important;
+      gap: 7px !important;
+    }
+    #indicatorSymbol,
+    #indicatorKey {
+      width: 100% !important;
+      font-size: 12px !important;
+      padding: 8px 10px !important;
+      border-radius: 7px !important;
+    }
+    #indicatorsPanel .small-strat-btn {
+      width: 100% !important;
+      padding: 9px 0 !important;
+      font-size: 12px !important;
+      border-radius: 7px !important;
+    }
+    #indicatorBody {
+      border-radius: 8px !important;
+      margin-top: 4px !important;
+      max-height: 220px !important;
+      font-size: 11px !important;
+    }
+
+    /* ── Block Deals table ── */
+    #blockDealsBody { border-radius: 6px; }
+    #blockDealsBody table { min-width: 520px; font-size: 11px; }
+
+    /* ── Banner / Action buttons ── */
+    .banner { border-radius: 8px !important; padding: 10px 10px !important; gap: 8px !important; }
+    .action-btn {
+      font-size: 11px !important;
+      padding: 8px 10px !important;
+      border-radius: 6px !important;
+      min-height: 36px !important;
+    }
+
+    /* ── Main content area ── */
+    main { padding: 8px !important; border-radius: 8px !important; }
+
+    /* ── Cards in results ── */
+    .opt-card { border-radius: 8px !important; }
+
+    /* ── rx-legacy-tools sections spacing ── */
+    .rx-legacy-tools {
+      margin-bottom: 10px !important;
+    }
+
+    /* ── Ticker cards horizontal scroll ── */
+    .index-ticker-card, .global-ticker-card {
+      min-width: 110px !important;
+      border-radius: 7px !important;
+    }
+
+    /* ── Scan button in filter panel ── */
+    .scan-btn {
+      padding: 12px 0 !important;
+      font-size: 13px !important;
+      border-radius: 8px !important;
+    }
+
+    /* ── fp-section cards on mobile ── */
+    .fp-section {
+      border-radius: 8px !important;
+      padding: 10px 10px !important;
+      margin-bottom: 8px !important;
+    }
+    .fp-input, .fp-select {
+      min-height: 38px !important;
+      font-size: 12px !important;
+    }
+    .fp-seg button {
+      min-height: 34px !important;
+      font-size: 12px !important;
+    }
+    .fp-mini-btn {
+      min-height: 26px !important;
+      font-size: 10px !important;
+    }
+
+    /* ── Pill/preset ribbon ── */
+    .preset-pill {
+      font-size: 11px !important;
+      padding: 6px 10px !important;
+    }
+
+    /* ── Results search box ── */
+    .results-search-box input {
+      font-size: 12px !important;
+    }
+
+    /* ── Toasts ── */
+    #toastContainer {
+      bottom: 16px !important;
+    }
+  }
+
+  /* ── Very small phones (≤380px) ── */
+  @media (max-width: 380px) {
+    .glow-title { font-size: 14px !important; }
+    .tab-btn { font-size: 10px !important; padding: 6px 8px !important; }
+    #indicatorsPanel { padding: 10px 8px !important; }
+    .index-ticker-card, .global-ticker-card { min-width: 96px !important; }
+    .fp-section { padding: 8px !important; }
   }
 
   /* Rajan Indicators Direct TradingView Launch Button */
