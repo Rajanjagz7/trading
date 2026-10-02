@@ -599,10 +599,11 @@
   .panel.filters {
     width: 320px;
     flex-shrink: 0;
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: linear-gradient(180deg, #0f1520 0%, #0a0f19 100%);
+    border: 2px solid #1e3a5f;
     border-radius: 10px;
     padding: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
   main {
     flex: 1;
@@ -665,11 +666,11 @@
   .segbtns button.active { background: #2563eb; color: #fff; }
   .scan-btn {
     width: 100%;
-    background: #10b981;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 0;
+    border: 2px solid #34d399;
+    border-radius: 8px;
+    padding: 12px 0;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
@@ -677,12 +678,19 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: 0 2px 10px rgba(16,185,129,0.3);
-    transition: all 0.15s ease;
+    box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+    transition: all 0.2s ease;
     font-family: inherit;
-    margin-top: 10px;
+    margin-top: 12px;
   }
-  .scan-btn:hover { background: #059669; }
+  .scan-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 6px 18px rgba(16,185,129,0.5);
+    transform: translateY(-2px);
+  }
+  .scan-btn:active {
+    transform: translateY(0);
+  }
 
   /* Strategy preset buttons in sidebar */
   .strat-btn {
@@ -2046,16 +2054,25 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    background: #141c2c;
-    border: 1px solid #2b394f;
-    color: #93c5fd;
-    padding: 10px 14px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 2px solid #3b82f6;
+    color: #e0f2fe;
+    padding: 12px 16px;
     border-radius: 8px;
     font-weight: 700;
-    font-size: 12.5px;
-    margin-bottom: 12px;
+    font-size: 13px;
+    margin-bottom: 14px;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+  }
+  .mobile-filter-toggle:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+  }
+  .mobile-filter-toggle:active {
+    transform: translateY(0);
   }
   .panel.filters.collapsed,
   .chartink-query-card.collapsed {
@@ -3401,14 +3418,14 @@
 
   <!-- Workspace -->
   <div class="workspace rx-legacy-tools">
-    <!-- Advanced Filters toggle (BRD FR-03: hidden by default on every viewport) -->
+    <!-- Advanced Filters toggle (visible by default on every viewport) -->
     <button class="mobile-filter-toggle" id="mobileFilterToggle" onclick="toggleMobileFilters()">
       <span>⚙️ Advanced Filters &amp; Custom Query Builder</span>
-      <span id="filterToggleArrow">▼ Show Advanced Filters</span>
+      <span id="filterToggleArrow">▲ Hide Advanced Filters</span>
     </button>
 
     <!-- Sidebar Filters -->
-    <div class="panel filters collapsed" id="sidebarFiltersPanel">
+    <div class="panel filters" id="sidebarFiltersPanel">
       <!-- Prominent User-Friendly Clear All Filters Action -->
       <button type="button" class="clear-all-filters-btn" id="clearAllFiltersBtn" onclick="clearAllScreenerFilters()" title="Reset all strategy ranges, symbols, tolerance, and filters to defaults">
         <span>🧹</span> <b>Clear All Filters &amp; Reset</b>
