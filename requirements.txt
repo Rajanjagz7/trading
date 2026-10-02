@@ -5,6 +5,3 @@ curl-cffi==0.16.3
 python-multipart==0.0.32
 defusedxml==0.7.1
 requests==2.31.0
-
-# Dev/test only -- not needed by the deployed Vercel function
-pytest==9.1.1
