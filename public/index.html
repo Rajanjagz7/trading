@@ -3247,35 +3247,50 @@
        guaranteed-outcome claim. See the "basedOnVerdict" field per row and
        api/nse_service.py's get_indices_pulse() for the exact documented rule. -->
   <div class="pulse-header" style="margin-top:14px;">
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-      <span class="pulse-title">📋 Recommendation for the Day</span>
-      <span class="pulse-badge" id="recoTimeBadge">Loading…</span>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span class="pulse-title">📋 Recommendation for the Day</span>
+        <span class="pulse-badge" id="recoTimeBadge">Loading…</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+        <select id="recoPaginationSelect" onchange="updateRecoPagination(this.value)" style="padding:4px 8px; font-size:11px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px;">
+          <option value="10" selected>10 per page</option>
+          <option value="5">5 per page</option>
+          <option value="30">30 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+        <span id="recoPaginationInfo" style="font-size:11px; color:#64748b;"></span>
+      </div>
     </div>
     <span style="font-size:11px; color:#94a3b8;" class="pulse-sub-text">Deterministic Call/Put flow rule — not a guaranteed outcome. NO SIGNAL shown honestly when flow is balanced.</span>
   </div>
-  <div style="overflow-x:auto; background:#0f1520; border:1px solid var(--line); border-radius:8px;">
-    <table style="width:100%; border-collapse:collapse; font-size:12px; white-space:nowrap;">
-      <thead>
-        <tr style="background:#131c2c; color:#94a3b8; text-align:left;">
-          <th style="padding:8px 12px;">Instrument</th>
-          <th style="padding:8px 12px;">Open</th>
-          <th style="padding:8px 12px;">High</th>
-          <th style="padding:8px 12px;">Low</th>
-          <th style="padding:8px 12px;">LTP</th>
-          <th style="padding:8px 12px;">Chg%</th>
-          <th style="padding:8px 12px;">Signal</th>
-          <th style="padding:8px 12px;">Contract</th>
-          <th style="padding:8px 12px;">Entry</th>
-          <th style="padding:8px 12px;">Target</th>
-          <th style="padding:8px 12px;">Stop Loss</th>
-          <th style="padding:8px 12px;">Status</th>
-          <th style="padding:8px 12px;">Timestamp (IST)</th>
-        </tr>
-      </thead>
-      <tbody id="recoTableBody">
-        <tr><td colspan="13" style="padding:16px; text-align:center; color:#94a3b8;">Loading…</td></tr>
-      </tbody>
-    </table>
+  <div style="background:#0f1520; border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px; min-width:100%;">
+        <thead>
+          <tr style="background:#131c2c; color:#94a3b8; text-align:left;">
+            <th style="padding:8px 12px;">Instrument</th>
+            <th style="padding:8px 12px;">Open</th>
+            <th style="padding:8px 12px;">High</th>
+            <th style="padding:8px 12px;">Low</th>
+            <th style="padding:8px 12px;">LTP</th>
+            <th style="padding:8px 12px;">Chg%</th>
+            <th style="padding:8px 12px;">Signal</th>
+            <th style="padding:8px 12px;">Contract</th>
+            <th style="padding:8px 12px;">Entry</th>
+            <th style="padding:8px 12px;">Target</th>
+            <th style="padding:8px 12px;">Stop Loss</th>
+            <th style="padding:8px 12px;">Status</th>
+            <th style="padding:8px 12px;">Timestamp (IST)</th>
+          </tr>
+        </thead>
+        <tbody id="recoTableBody">
+          <tr><td colspan="13" style="padding:16px; text-align:center; color:#94a3b8;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="recoPaginationControls" style="display:flex; gap:6px; padding:12px; background:#131c2c; justify-content:center; flex-wrap:wrap;"></div>
   </div>
 
   <!-- Phase 1 (BRD redesign): clean Dashboard landing view (FR-01) -->
@@ -3297,19 +3312,28 @@
     <!-- Best Mutual Funds -- real AMFI NAV history via mfapi.in, ranked by
          real computed 5-year CAGR for a fixed universe of Direct-Growth
          equity schemes. Never an invented return figure. -->
-    <div id="bestMutualFundsHeading" class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center;">
+    <div id="bestMutualFundsHeading" class="rx-section-label" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
       <span>💰 Best Mutual Funds (5-Year Returns)</span>
-      <span style="display:flex; gap:6px;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
         <button class="small-strat-btn mf-filter-btn active" data-mf-filter="ALL" onclick="setMfFilter('ALL')" style="padding:3px 9px; font-size:11px;">All</button>
         <button class="small-strat-btn mf-filter-btn" data-mf-filter="Flexi Cap" onclick="setMfFilter('Flexi Cap')" style="padding:3px 9px; font-size:11px;">Flexi Cap</button>
         <button class="small-strat-btn mf-filter-btn" data-mf-filter="Large Cap" onclick="setMfFilter('Large Cap')" style="padding:3px 9px; font-size:11px;">Large Cap</button>
         <button class="small-strat-btn mf-filter-btn" data-mf-filter="Mid Cap" onclick="setMfFilter('Mid Cap')" style="padding:3px 9px; font-size:11px;">Mid Cap</button>
         <button class="small-strat-btn mf-filter-btn" data-mf-filter="Small Cap" onclick="setMfFilter('Small Cap')" style="padding:3px 9px; font-size:11px;">Small Cap</button>
         <button class="small-strat-btn mf-filter-btn" data-mf-filter="ELSS" onclick="setMfFilter('ELSS')" style="padding:3px 9px; font-size:11px;">ELSS</button>
-      </span>
+        <select id="mfPaginationSelect" onchange="updateMfPagination(this.value)" style="padding:4px 8px; font-size:11px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px;">
+          <option value="10" selected>10 per page</option>
+          <option value="5">5 per page</option>
+          <option value="30">30 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+        <span id="mfPaginationInfo" style="font-size:11px; color:#64748b;"></span>
+      </div>
     </div>
-    <div id="mutualFundsSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+    <div id="mutualFundsSection" style="background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px; overflow:hidden;">
       <div style="display:flex; align-items:center; gap:12px; color:#94a3b8; font-size:12px;">Loading…</div>
+      <div id="mfPaginationControls" style="display:flex; gap:6px; padding:12px 0; justify-content:center; flex-wrap:wrap;"></div>
     </div>
 
     <!-- IPO Calendar -- real NSE public IPO data (upcoming / ongoing / closed). -->
@@ -3462,14 +3486,29 @@
   <div class="rx-legacy-tools" id="indicatorsPanel" style="display:block !important; background:#0f1520; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
       <div style="font-weight:700; font-size:14px; color:#f1f5f9;">📊 Rajan-Pavan Indicators (15 Strategies)</div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
         <select id="indicatorSymbol" style="padding:6px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:4px; font-size:11px;">
-          <option value="NIFTY">NIFTY</option>
-          <option value="BANKNIFTY">BANKNIFTY</option>
-          <option value="FINNIFTY">FINNIFTY</option>
-          <option value="SENSEX">SENSEX</option>
-          <option value="MIDCPNIFTY">MIDCPNIFTY</option>
+          <optgroup label="📊 Indices">
+            <option value="NIFTY">NIFTY (Index)</option>
+            <option value="BANKNIFTY">BANKNIFTY (Index)</option>
+            <option value="FINNIFTY">FINNIFTY (Index)</option>
+            <option value="SENSEX">SENSEX (Index)</option>
+            <option value="MIDCPNIFTY">MIDCPNIFTY (Index)</option>
+          </optgroup>
+          <optgroup label="📈 Top Stocks">
+            <option value="RELIANCE">RELIANCE</option>
+            <option value="INFY">INFY</option>
+            <option value="TCS">TCS</option>
+            <option value="WIPRO">WIPRO</option>
+            <option value="HDFC">HDFC</option>
+            <option value="ICICIBANK">ICICIBANK</option>
+            <option value="BAJAJFINSV">BAJAJFINSV</option>
+            <option value="LT">LT</option>
+            <option value="AXISBANK">AXISBANK</option>
+            <option value="MARUTI">MARUTI</option>
+          </optgroup>
         </select>
+        <input type="text" id="indicatorSymbolSearch" placeholder="Search symbol..." style="padding:6px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:4px; font-size:11px; width:120px;" onkeyup="filterIndicatorSymbols()">
         <select id="indicatorKey" style="padding:6px 8px; background:var(--panel-2); color:#fff; border:1px solid var(--line); border-radius:4px; font-size:11px;">
           <option value="hammer-support">🔨 Hammer Support</option>
           <option value="w-pattern">🌊 W Pattern</option>
@@ -3487,7 +3526,7 @@
           <option value="vix-range">📊 VIX Range</option>
           <option value="confluence">🎪 Confluence</option>
         </select>
-        <button class="small-strat-btn" onclick="runIndicator()">Run</button>
+        <button class="small-strat-btn" onclick="runIndicator()">⚡ Run</button>
       </div>
     </div>
     <div id="indicatorBody" style="color:#94a3b8; font-size:12px; padding:10px;">Select symbol & indicator, then click Run</div>
@@ -7623,13 +7662,28 @@ async function fetchBlockDeals(forceRefresh) {
 }
 
 /* ─── Rajan-Pavan Indicators ─── */
+function filterIndicatorSymbols() {
+  const searchTerm = document.getElementById('indicatorSymbolSearch')?.value?.toUpperCase() || '';
+  const select = document.getElementById('indicatorSymbol');
+  if (!select) return;
+
+  const options = select.querySelectorAll('option');
+  options.forEach(opt => {
+    if (opt.value && searchTerm && !opt.value.includes(searchTerm)) {
+      opt.style.display = 'none';
+    } else {
+      opt.style.display = 'block';
+    }
+  });
+}
+
 async function runIndicator() {
   const symbol = document.getElementById('indicatorSymbol')?.value || 'NIFTY';
-  const key = document.getElementById('indicatorKey')?.value || 'ut';
+  const key = document.getElementById('indicatorKey')?.value || 'hammer-support';
   const body = document.getElementById('indicatorBody');
   if (!body) return;
 
-  body.innerHTML = '<div style="color:#94a3b8;">Loading indicator results...</div>';
+  body.innerHTML = '<div style="color:#94a3b8;">Loading indicator results & option chain data...</div>';
 
   try {
     const url = `${API_BASE}/api/indicators/rajan-pavan?key=${key}&symbol=${symbol}`;
@@ -7638,23 +7692,87 @@ async function runIndicator() {
 
     if (data.results) {
       const r = data.results;
+      const signalClass = r.signal === 'BULLISH' ? 'signal-badge-buy' : 'signal-badge-sell';
+      const signalColor = r.signal === 'BULLISH' ? '#22c55e' : r.signal === 'BEARISH' ? '#ef4444' : '#94a3b8';
+      const signalEmoji = r.signal === 'BULLISH' ? '🟢' : r.signal === 'BEARISH' ? '🔴' : '⚪';
+
+      // Fetch option chain data for this symbol
+      let optionChainHTML = '';
+      try {
+        const chainRes = await fetch(`${API_BASE}/api/option-chain?symbol=${symbol}`);
+        const chainData = await chainRes.json();
+        if (chainData.data && chainData.data.length > 0) {
+          const topCalls = chainData.data.filter(d => d.optionType === 'CE').slice(0, 3);
+          const topPuts = chainData.data.filter(d => d.optionType === 'PE').slice(0, 3);
+          optionChainHTML = `
+            <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
+              <div style="color:#64748b; font-weight:700; margin-bottom:8px;">📈 Option Chain (Top 3)</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:10px; color:#e2e8f0;">
+                <div>
+                  <div style="color:#22c55e; font-weight:700; margin-bottom:6px;">📞 Calls (CE)</div>
+                  ${topCalls.map(c => `<div>Strike: ₹${c.strike} | OI: ${(c.openInterest/100000).toFixed(1)}L</div>`).join('')}
+                </div>
+                <div>
+                  <div style="color:#ef4444; font-weight:700; margin-bottom:6px;">📱 Puts (PE)</div>
+                  ${topPuts.map(p => `<div>Strike: ₹${p.strike} | OI: ${(p.openInterest/100000).toFixed(1)}L</div>`).join('')}
+                </div>
+              </div>
+            </div>`;
+        }
+      } catch (e) {
+        console.warn('Option chain fetch error:', e);
+      }
+
+      // Fetch block deals for this symbol
+      let blockDealsHTML = '';
+      try {
+        const dealsRes = await fetch(`${API_BASE}/api/block-deals`);
+        const dealsData = await dealsRes.json();
+        if (dealsData.deals) {
+          const symbolDeals = dealsData.deals.filter(d => d.symbol === symbol).slice(0, 3);
+          if (symbolDeals.length > 0) {
+            blockDealsHTML = `
+              <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
+                <div style="color:#64748b; font-weight:700; margin-bottom:8px;">🔗 Block Deals (${symbol})</div>
+                ${symbolDeals.map(d => `
+                  <div style="color:#e2e8f0; font-size:10px; padding:4px 0; border-bottom:1px solid #141b29;">
+                    <div>Qty: ${(d.quantity/100000).toFixed(1)}L @ ₹${d.price.toFixed(2)} | Value: ₹${(d.value/10000000).toFixed(1)}Cr</div>
+                  </div>
+                `).join('')}
+              </div>`;
+          }
+        }
+      } catch (e) {
+        console.warn('Block deals fetch error:', e);
+      }
+
       body.innerHTML = `
-        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0;">
-          <div style="color:#60a5fa; font-weight:700; margin-bottom:10px;">📊 ${symbol} - ${key.toUpperCase()}</div>
-          <div style="color:#e2e8f0; font-size:11px; line-height:1.8;">
-            <div>🎯 Signal: <span style="color:#22c55e; font-weight:600;">${r.signal || 'N/A'}</span></div>
-            <div>💰 Price: ₹${r.price?.toFixed(2) || 'N/A'}</div>
-            ${r.entry ? `<div>📍 Entry: ₹${r.entry.toFixed(2)}</div>` : ''}
-            ${r.target ? `<div>🎪 Target: ₹${r.target.toFixed(2)}</div>` : ''}
-            ${r.stoploss ? `<div>🛑 Stop Loss: ₹${r.stoploss.toFixed(2)}</div>` : ''}
+        <div style="background:#1a2333; border-radius:6px; padding:12px; margin:8px 0; border-left:3px solid ${signalColor};">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <span style="font-size:18px;">${signalEmoji}</span>
+            <div>
+              <div style="color:#60a5fa; font-weight:700; font-size:13px;">📊 ${symbol} - ${key.replaceAll('-', ' ').toUpperCase()}</div>
+              <div style="color:${signalColor}; font-weight:700; font-size:12px;">${r.signal} Signal</div>
+            </div>
           </div>
+          <div style="background:#0f1520; padding:10px; border-radius:4px; margin-bottom:8px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px; color:#e2e8f0;">
+              <div>💰 Current Price: <span style="font-weight:700;">₹${r.price?.toFixed(2) || 'N/A'}</span></div>
+              <div>📍 Entry: <span style="font-weight:700;">₹${r.entry?.toFixed(2) || 'N/A'}</span></div>
+              <div>🎯 Target: <span style="color:#22c55e; font-weight:700;">₹${r.target?.toFixed(2) || 'N/A'}</span></div>
+              <div>🛑 Stop Loss: <span style="color:#ef4444; font-weight:700;">₹${r.stoploss?.toFixed(2) || 'N/A'}</span></div>
+            </div>
+          </div>
+          ${r.target && r.price ? `<div style="color:#64748b; font-size:10px;">📊 Potential Return: ${((r.target - r.price) / r.price * 100).toFixed(2)}%</div>` : ''}
         </div>
+        ${optionChainHTML}
+        ${blockDealsHTML}
       `;
     } else if (data.detail) {
       body.innerHTML = `<div style="color:#fbbf24; padding:10px;">⚠️ ${data.detail}</div>`;
     }
   } catch (e) {
-    body.innerHTML = `<div style="color:#ef4444; padding:10px;">Error: ${e.message}</div>`;
+    body.innerHTML = `<div style="color:#ef4444; padding:10px;">❌ Error: ${e.message}</div>`;
   }
 }
 
@@ -7775,6 +7893,16 @@ function setMfFilter(filter) {
   renderMutualFunds();
 }
 
+let mfCurrentPage = 1;
+let mfItemsPerPage = 10;
+let mfAllFunds = [];
+
+function updateMfPagination(itemsPerPage) {
+  mfItemsPerPage = parseInt(itemsPerPage);
+  mfCurrentPage = 1;
+  renderMutualFunds();
+}
+
 function renderMutualFunds() {
   const container = document.getElementById('mutualFundsSection');
   if (!container || !mutualFundsData) return;
@@ -7792,6 +7920,7 @@ function renderMutualFunds() {
 
   let funds = data.funds || [];
   if (mfFilter !== 'ALL') funds = funds.filter(f => f.category === mfFilter);
+  mfAllFunds = funds;
 
   const header = `<div style="color:#64748b; font-size:11px; margin-bottom:8px;">${escapeHtml(data.universe || '')} · ${escapeHtml(data.dataSource || '')}</div>`;
 
@@ -7800,9 +7929,14 @@ function renderMutualFunds() {
     return;
   }
 
-  container.innerHTML = header + `
+  const totalPages = Math.ceil(funds.length / mfItemsPerPage);
+  mfCurrentPage = Math.min(mfCurrentPage, totalPages);
+  const startIdx = (mfCurrentPage - 1) * mfItemsPerPage;
+  const paginatedFunds = funds.slice(startIdx, startIdx + mfItemsPerPage);
+
+  const header_html = header + `
     <div style="overflow-x:auto;">
-    <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+    <table style="width:100%; border-collapse:collapse; font-size:12.5px; min-width:100%;">
       <thead><tr style="color:#64748b; text-align:left; border-bottom:1px solid #1a2333;">
         <th style="padding:6px 8px;">Fund</th>
         <th style="padding:6px 8px;">Category</th>
@@ -7812,7 +7946,7 @@ function renderMutualFunds() {
         <th style="padding:6px 8px;">5Y CAGR</th>
       </tr></thead>
       <tbody>
-        ${funds.map(f => `
+        ${paginatedFunds.map(f => `
           <tr style="border-bottom:1px solid #141b29;">
             <td style="padding:6px 8px; font-weight:700; color:#f1f5f9;">${escapeHtml(f.name)}<div style="color:#64748b; font-weight:400; font-size:10.5px;">${escapeHtml(f.fundHouse || '')}</div></td>
             <td style="padding:6px 8px; color:#94a3b8;">${escapeHtml(f.category)}</td>
@@ -7825,6 +7959,30 @@ function renderMutualFunds() {
     </table>
     </div>
     <div style="color:#64748b; font-size:10.5px; margin-top:8px;">${escapeHtml(data.note || '')}</div>`;
+
+  container.innerHTML = header_html;
+
+  const infoSpan = document.getElementById('mfPaginationInfo');
+  if (infoSpan) infoSpan.textContent = `${startIdx + 1}-${Math.min(startIdx + mfItemsPerPage, funds.length)} of ${funds.length}`;
+
+  if (totalPages > 1) {
+    const controlsDiv = document.getElementById('mfPaginationControls');
+    if (controlsDiv) {
+      let btns = '';
+      if (mfCurrentPage > 1) btns += `<button onclick="mfCurrentPage=1; renderMutualFunds()" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">« First</button>`;
+      if (mfCurrentPage > 1) btns += `<button onclick="mfCurrentPage--; renderMutualFunds()" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">‹ Prev</button>`;
+
+      for (let i = Math.max(1, mfCurrentPage - 2); i <= Math.min(totalPages, mfCurrentPage + 2); i++) {
+        const isActive = i === mfCurrentPage;
+        btns += `<button onclick="mfCurrentPage=${i}; renderMutualFunds()" style="padding:6px 10px; background:${isActive ? '#2563eb' : '#1e293b'}; color:#e2e8f0; border:1px solid ${isActive ? '#3b82f6' : '#334155'}; border-radius:4px; cursor:pointer; font-size:11px;">${i}</button>`;
+      }
+
+      if (mfCurrentPage < totalPages) btns += `<button onclick="mfCurrentPage++; renderMutualFunds()" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">Next ›</button>`;
+      if (mfCurrentPage < totalPages) btns += `<button onclick="mfCurrentPage=${totalPages}; renderMutualFunds()" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">Last »</button>`;
+
+      controlsDiv.innerHTML = btns;
+    }
+  }
 }
 
 /* ============================================================
@@ -8014,6 +8172,17 @@ async function fetchIndexPulse() {
   }
 }
 
+let recoCurrentPage = 1;
+let recoItemsPerPage = 10;
+let recoAllIndices = [];
+let recoData = null;
+
+function updateRecoPagination(itemsPerPage) {
+  recoItemsPerPage = parseInt(itemsPerPage);
+  recoCurrentPage = 1;
+  renderRecommendationTable(recoData, recoAllIndices);
+}
+
 // Renders the "Recommendation for the Day" table from the real
 // `recommendation` object each index already carries in /api/indices/pulse
 // (see get_indices_pulse() in nse_service.py for the documented rule this
@@ -8023,7 +8192,15 @@ function renderRecommendationTable(data, indices) {
   const badge = document.getElementById('recoTimeBadge');
   if (!tbody) return;
 
-  const rows = indices.map(sym => {
+  recoData = data;
+  recoAllIndices = indices;
+
+  const totalPages = Math.ceil(indices.length / recoItemsPerPage);
+  recoCurrentPage = Math.min(recoCurrentPage, totalPages || 1);
+  const startIdx = (recoCurrentPage - 1) * recoItemsPerPage;
+  const paginatedIndices = indices.slice(startIdx, startIdx + recoItemsPerPage);
+
+  const rows = paginatedIndices.map(sym => {
     const item = data[sym];
     if (!item) return '';
     const rec = item.recommendation;
@@ -8064,6 +8241,29 @@ function renderRecommendationTable(data, indices) {
   }).filter(Boolean).join('');
 
   tbody.innerHTML = rows || '<tr><td colspan="13" style="padding:16px; text-align:center; color:#94a3b8;">No recommendation data available.</td></tr>';
+
+  const infoSpan = document.getElementById('recoPaginationInfo');
+  if (infoSpan) infoSpan.textContent = `${startIdx + 1}-${Math.min(startIdx + recoItemsPerPage, indices.length)} of ${indices.length}`;
+
+  if (totalPages > 1) {
+    const controlsDiv = document.getElementById('recoPaginationControls');
+    if (controlsDiv) {
+      let btns = '';
+      if (recoCurrentPage > 1) btns += `<button onclick="recoCurrentPage=1; renderRecommendationTable(recoData, recoAllIndices)" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">« First</button>`;
+      if (recoCurrentPage > 1) btns += `<button onclick="recoCurrentPage--; renderRecommendationTable(recoData, recoAllIndices)" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">‹ Prev</button>`;
+
+      for (let i = Math.max(1, recoCurrentPage - 2); i <= Math.min(totalPages, recoCurrentPage + 2); i++) {
+        const isActive = i === recoCurrentPage;
+        btns += `<button onclick="recoCurrentPage=${i}; renderRecommendationTable(recoData, recoAllIndices)" style="padding:6px 10px; background:${isActive ? '#2563eb' : '#1e293b'}; color:#e2e8f0; border:1px solid ${isActive ? '#3b82f6' : '#334155'}; border-radius:4px; cursor:pointer; font-size:11px;">${i}</button>`;
+      }
+
+      if (recoCurrentPage < totalPages) btns += `<button onclick="recoCurrentPage++; renderRecommendationTable(recoData, recoAllIndices)" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">Next ›</button>`;
+      if (recoCurrentPage < totalPages) btns += `<button onclick="recoCurrentPage=${totalPages}; renderRecommendationTable(recoData, recoAllIndices)" style="padding:6px 10px; background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:4px; cursor:pointer; font-size:11px;">Last »</button>`;
+
+      controlsDiv.innerHTML = btns;
+    }
+  }
+
   if (badge) {
     const now = new Date();
     badge.textContent = `Updated ${now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kolkata' })} IST`;
