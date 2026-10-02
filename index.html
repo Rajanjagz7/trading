@@ -6627,10 +6627,17 @@ function syncStocksOnlyButtons() {
 function toggleStocksOnly() {
   stocksOnlyLock = !stocksOnlyLock;
   syncStocksOnlyButtons();
+
+  // When Stocks Only is enabled, hide CE/PE filter and show all stocks
+  const optTypeGroup = document.querySelector('#optTypeSeg')?.closest('.group');
+  if (optTypeGroup) {
+    optTypeGroup.style.display = stocksOnlyLock ? 'none' : 'block';
+  }
+
   showToast(
     stocksOnlyLock
-      ? '📦 Stocks Only locked — every scan now excludes NIFTY, BANKNIFTY & other indices'
-      : '📦 Stocks Only unlocked — indices included again',
+      ? '📦 Stocks Only locked — scanning all NSE stocks, CE/PE filter disabled'
+      : '📦 Stocks Only unlocked — indices and option types included again',
     'info'
   );
 
@@ -6648,9 +6655,17 @@ function toggleStocksOnly() {
   } else if (window.activeScan.source === 'manual' || window.activeScan.source === 'chartink') {
     syncUIToActiveScan(window.activeScan.source);
   }
+
   window.activeScan.rules.instrument = stocksOnlyLock
     ? { enabled: true, index: false, stock: true }
     : { enabled: true, index: true, stock: true };
+
+  // When Stocks Only is on, disable CE/PE filtering to show all stocks
+  if (stocksOnlyLock && window.activeScan.rules.optionType) {
+    window.activeScan.rules.optionType.enabled = false;
+    window.activeScan.rules.optionType.type = 'BOTH';
+  }
+
   syncActiveScanToUI();
   updateActiveFilterChips();
   executeActiveScan();
