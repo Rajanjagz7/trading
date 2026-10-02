@@ -43,9 +43,14 @@ from .block_deals_service import get_block_deals
 from .indian_stocks_service import get_indian_stocks, get_indian_indices
 try:
     from .rajan_pavan_indicators import RAJAN_PAVAN_KEYS
-    import rajan_pavan_indicators as rp_indicators
+    from . import rajan_pavan_indicators as rp_indicators
     HAS_RAJAN_PAVAN = True
-except ImportError:
+except ImportError as e:
+    print(f"[WARNING] Failed to load Rajan-Pavan indicators: {e}")
+    HAS_RAJAN_PAVAN = False
+    RAJAN_PAVAN_KEYS = {}
+except Exception as e:
+    print(f"[WARNING] Error initializing Rajan-Pavan: {e}")
     HAS_RAJAN_PAVAN = False
     RAJAN_PAVAN_KEYS = {}
 
@@ -558,7 +563,12 @@ def api_indicator_rajan_pavan(
         if not indicator_func:
             raise HTTPException(status_code=404, detail=f"Indicator {key} not found")
 
-        # Build kwargs from provided parameters
+        # Build kwargs from provided parameters - convert camelCase to snake_case
+        def camel_to_snake(name):
+            import re
+            s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+            return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
         kwargs = {"symbol": symbol}
 
         # Add all optional parameters if provided
@@ -577,7 +587,8 @@ def api_indicator_rajan_pavan(
         for param_name in param_names:
             param_value = locals().get(param_name)
             if param_value is not None:
-                kwargs[param_name] = param_value
+                snake_name = camel_to_snake(param_name)
+                kwargs[snake_name] = param_value
 
         result = indicator_func(**kwargs)
 
