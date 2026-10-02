@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "public": "public",
-  "buildCommand": "echo 'No build needed'",
   "builds": [
     {
       "src": "api/tv.js",
@@ -10,6 +8,10 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "public/",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -23,7 +25,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/public/$1"
     }
   ]
 }
