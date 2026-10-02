@@ -10,7 +10,11 @@
       "use": "@vercel/python"
     },
     {
-      "src": "public/",
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "public/**/*",
       "use": "@vercel/static"
     }
   ],
@@ -24,8 +28,21 @@
       "dest": "api/index.py"
     },
     {
+      "src": "/index.html",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      },
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)\\.html$",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    },
+    {
       "src": "/(.*)",
-      "dest": "/public/$1"
+      "dest": "/index.html"
     }
   ]
 }
