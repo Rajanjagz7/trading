@@ -4783,13 +4783,16 @@
       <button class="strat-tab-btn" data-ind="strat3" onclick="switchIndModalTab('strat3')">3️⃣ Premium ÷8 &amp; ÷6.5</button>
     </div>
 
-    <!-- View Switcher Tabs: Live Option Chain vs Pine Script Code -->
+    <!-- View Switcher Tabs: Live Option Chain vs Pine Script Code vs Multi-Index Scanner -->
     <div class="ind-view-switcher">
       <button class="ind-view-btn active" id="indViewChainBtn" onclick="switchIndView('chain')">
         <span>📊</span> <b>Live Option Chain (Indicator Fitted)</b>
       </button>
       <button class="ind-view-btn" id="indViewCodeBtn" onclick="switchIndView('code')">
         <span>📜</span> <b>Pine Script v6 Code &amp; Formulas</b>
+      </button>
+      <button class="ind-view-btn" id="indViewScanBtn" onclick="switchIndView('scan')">
+        <span>🔍</span> <b>Multi-Index Scanner</b>
       </button>
     </div>
 
@@ -4911,6 +4914,72 @@
 
       <div class="code-preview-wrap">
         <pre id="indCodePreview" style="margin:0;"></pre>
+      </div>
+    </div>
+
+    <!-- 3. MULTI-INDEX SCANNER VIEW -->
+    <div id="indScanSection" class="ind-modal-body" style="display:none;">
+      <div style="padding:16px 20px; max-height:calc(85vh - 120px); overflow-y:auto;">
+        <div style="background:#111827; border:1px solid #1f293d; border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+          <div style="font-size:13px; color:#e2e8f0; font-weight:700; margin-bottom:10px;">🔍 Multi-Index Option Chain Scanner</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+            <div>
+              <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Select Indices</label>
+              <select id="scanIndices" multiple style="width:220px; height:110px; padding:6px 8px; font-size:12px; background:#182234; border:1px solid #2b3b52; border-radius:6px; color:#fff;">
+                <option value="NIFTY" selected>NIFTY</option>
+                <option value="BANKNIFTY">BANKNIFTY</option>
+                <option value="FINNIFTY">FINNIFTY</option>
+                <option value="MIDCPNIFTY">MIDCPNIFTY</option>
+                <option value="SENSEX">SENSEX</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Indicator</label>
+              <select id="scanIndicator" style="width:180px; padding:6px 8px; font-size:12px; background:#182234; border:1px solid #2b3b52; border-radius:6px; color:#fff;">
+                <option value="ut">⚡ UT Bot Alerts</option>
+                <option value="trade_pred">🔮 Trade Predictor</option>
+                <option value="quantum">🌌 Quantum Matrix</option>
+                <option value="alphascan">📊 AlphaScan Matrix</option>
+                <option value="target_proj">🎯 Target Projections</option>
+                <option value="supertrend">📈 Supertrend MTF</option>
+                <option value="orb15">🚀 15m ORB</option>
+                <option value="vwap_rsi">🌊 VWAP + RSI</option>
+                <option value="volume_oi">📊 Volume &amp; OI</option>
+                <option value="candle_pattern">🕯️ Candlestick</option>
+                <option value="strat1">1️⃣ Low Range Setup</option>
+                <option value="strat2">2️⃣ OH/OL + VIX</option>
+                <option value="strat3">3️⃣ Premium ÷8 &amp; ÷6.5</option>
+              </select>
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+              <button class="action-btn" onclick="runMultiIndexScan()" style="padding:6px 14px; font-size:12px;">🔍 Scan Now</button>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#64748b;">Select multiple indices and an indicator to see BUY / SELL / WAIT summary across all indices.</div>
+        </div>
+
+        <div id="multiIndexScanResult" style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+            <thead>
+              <tr style="background:#132d20; color:#35d07f; text-align:left;">
+                <th style="padding:8px 12px;">Index</th>
+                <th style="padding:8px 12px;">Spot</th>
+                <th style="padding:8px 12px;">ATM</th>
+                <th style="padding:8px 12px;">Indicator</th>
+                <th style="padding:8px 12px;">BUY Signals</th>
+                <th style="padding:8px 12px;">SELL Signals</th>
+                <th style="padding:8px 12px;">Call Vol%</th>
+                <th style="padding:8px 12px;">Put Vol%</th>
+                <th style="padding:8px 12px;">Volume Signal</th>
+                <th style="padding:8px 12px;">Verdict</th>
+                <th style="padding:8px 12px;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="multiIndexScanBody">
+              <tr><td colspan="11" style="padding:20px; text-align:center; color:#94a3b8;">Click Scan Now to analyze selected indices.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -9209,22 +9278,35 @@ function switchIndView(view) {
   currentIndView = view;
   const chainBtn = document.getElementById('indViewChainBtn');
   const codeBtn = document.getElementById('indViewCodeBtn');
+  const scanBtn = document.getElementById('indViewScanBtn');
   const chainSec = document.getElementById('indChainSection');
   const codeSec = document.getElementById('indCodeSection');
+  const scanSec = document.getElementById('indScanSection');
 
   if (view === 'chain') {
     if (chainBtn) chainBtn.classList.add('active');
     if (codeBtn) codeBtn.classList.remove('active');
+    if (scanBtn) scanBtn.classList.remove('active');
     if (chainSec) chainSec.style.display = 'flex';
     if (codeSec) codeSec.style.display = 'none';
+    if (scanSec) scanSec.style.display = 'none';
     if (!currentIndChainData || currentIndChainData.symbol !== currentIndSymbol) {
       loadIndicatorOptionChain(currentIndSymbol, currentIndExpiry, currentIndKey);
     }
-  } else {
+  } else if (view === 'code') {
     if (chainBtn) chainBtn.classList.remove('active');
     if (codeBtn) codeBtn.classList.add('active');
+    if (scanBtn) scanBtn.classList.remove('active');
     if (chainSec) chainSec.style.display = 'none';
     if (codeSec) codeSec.style.display = 'block';
+    if (scanSec) scanSec.style.display = 'none';
+  } else if (view === 'scan') {
+    if (chainBtn) chainBtn.classList.remove('active');
+    if (codeBtn) codeBtn.classList.remove('active');
+    if (scanBtn) scanBtn.classList.add('active');
+    if (chainSec) chainSec.style.display = 'none';
+    if (codeSec) codeSec.style.display = 'none';
+    if (scanSec) scanSec.style.display = 'block';
   }
 }
 
@@ -9391,6 +9473,57 @@ async function loadIndicatorOptionChain(symbol, expiry, indicator) {
     if (tbody) {
       tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:30px; color:#f87171;">⚠️ Failed to load option chain: ${err.message}</td></tr>`;
     }
+  }
+}
+
+async function runMultiIndexScan() {
+  const indicesSelect = document.getElementById('scanIndices');
+  const indicatorSelect = document.getElementById('scanIndicator');
+  const tbody = document.getElementById('multiIndexScanBody');
+  if (!indicesSelect || !indicatorSelect || !tbody) return;
+
+  const selectedOptions = Array.from(indicesSelect.selectedOptions).map(o => o.value);
+  if (!selectedOptions.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; text-align:center; color:#f87171;">Please select at least one index.</td></tr>';
+    return;
+  }
+
+  const indicator = indicatorSelect.value;
+  tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; text-align:center; color:#94a3b8;">Scanning indices with ' + (PINE_SCRIPTS[indicator] ? PINE_SCRIPTS[indicator].title : indicator.toUpperCase()) + '…</td></tr>';
+
+  try {
+    const url = `${API_BASE}/api/chain/summary?symbols=${encodeURIComponent(selectedOptions.join(','))}&indicator=${encodeURIComponent(indicator)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success || !data.results) {
+      tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; text-align:center; color:#f87171;">Failed to load scan results.</td></tr>';
+      return;
+    }
+
+    const rows = data.results.map(r => {
+      const verdict = r.verdict || 'WAIT';
+      const verdictColor = verdict === 'BUY' ? '#22c55e' : verdict === 'SELL' ? '#ef4444' : '#64748b';
+      const verdictBadge = verdict === 'BUY' ? '🟢 BUY' : verdict === 'SELL' ? '🔴 SELL' : '⚪ WAIT';
+      const statusColor = r.status === 'ok' ? '#22c55e' : '#ef4444';
+      return `<tr style="border-bottom:1px solid #1a2333;">
+        <td style="padding:8px; font-weight:700; color:#f1f5f9;">${escapeHtml(r.symbol)}</td>
+        <td style="padding:8px; color:#e2e8f0;">${r.spot ? '₹' + fmtNum(r.spot) : '–'}</td>
+        <td style="padding:8px; color:#94a3b8;">${r.atmStrike || '–'}</td>
+        <td style="padding:8px; color:#93c5fd;">${escapeHtml(PINE_SCRIPTS[indicator] ? PINE_SCRIPTS[indicator].title : indicator.toUpperCase())}</td>
+        <td style="padding:8px; color:#22c55e; font-weight:700;">${r.buySignals || 0}</td>
+        <td style="padding:8px; color:#ef4444; font-weight:700;">${r.sellSignals || 0}</td>
+        <td style="padding:8px; color:#e2e8f0;">${r.callPct ? r.callPct.toFixed(1) + '%' : '–'}</td>
+        <td style="padding:8px; color:#e2e8f0;">${r.putPct ? r.putPct.toFixed(1) + '%' : '–'}</td>
+        <td style="padding:8px; color:#cbd5e1; font-size:11px;">${escapeHtml(r.volumeSignal || 'NEUTRAL')}</td>
+        <td style="padding:8px; color:${verdictColor}; font-weight:700;">${verdictBadge}</td>
+        <td style="padding:8px; color:${statusColor}; font-size:11px;">${r.dataStatus || '–'}</td>
+      </tr>`;
+    }).join('');
+
+    tbody.innerHTML = rows || '<tr><td colspan="11" style="padding:20px; text-align:center; color:#94a3b8;">No results.</td></tr>';
+  } catch (err) {
+    console.error('Multi-index scan error:', err);
+    tbody.innerHTML = `<tr><td colspan="11" style="padding:20px; text-align:center; color:#f87171;">⚠️ Scan failed: ${err.message}</td></tr>`;
   }
 }
 

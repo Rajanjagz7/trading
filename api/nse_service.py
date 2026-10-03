@@ -1623,6 +1623,62 @@ class NSEService:
             "timestamp": now_ist_iso()
         }
 
+    def get_option_chain_summary(self, symbols, indicator=None):
+        """Scan multiple indices with one indicator and return BUY/SELL/WAIT summary."""
+        results = []
+        for sym in symbols:
+            try:
+                chain = self.get_option_chain_for_symbol(symbol=sym, indicator=indicator)
+                if chain.get("error"):
+                    results.append({
+                        "symbol": sym,
+                        "status": "error",
+                        "message": chain["error"],
+                        "spot": 0,
+                        "atmStrike": 0,
+                        "buySignals": 0,
+                        "sellSignals": 0,
+                        "volumeSignal": "NEUTRAL",
+                        "dataStatus": "unavailable",
+                    })
+                    continue
+                buy = chain.get("buySignalsCount") or 0
+                sell = chain.get("sellSignalsCount") or 0
+                if buy > sell:
+                    verdict = "BUY"
+                elif sell > buy:
+                    verdict = "SELL"
+                else:
+                    verdict = "WAIT"
+                results.append({
+                    "symbol": sym,
+                    "status": "ok",
+                    "spot": chain.get("spot") or 0,
+                    "atmStrike": chain.get("atmStrike") or 0,
+                    "buySignals": buy,
+                    "sellSignals": sell,
+                    "verdict": verdict,
+                    "volumeSignal": chain.get("volumeSignal") or "NEUTRAL",
+                    "callPct": chain.get("callVolumePct") or 0,
+                    "putPct": chain.get("putVolumePct") or 0,
+                    "indicator": chain.get("indicator") or indicator or "ut",
+                    "dataStatus": chain.get("dataStatus") or "unavailable",
+                    "timestamp": chain.get("timestamp") or now_ist_iso(),
+                })
+            except Exception as e:
+                results.append({
+                    "symbol": sym,
+                    "status": "error",
+                    "message": str(e),
+                    "spot": 0,
+                    "atmStrike": 0,
+                    "buySignals": 0,
+                    "sellSignals": 0,
+                    "volumeSignal": "NEUTRAL",
+                    "dataStatus": "unavailable",
+                })
+        return {"success": True, "indicator": indicator or "ut", "results": results}
+
     def clear_cached_data(self):
         """
         Deletes all stored CSV files from writable cache directory and clears in-memory state.

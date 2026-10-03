@@ -124,6 +124,15 @@ def get_chain(symbol: str = "NIFTY", expiry: Optional[str] = None, indicator: Op
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/chain/summary")
+def get_chain_summary(symbols: str = "NIFTY,BANKNIFTY,FINNIFTY,MIDCPNIFTY,SENSEX", indicator: Optional[str] = None):
+    try:
+        sym_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+        res = nse_service.get_option_chain_summary(symbols=sym_list, indicator=indicator)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/stock-picks")
 def get_stock_picks(force_refresh: bool = False):
     try:
